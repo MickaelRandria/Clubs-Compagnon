@@ -1,0 +1,21 @@
+/* États de l'app : chargement, erreur, page introuvable, bouton principal */
+
+.fc-skel { display: flex; flex-direction: column; gap: 6px; }
+.fc-skel-row { display: grid; grid-template-columns: var(--cols); gap: 6px; }
+.fc-skel-cell { background: var(--fc-marine); animation: fcPulse 1.4s ease-in-out infinite; }
+@keyframes fcPulse { 50% { opacity: .5; } }
+
+.fc-error { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 34px 30px; }
+.fc-error > :not(svg) { position: relative; }
+.fc-error .fc-body { max-width: 52ch; color: var(--fc-acier); }
+
+.fc-cta { appearance: none; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; align-self: flex-start;
+          padding: 14px 36px 14px 20px; background: var(--fc-craie); color: var(--fc-marine); text-decoration: none;
+          font: 800 16px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase;
+          clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%); transition: background .15s; }
+.fc-cta:hover, .fc-cta:focus-visible { outline: none; background: var(--fc-glacier); }
+.fc-cta:disabled { cursor: progress; opacity: .6; }
+
+a.fc-ghost { display: inline-block; text-decoration: none; }
+a.fc-mrow { color: inherit; text-decoration: none; }
+a.fc-mrow:focus-visible { outline: 2px solid var(--fc-glacier); outline-offset: -2px; }

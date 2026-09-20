@@ -1,0 +1,341 @@
+/* FC 27 — préparation temporaire, menu console FIFA 20 (Online / Pro Clubs).
+   Tuiles asymétriques à aplats francs : craie, bleu roi et bleu nuit alternent sur un fond texturé.
+   Angles droits, aucune lueur ; la sélection se lit par un aplat ou un liseré magenta. */
+
+.fc-tab--preparation { display: flex; align-items: center; gap: 6px; }
+.fc-tab--preparation span { padding: 3px 4px; background: var(--fc-marine); color: var(--fc-craie); font-size: 10px; letter-spacing: .03em; }
+
+/* ---------- Base ---------- */
+.fc27 { --p-ink: #0B1A3A; --p-night: #0A1128; --p-night-2: #111C3D; --p-chalk: #F1F3F6; --p-steel: #C9D3E4; --p-mist: #E3E8F0;
+        --p-muted: #5C6781; --p-body: #33405C; --p-magenta: #FF4FA3; --p-ambre: #FFB547; --p-vert: #3DDC97;
+        --fc27-line: rgba(242,244,248,.1); --fc27-cut: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+        display: grid; gap: 6px; }
+.fc27 h1, .fc27 h2, .fc27 h3, .fc27 h4, .fc27-dialog h2, .fc27-dialog h3 { margin: 0; }
+.fc27 p, .fc27-dialog p { line-height: 1.5; }
+.fc27 button, .fc27-dialog button, .fc27 summary { cursor: pointer; }
+.fc27 button:disabled, .fc27-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+.fc27 :focus-visible, .fc27-dialog :focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 3px; }
+.fc27-sr { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.fc27-eyebrow { margin: 0 0 10px; font: 800 14px/1.1 var(--fc-display); letter-spacing: .16em; text-transform: uppercase; color: var(--fc-glacier); }
+.fc27-small { font-size: 12px; line-height: 1.5; }
+.fc27-muted { color: var(--fc-brume); font-size: 14px; }
+.fc27-tag { display: inline-block; padding: 7px 11px 6px; background: var(--p-ink); color: #fff; font: 800 13px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; }
+.fc27-tag--light { background: #fff; color: var(--p-ink); }
+.fc27-section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+.fc27-section-title { font: 800 clamp(40px, 4.6vw, 64px)/.84 var(--fc-display); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; }
+.fc27-section-hint { margin: 12px 0 0; font: 600 14px/1.4 var(--fc-text); color: var(--fc-brume); }
+
+/* ---------- Fond de page : béton bleu nuit, pinceaux, trames (couvre le mur global) ---------- */
+.fc27-backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #050A1C; }
+.fc27-backdrop svg { display: block; width: 100%; height: 100%; }
+.fc27-backdrop-brush { position: absolute; width: min(920px, 74vw); height: auto; opacity: .55; }
+.fc27-backdrop-brush--top { top: -26%; right: -18%; transform: rotate(6deg); }
+.fc27-backdrop-brush--bottom { bottom: -34%; left: -26%; transform: rotate(192deg); opacity: .3; }
+
+/* ---------- Bandeau + titre de page ---------- */
+.fc27-banner { display: flex; align-items: stretch; flex-wrap: wrap; background: var(--p-chalk); color: var(--p-ink); }
+.fc27-phase { display: flex; align-items: center; padding: 10px 16px; background: var(--fc-blue); color: #fff; box-shadow: inset 5px 0 0 var(--p-magenta);
+              font: 800 16px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.fc27-banner-text { display: flex; align-items: center; padding: 10px 16px; font: 600 14px/1.3 var(--fc-text); }
+.fc27-banner .fc27-text-button { margin-left: auto; padding: 0 18px; min-height: 42px; border: 0; background: var(--p-night); color: #fff; text-decoration: none;
+                                 font: 800 15px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.fc27-banner .fc27-text-button:hover { background: var(--fc-blue); color: #fff; }
+.fc27-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 22px 0 40px; }
+.fc27-heading .fc27-eyebrow { display: inline-block; padding: 6px 10px 5px; background: var(--p-magenta); color: #fff; }
+.fc27-heading h1 { font: 800 clamp(58px, 7.6vw, 108px)/.8 var(--fc-display); letter-spacing: -.015em; text-transform: uppercase; }
+.fc27-heading-accent { display: inline-block; padding: .06em .14em 0; background: var(--fc-blue); box-shadow: .07em .07em 0 var(--p-magenta); }
+.fc27-season { padding-left: 14px; box-shadow: inset 5px 0 0 var(--fc-glacier); font: italic 800 22px/1.05 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; color: #fff; }
+.fc27-archive-link { font-size: 13px; color: var(--fc-brume); }
+.fc27-archive-link a { color: var(--fc-glacier); }
+
+/* ---------- Boutons des fenêtres et de l'arène : principal plein, secondaire transparent, tertiaire texte ---------- */
+.fc27-button { position: relative; isolation: isolate; display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+               min-height: 46px; padding: 12px 28px 12px 20px; border: 0; border-radius: 0; background: none; color: var(--fc-marine);
+               text-decoration: none; font: 800 17px/1.15 var(--fc-display); text-transform: uppercase; letter-spacing: .05em;
+               transition: filter .15s, color .15s; }
+.fc27-button::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--fc-craie); clip-path: var(--fc27-cut); transition: background .15s, box-shadow .15s; }
+.fc27-button:hover:not(:disabled)::before, .fc27-button:focus-visible::before { background: var(--fc-glacier); }
+.fc27-button:hover:not(:disabled) { filter: drop-shadow(0 0 14px rgba(111,200,255,.5)); }
+.fc27-button--outline { color: var(--fc-craie); }
+.fc27-button--outline::before { background: transparent; clip-path: none; box-shadow: inset 0 0 0 1.5px rgba(242,244,248,.55); }
+.fc27-button--outline:hover:not(:disabled), .fc27-button--outline:focus-visible { color: var(--fc-glacier); filter: none; }
+.fc27-button--outline:hover:not(:disabled)::before, .fc27-button--outline:focus-visible::before { background: rgba(111,200,255,.1); box-shadow: inset 0 0 0 1.5px var(--fc-glacier); }
+.fc27-text-button { background: none; border: 0; color: var(--fc-craie); padding: 10px 0; font: 700 14px/1.2 var(--fc-text); text-underline-offset: 4px; text-decoration: underline; }
+.fc27-text-button:hover { color: var(--fc-glacier); }
+
+/* ---------- Formulaires « console » ---------- */
+.fc27-form { display: grid; gap: 14px; margin-top: 18px; }
+.fc27-form > label { display: block; }
+.fc27-form > label > :is(input, select, textarea) { display: block; margin-top: 7px; }
+.fc27-form > label, .fc27-form legend { font: 600 12px/1.3 var(--fc-text); text-transform: uppercase; letter-spacing: .1em; color: var(--fc27-label, var(--fc-brume)); }
+.fc27-form legend { margin-bottom: 8px; padding: 0; }
+.fc27-form > label .fc27-muted, .fc27-form legend .fc27-muted { font-size: 12px; text-transform: none; letter-spacing: 0; }
+.fc27-form input:not([type='radio']):not([type='checkbox']):not([type='range']), .fc27-form select, .fc27-form textarea {
+  width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid rgba(242,244,248,.2); border-radius: 0;
+  background: var(--fc27-field, rgba(6,12,31,.45)); color: var(--fc-craie); font: 500 16px/1.3 var(--fc-text);
+  text-transform: none; letter-spacing: 0; transition: border-color .15s, box-shadow .15s; }
+.fc27-form input::placeholder, .fc27-form textarea::placeholder { color: rgba(195,204,223,.8); }
+.fc27-form input:hover:not([readonly]), .fc27-form select:hover, .fc27-form textarea:hover { border-color: rgba(242,244,248,.4); }
+.fc27-form input:focus, .fc27-form select:focus, .fc27-form textarea:focus,
+.fc27-form input:focus-visible, .fc27-form select:focus-visible, .fc27-form textarea:focus-visible {
+  outline: none; border-color: var(--fc-glacier); box-shadow: inset 0 0 0 1px var(--fc-glacier); }
+.fc27-form input[readonly] { background: rgba(242,244,248,.06); color: var(--fc-brume); }
+.fc27-form select { appearance: none; padding-right: 42px; background-repeat: no-repeat; background-position: right 14px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236FC8FF' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+.fc27-form select option { background: var(--fc-marine); color: var(--fc-craie); }
+.fc27-form textarea { resize: vertical; }
+.fc27-form fieldset { min-width: 0; }
+.fc27-feedback { margin: 0; padding: 12px 14px; border-left: 3px solid var(--fc-glacier); background: rgba(111,200,255,.12); color: var(--fc-craie); font-size: 14px; }
+.fc27-feedback[role='alert'] { border-left-color: var(--fc-rouge); background: rgba(255,77,94,.14); }
+
+/* ---------- Tuiles supérieures ---------- */
+.fc27-top-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 6px; }
+
+/* Tuile 1 — L'arène : aplat craie, tribunes découpées en diagonale */
+.fc27-arena-entry { --cut-top: 64%; --cut-bottom: 47%; position: relative; overflow: hidden; display: flex; min-height: 510px;
+                    background: var(--p-chalk); color: var(--p-ink); text-decoration: none; animation: fcIn .5s cubic-bezier(.2,.7,.2,1) both; }
+.fc27-arena-visual { position: absolute; inset: 0; clip-path: polygon(var(--cut-top) 0, 100% 0, 100% 100%, var(--cut-bottom) 100%); background: #081233; }
+.fc27-stadium { position: absolute; top: 0; right: 0; width: 56%; height: 100%; }
+.fc27-arena-entry::before, .fc27-arena-entry::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.fc27-arena-entry::before { background: var(--fc-blue); clip-path: polygon(calc(var(--cut-top) - 26px) 0, calc(var(--cut-top) - 8px) 0, calc(var(--cut-bottom) - 8px) 100%, calc(var(--cut-bottom) - 26px) 100%); }
+.fc27-arena-entry::after { background: var(--p-magenta); clip-path: polygon(calc(var(--cut-top) - 8px) 0, var(--cut-top) 0, var(--cut-bottom) 100%, calc(var(--cut-bottom) - 8px) 100%); }
+.fc27-arena-stamp { position: absolute; right: 22px; bottom: 16px; font: italic 800 120px/.74 var(--fc-display); text-align: right; letter-spacing: -.02em;
+                    color: transparent; -webkit-text-stroke: 2px rgba(242,244,248,.7); }
+.fc27-arena-copy { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; max-width: 58%; padding: 32px 0 32px 34px; }
+.fc27-arena-title { font: 800 clamp(58px, 6.8vw, 98px)/.8 var(--fc-display); letter-spacing: -.02em; text-transform: uppercase; }
+.fc27-arena-title span { color: var(--fc-blue); }
+.fc27-arena-copy > p { max-width: 30ch; margin: auto 0 0; font: 600 16px/1.4 var(--fc-text); color: var(--p-body); }
+.fc27-arena-copy > p strong { display: block; margin-top: 2px; font: 800 26px/1 var(--fc-display); text-transform: uppercase; color: var(--p-ink); }
+.fc27-entry-status { display: flex; flex-wrap: wrap; align-items: stretch; font: 800 14px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.fc27-entry-status b { display: grid; place-items: center; min-width: 44px; padding: 6px 10px; background: var(--p-ink); color: #fff; font-size: 26px; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.fc27-entry-status span { display: flex; align-items: center; padding: 0 12px 0 8px; background: var(--p-ink); color: #fff; }
+.fc27-entry-status i { display: flex; align-items: center; padding: 0 12px; background: var(--p-steel); color: var(--p-ink); font-style: normal; }
+.fc27-cta { display: inline-flex; align-items: center; gap: 22px; min-height: 66px; padding: 0 30px 0 26px; background: var(--fc-blue); color: #fff;
+            box-shadow: inset 8px 0 0 var(--p-magenta); font: 800 26px/1 var(--fc-display); letter-spacing: .03em; text-transform: uppercase; }
+.fc27-arena-entry:hover .fc27-cta, .fc27-arena-entry:focus-visible .fc27-cta { background: var(--p-ink); }
+.fc27-arena-entry:hover, .fc27-arena-entry:focus-visible { outline: 4px solid var(--fc-glacier); outline-offset: -4px; }
+
+/* Tuile 2 — Le vestiaire : aplat bleu roi, joueur détouré qui déborde du cadre */
+.fc27-player-tile { position: relative; overflow: visible; display: flex; flex-direction: column; gap: 12px; min-height: 510px; padding: 30px 26px 22px;
+                    background: var(--fc-blue); color: #fff; }
+.fc27-player-cutout { position: absolute; z-index: 1; top: -30px; right: -34px; width: 54%; max-width: 300px; height: auto; pointer-events: none; }
+.fc27-player-copy { position: relative; z-index: 2; max-width: 64%; }
+.fc27-player-copy .fc27-tag { margin-bottom: 14px; }
+.fc27-player-title { white-space: nowrap; font: 800 clamp(32px, 3.2vw, 42px)/.86 var(--fc-display); letter-spacing: -.01em; text-transform: uppercase; }
+.fc27-player-lead { max-width: 22ch; margin: 14px 0 0; font: 600 15px/1.4 var(--fc-text); }
+.fc27-player-count { position: relative; z-index: 2; display: flex; align-self: flex-start; align-items: stretch; margin-top: auto; }
+.fc27-player-count strong { display: grid; place-items: center; min-width: 104px; padding: 6px 14px 2px; background: #fff; color: var(--p-ink);
+                            font: 800 68px/.9 var(--fc-display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.fc27-player-count span { display: flex; align-items: center; max-width: 124px; padding: 10px 14px; background: var(--p-night); box-shadow: inset 0 -5px 0 var(--p-magenta);
+                          font: 800 16px/1.05 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.fc27-player-actions { position: relative; z-index: 2; display: grid; gap: 4px; }
+.fc27-pad { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 58px; padding: 0 20px; border: 0; border-radius: 0;
+            background: var(--p-night); color: #fff; text-align: left; font: 800 21px/1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; }
+.fc27-pad--primary { padding-left: 28px; background: #fff; color: var(--p-ink); box-shadow: inset 8px 0 0 var(--p-magenta); }
+.fc27-pad:hover:not(:disabled) { background: #fff; color: var(--p-ink); box-shadow: inset 8px 0 0 var(--p-magenta); }
+.fc27-pad--primary:hover:not(:disabled) { background: var(--fc-glacier); }
+.fc27-player-tile > .fc27-small { position: relative; z-index: 2; margin: 0; font: 800 13px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: #DCE6FF; }
+
+/* ---------- L'effectif de demain : mini-terrain + feuille de match ---------- */
+.fc27-roster { padding: 28px 30px 30px; background: var(--p-night); color: #fff; }
+.fc27-roster-stats { display: flex; gap: 4px; }
+.fc27-roster-stats > span { display: grid; gap: 4px; min-width: 108px; padding: 10px 14px 13px; background: var(--p-chalk); color: var(--p-ink); box-shadow: inset 0 -5px 0 var(--fc-blue);
+                            font: 800 13px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.fc27-roster-stats strong { font: 800 48px/.86 var(--fc-display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.fc27-roster-body { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr); gap: 6px; margin-top: 22px; align-items: stretch; }
+
+/* Terrain : pelouse tondue vert stade, lignes blanches nettes */
+.fc27-pitch { position: relative; isolation: isolate; display: grid; align-content: space-between; gap: 16px; padding: 30px 22px 30px 12px; overflow: hidden;
+              background:
+                linear-gradient(180deg, rgba(0,0,0,.28), transparent 22%, transparent 78%, rgba(0,0,0,.3)),
+                repeating-linear-gradient(180deg, #13503A 0 58px, #0F4431 58px 116px); }
+.fc27-pitch::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .22; mix-blend-mode: overlay;
+                      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E"); }
+.fc27-pitch-lines { --line: rgba(255,255,255,.85); position: absolute; inset: 12px; z-index: -1; border: 2px solid var(--line); pointer-events: none; }
+.fc27-pitch-lines i { position: absolute; display: block; border: 2px solid var(--line); }
+.fc27-pitch-half { left: -2px; right: -2px; top: 50%; height: 0; border-width: 2px 0 0 !important; }
+.fc27-pitch-circle { left: 50%; top: 50%; width: 132px; height: 132px; margin: -66px 0 0 -66px; border-radius: 50%; }
+.fc27-pitch-box { left: 24%; right: 24%; height: 15%; }
+.fc27-pitch-six { left: 39%; right: 39%; height: 5.5%; }
+.fc27-pitch-box--top, .fc27-pitch-six--top { top: -2px; }
+.fc27-pitch-box--bottom, .fc27-pitch-six--bottom { bottom: -2px; }
+.fc27-position-line { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 8px; }
+.fc27-line-tag { justify-self: center; writing-mode: vertical-rl; transform: rotate(180deg); font: 800 14px/1 var(--fc-display); letter-spacing: .18em; color: rgba(255,255,255,.75); }
+.fc27-position-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.fc27-position-grid--att { grid-template-areas: "AG AG BU BU AD AD" ". . AT AT . ."; }
+.fc27-position-grid--mil { grid-template-areas: "MG MG MOC MOC MD MD" ". MC MC MDC MDC ."; }
+.fc27-position-grid--def { grid-template-areas: "DG DG DC DC DD DD"; }
+.fc27-position-grid--gk { grid-template-areas: ". . G G . ."; }
+
+/* Mini-cartes de poste : blanches avec titulaire, sombres « Disponible » quand le poste est libre */
+.fc27-position { position: relative; display: grid; align-items: center; min-width: 0; min-height: 76px; padding: 8px 10px; border: 0; border-radius: 0;
+                 text-align: left; font: inherit; }
+.fc27-position-code { grid-area: code; font: 800 14px/1 var(--fc-display); letter-spacing: .08em; }
+.fc27-position-name { grid-area: name; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+.fc27-position--covered, .fc27-position--contested {
+  grid-template-columns: 46px auto minmax(0, 1fr) auto; grid-template-areas: "photo code kit flag" "photo player player player" "photo name name name";
+  column-gap: 8px; row-gap: 3px; padding: 0 10px 4px 0; background: var(--p-chalk); color: var(--p-ink); box-shadow: inset 0 -4px 0 var(--fc-blue); }
+.fc27-position-photo { grid-area: photo; align-self: stretch; overflow: hidden; background: var(--p-night); }
+.fc27-position-img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+.fc27-position-photo .fc27-photo-shirt { padding: 8px 4px; }
+.fc27-position--covered .fc27-position-code, .fc27-position--contested .fc27-position-code { align-self: end; color: var(--fc-blue); }
+.fc27-position-kit { grid-area: kit; align-self: end; justify-self: start; padding: 2px 5px; background: var(--p-ink); color: #fff; font: 800 12px/1 var(--fc-display); letter-spacing: .04em; }
+.fc27-position-flag { grid-area: flag; align-self: end; padding: 3px 6px; background: var(--p-magenta); color: #fff; font: 800 12px/1 var(--fc-display); }
+.fc27-position-player { grid-area: player; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+                        font: 800 20px/1 var(--fc-display); letter-spacing: .01em; text-transform: uppercase; }
+.fc27-position--covered .fc27-position-name, .fc27-position--contested .fc27-position-name { align-self: start; font: 600 11px/1.1 var(--fc-text); color: var(--p-muted); }
+.fc27-position--covered:hover, .fc27-position--contested:hover { background: #fff; }
+
+.fc27-position--empty { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "code free" "name name"; align-content: space-between; row-gap: 8px;
+                        background: rgba(5,10,28,.6); color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.6); }
+.fc27-position--empty .fc27-position-code { font-size: 20px; }
+.fc27-position-free { grid-area: free; padding: 3px 6px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.75); font: 800 11px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.fc27-position--empty .fc27-position-name { font: 800 15px/1.05 var(--fc-display); letter-spacing: .03em; text-transform: uppercase; color: rgba(255,255,255,.85); }
+.fc27-position--empty:hover { background: rgba(24,70,245,.55); box-shadow: inset 0 0 0 2px #fff; }
+
+/* Poste sélectionné : liseré magenta franc, le poste libre passe en bleu roi */
+.fc27-position[aria-pressed='true'] { box-shadow: inset 0 -4px 0 var(--p-magenta), 0 0 0 3px var(--p-magenta); background: #fff; }
+.fc27-position--empty[aria-pressed='true'] { background: var(--fc-blue); box-shadow: inset 0 0 0 2px #fff, 0 0 0 3px var(--p-magenta); }
+
+/* Feuille de match « Team Sheet » : panneau craie en face du terrain */
+.fc27-position-players { position: relative; min-width: 0; padding: 0 0 16px; background: var(--p-chalk); color: var(--p-ink); }
+.fc27-sheet-head { display: flex; align-items: stretch; background: var(--p-ink); color: #fff; box-shadow: inset 0 -5px 0 var(--p-magenta); }
+.fc27-selected-code { flex-shrink: 0; display: grid; place-items: center; min-width: 86px; padding: 0 12px 5px; background: var(--fc-blue); color: #fff;
+                      font: 800 40px/1 var(--fc-display); letter-spacing: -.01em; }
+.fc27-sheet-head > div { min-width: 0; padding: 16px 16px 20px; }
+.fc27-sheet-kicker { margin: 0 0 8px; font: 800 12px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--fc-glacier); }
+.fc27-sheet-title { font: 800 clamp(30px, 2.9vw, 40px)/.88 var(--fc-display); letter-spacing: -.01em; text-transform: uppercase; overflow-wrap: anywhere; }
+.fc27-selected-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin: 0; background: var(--p-steel); border-bottom: 2px solid var(--p-steel); }
+.fc27-selected-stats > div { min-width: 0; padding: 12px 14px; background: #fff; }
+.fc27-selected-stats dt { font: 800 12px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: var(--p-muted); }
+.fc27-selected-stats dd { margin: 6px 0 0; font: 800 42px/.9 var(--fc-display); font-variant-numeric: tabular-nums; }
+.fc27-status { display: inline-block; padding: 6px 8px; font: 800 15px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.fc27-status--empty { color: var(--p-ink); box-shadow: inset 0 0 0 2px var(--p-ink); }
+.fc27-status--covered { color: #fff; background: var(--fc-blue); }
+.fc27-status--contested { color: #fff; background: var(--p-magenta); }
+.fc27-position-players > h4 { margin: 18px 16px 0; padding: 9px 12px 8px; background: var(--p-ink); color: #fff;
+                              font: 800 15px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; }
+.fc27-sheet-empty { margin: 12px 16px 0; font: 600 14px/1.4 var(--fc-text); color: var(--p-muted); }
+.fc27-player-details { margin: 0 16px; border-bottom: 2px solid var(--p-mist); overflow-wrap: anywhere; }
+.fc27-player-details summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+.fc27-player-details summary::-webkit-details-marker { display: none; }
+.fc27-player-thumb { flex-shrink: 0; display: block; width: 44px; height: 44px; object-fit: cover; object-position: 50% 12%; background: var(--p-night); }
+svg.fc27-player-thumb { padding: 6px 4px; }
+.fc27-sheet-kit { flex-shrink: 0; display: grid; place-items: center; min-width: 34px; height: 34px; padding: 0 4px; background: var(--fc-blue); color: #fff; font: 800 19px/1 var(--fc-display); }
+.fc27-sheet-name { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.fc27-sheet-name strong { font: 800 20px/1 var(--fc-display); letter-spacing: .01em; text-transform: uppercase; }
+.fc27-sheet-name span { font: 600 12px/1.2 var(--fc-text); color: var(--p-muted); }
+.fc27-role-badge { flex-shrink: 0; padding: 5px 7px 4px; font: 800 11px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.fc27-role-badge--starter { background: var(--p-ink); color: #fff; }
+.fc27-role-badge--sub { background: var(--p-steel); color: var(--p-ink); }
+.fc27-sheet-toggle { flex-shrink: 0; width: 18px; text-align: center; font: 800 18px/1 var(--fc-display); color: var(--fc-blue); }
+.fc27-player-details[open] .fc27-sheet-toggle { transform: rotate(45deg); }
+.fc27-player-details summary:hover strong { color: var(--fc-blue); }
+.fc27-player-details dl { display: grid; gap: 10px; margin: 0 0 14px; padding: 14px; background: var(--p-mist); font-size: 14px; }
+.fc27-player-details dt { margin-bottom: 3px; font: 800 11px/1.2 var(--fc-display); text-transform: uppercase; letter-spacing: .1em; color: var(--p-muted); }
+.fc27-player-details dd { margin: 0; }
+.fc27-notes { white-space: pre-wrap; }
+
+/* ---------- Fenêtres (fiche joueur, réglages) ---------- */
+.fc27-dialog { --fc27-cut: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+               width: min(620px, calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 26px 28px 28px;
+               border: 1px solid rgba(242,244,248,.1); border-top: 4px solid var(--fc-blue); color: var(--fc-craie);
+               background: var(--fc-marine); font-family: var(--fc-text); box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+.fc27-dialog::backdrop { background: #060c1fcc; backdrop-filter: blur(4px); }
+.fc27-dialog-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.fc27-close { min-width: 40px; min-height: 40px; border: 1px solid rgba(242,244,248,.3); background: transparent; color: var(--fc-craie); font-size: 26px; line-height: 1; }
+.fc27-close:hover { border-color: var(--fc-glacier); color: var(--fc-glacier); }
+.fc27-secondary { border: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+.fc27-secondary label { display: flex; gap: 8px; align-items: center; min-height: 36px; font-size: 14px; color: var(--fc-craie); text-transform: none; letter-spacing: 0; font-weight: 500; }
+.fc27-secondary input { accent-color: var(--fc-glacier); width: 17px; height: 17px; flex-shrink: 0; }
+.fc27-settings-actions { display: grid; gap: 12px; border-top: 1px solid rgba(242,244,248,.1); padding-top: 22px; margin-top: 22px; }
+.fc27-settings-actions > p { margin: 0; color: var(--fc-brume); }
+.fc27-confirm { border-left: 3px solid var(--fc-glacier); padding: 16px; margin-top: 20px; background: rgba(24,70,245,.2); }
+.fc27-button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.fc27-archives { margin-top: 24px; }
+.fc27-archives h3 { font: 700 18px/1.2 var(--fc-display); text-transform: uppercase; letter-spacing: .06em; }
+.fc27-archives a { display: block; color: var(--fc-glacier); margin-top: 12px; }
+
+/* ---------- Responsive ---------- */
+@media (min-width: 768px) and (max-width: 1100px) {
+  .fc-tabs .fc-tab { padding-inline: 12px; }
+  .fc-top { flex-wrap: wrap; }
+  .fc-profile { margin-left: auto; margin-bottom: 8px; }
+  .fc27-roster-body { grid-template-columns: minmax(0, 1fr); }
+  .fc27-arena-copy { max-width: 64%; }
+  .fc27-arena-stamp { font-size: 90px; }
+  .fc27-player-cutout { width: 54%; }
+}
+@media (max-width: 767px) {
+  .fc27-banner-text { flex: 1 1 100%; order: 2; padding: 10px 12px; font-size: 13px; }
+  .fc27-phase { flex: 1; }
+  .fc27-heading { flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px 0 34px; }
+  .fc27-heading h1 { font-size: clamp(50px, 16vw, 68px); }
+  .fc27-season { font-size: 17px; }
+  .fc27-top-grid, .fc27-roster-body { grid-template-columns: minmax(0, 1fr); }
+  .fc27-top-grid { gap: 40px; }
+  .fc27-section-head { flex-direction: column; align-items: stretch; }
+  .fc27-section-title { font-size: clamp(36px, 11vw, 46px); }
+
+  .fc27-arena-entry { flex-direction: column; min-height: 0; }
+  .fc27-arena-visual { position: relative; inset: auto; height: 180px; flex-shrink: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 78%); }
+  .fc27-stadium { width: 100%; }
+  .fc27-arena-entry::before, .fc27-arena-entry::after { display: none; }
+  .fc27-arena-stamp { right: 14px; bottom: 30px; font-size: 64px; }
+  .fc27-arena-copy { max-width: none; gap: 16px; margin-top: -8px; padding: 0 18px 22px; }
+  .fc27-arena-title { font-size: clamp(50px, 15vw, 64px); }
+  .fc27-arena-copy > p { margin-top: 0; }
+  .fc27-cta { align-self: stretch; justify-content: space-between; min-height: 58px; padding: 0 18px 0 24px; font-size: 21px; }
+
+  .fc27-player-tile { min-height: 0; padding: 26px 18px 18px; }
+  .fc27-player-cutout { top: -26px; right: -8px; width: 52%; }
+  .fc27-player-copy { max-width: 60%; }
+  .fc27-player-title { font-size: clamp(30px, 9vw, 38px); }
+  .fc27-player-count { margin-top: 10px; }
+  .fc27-player-count strong { min-width: 84px; font-size: 56px; }
+  .fc27-pad { min-height: 54px; font-size: 19px; }
+
+  .fc27-roster { padding: 22px 16px; }
+  .fc27-roster-stats > span { flex: 1; min-width: 0; padding: 10px 10px 12px; font-size: 11px; }
+  .fc27-roster-stats strong { font-size: 38px; }
+  .fc27-pitch { padding: 20px 8px 20px 2px; gap: 12px; }
+  .fc27-pitch-lines { inset: 6px; }
+  .fc27-pitch-circle { width: 90px; height: 90px; margin: -45px 0 0 -45px; }
+  .fc27-position-line { grid-template-columns: 18px minmax(0, 1fr); gap: 4px; }
+  .fc27-line-tag { font-size: 11px; letter-spacing: .1em; }
+  .fc27-position-grid { gap: 5px; }
+  .fc27-position { min-height: 64px; padding: 6px 6px 8px; }
+  .fc27-position--covered, .fc27-position--contested { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "code . flag" "player player player" "kit kit kit";
+                                                       row-gap: 4px; padding: 6px 6px 9px; }
+  .fc27-position-photo { display: none; }
+  .fc27-position--covered .fc27-position-name, .fc27-position--contested .fc27-position-name {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+  .fc27-position-player { font-size: 15px; }
+  .fc27-position--empty { grid-template-areas: "code" "free" "name"; grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
+  .fc27-position--empty .fc27-position-code { font-size: 16px; }
+  .fc27-position-free { justify-self: start; font-size: 9px; padding: 2px 4px; }
+  .fc27-position--empty .fc27-position-name { font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
+  .fc27-selected-code { min-width: 66px; font-size: 30px; }
+  .fc27-selected-stats > div { padding: 10px; }
+  .fc27-selected-stats dd { font-size: 32px; }
+  .fc27-status { font-size: 12px; padding: 5px 6px; }
+  .fc27-player-details { margin: 0 12px; }
+  .fc27-position-players > h4 { margin-inline: 12px; }
+  .fc27-role-badge { display: none; }
+
+  .fc27-dialog { padding: 22px 18px; }
+  .fc27-secondary { grid-template-columns: minmax(0, 1fr); }
+  .fc27-banner .fc27-text-button { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc27 .fc-block, .fc27-arena-entry { animation: none; }
+  .fc27-button, .fc27-button::before { transition: none; }
+}
+
+/* Postes laissés à l'IA : présents sur le terrain, mais jamais présentés comme un trou. */
+.fc27-position--ai { opacity: .72; }
+.fc27-position--ai .fc27-position-free { color: var(--fc-brume); letter-spacing: .1em; }
+.fc27-policy-note { color: var(--fc-glacier); font-weight: 700; }
+.fc27-status--ai { background: var(--p-steel); color: var(--p-ink); }

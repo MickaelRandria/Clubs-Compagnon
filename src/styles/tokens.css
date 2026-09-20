@@ -1,0 +1,15 @@
+/* Tokens Dommage BJ FC — palette et familles typographiques */
+
+:root {
+  --fc-blue: #1846F5;     /* Bleu Dommage — aplat du tile principal */
+  --fc-glacier: #6FC8FF;  /* Bleu Glacier — onglet actif, éclats, victoires */
+  --fc-marine: #0B1A3A;   /* Marine Profond — texte sur fonds clairs */
+  --fc-abysse: #060C1F;   /* Nuit Abysse — fond de page, voile photo */
+  --fc-craie: #F2F4F8;    /* Blanc Craie — tiles du bas, texte sur fonds sombres */
+  --fc-acier: #8A97B8;    /* Acier Voilé — secondaire sur fonds sombres, nuls */
+  --fc-ardoise: #5C6781;  /* Acier foncé — secondaire sur Blanc Craie (AA) */
+  --fc-brume: #C3CCDF;    /* Brume — sous-titres et métadonnées sur Marine / Abysse (≥ 10:1) */
+  --fc-rouge: #FF4D5E;    /* Rouge fonctionnel — défaites uniquement */
+  --fc-display: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif;
+  --fc-text: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+}

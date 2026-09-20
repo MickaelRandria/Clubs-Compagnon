@@ -1,0 +1,99 @@
+/* ============================================================
+   FC 27 — refonte mobile-first.
+   Sur petit écran, la page entière faisait plus de sept écrans : tout était empilé.
+   Ici, une section à la fois, des blocs repliables, et une seule action à l'écran.
+   Rien ne s'applique au-dessus de 768 px : le grand écran garde la page d'un seul tenant.
+   ============================================================ */
+
+/* Bande d'étapes : collante sous la navigation, toujours visible pour se repérer. */
+.fc27-steps { display: none; }
+
+/* Barre d'action : une seule action principale, ancrée en bas. */
+.fc27-actionbar { display: none; }
+
+/* Bloc repliable : ouvert et sans résumé au-dessus de 768 px. */
+.fc27-fold--open { display: contents; }
+
+@media (max-width: 767px) {
+  /* ---------- Étapes ---------- */
+  .fc27-steps { position: sticky; top: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 1px; margin: 0 0 12px; background: rgba(242, 244, 248, .14); }
+  .fc27-step-tab { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; padding: 0 4px;
+                   border: 0; border-radius: 0; background: var(--p-night); color: var(--fc-brume); cursor: pointer;
+                   font: 800 12px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
+  .fc27-step-tab b { display: grid; place-items: center; width: 18px; height: 18px; background: rgba(242, 244, 248, .14);
+                     color: var(--fc-craie); font: 800 11px/1 var(--fc-display); }
+  .fc27-step-tab[aria-current='step'] { background: var(--fc-blue); color: #fff; box-shadow: inset 0 -3px 0 var(--p-magenta); }
+  .fc27-step-tab[aria-current='step'] b { background: #fff; color: var(--fc-blue); }
+  .fc27-step-tab:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: -3px; }
+
+  /* ---------- Bannières condensées (axe 4) ---------- */
+  .fc27-banner { padding: 8px 12px; gap: 6px; }
+  .fc27-banner-text { display: none; }
+  .fc27-heading { margin: 10px 0 12px; gap: 4px; }
+  .fc27-heading .fc-title { font-size: clamp(38px, 12vw, 54px); line-height: .88; }
+  .fc27-season { display: none; }
+  .fc27-top-grid { gap: 10px; }
+
+  /* L'arène : visuel réduit, le texte passe devant. */
+  .fc27-arena-entry { grid-template-rows: auto auto; }
+  .fc27-arena-visual { aspect-ratio: 16 / 7; }
+  .fc27-arena-copy { padding: 14px 16px 16px; gap: 8px; }
+  .fc27-arena-title { font-size: clamp(26px, 8vw, 36px); line-height: .94; }
+
+  /* Tuile « Ton joueur » : le découpé mangeait la moitié de la hauteur. */
+  .fc27-player-tile { padding: 16px; }
+  .fc27-player-cutout { width: 132px; right: -14px; bottom: -8px; }
+  /* Le titre est en `white-space: nowrap` : chaque ligne doit tenir seule dans la colonne.
+     On réduit donc la taille plutôt que de contraindre la largeur, qui l'étranglerait. */
+  .fc27-player-title { font-size: clamp(22px, 6.4vw, 28px); line-height: 1; }
+  .fc27-player-copy { max-width: 64%; }
+  .fc27-player-lead { max-width: 100%; font-size: 13px; }
+  .fc27-player-count { margin-top: 14px; }
+
+  /* ---------- Terrain et feuille de poste (axe 2) ---------- */
+  .fc27-roster-body { gap: 8px; }
+  .fc27-pitch-hint { margin: 10px 0 0; padding: 10px 12px; background: rgba(242, 244, 248, .08);
+                     font: 700 13px/1.4 var(--fc-text); color: var(--fc-brume); text-align: center; }
+  .fc27-position-players { animation: fc27-reveal .18s ease-out; }
+  .fc27-sheet-head { position: relative; padding-right: 48px; }
+  .fc27-sheet-close { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); width: 34px; height: 34px;
+                      padding: 0; border: 0; border-radius: 0; background: rgba(242, 244, 248, .16); color: var(--fc-craie);
+                      cursor: pointer; font: 700 15px/1 var(--fc-text); }
+  @keyframes fc27-reveal { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- Blocs repliables (axe 3) ---------- */
+  .fc27-fold > summary { display: flex; align-items: center; gap: 10px; padding: 13px 14px; list-style: none; cursor: pointer;
+                         background: rgba(242, 244, 248, .08); color: var(--fc-craie);
+                         font: 800 13px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+  .fc27-fold > summary::-webkit-details-marker { display: none; }
+  .fc27-fold > summary > span { flex: 1 1 auto; min-width: 0; }
+  .fc27-fold > summary > b { padding: 3px 7px 2px; background: var(--p-magenta); color: var(--p-ink); font: 800 12px/1 var(--fc-display); }
+  .fc27-fold > summary > i { width: 10px; height: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+                             transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s; }
+  .fc27-fold[open] > summary > i { transform: rotate(-135deg) translate(-2px, -2px); }
+  .fc27-fold > summary:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: -3px; }
+  .fc27-fold-body { padding-top: 12px; }
+  /* Les titres doublonnent le résumé du repli : on les cache sur mobile. */
+  .fc27-report-label--desktop, .fc27-tips-head--desktop { display: none; }
+
+  .fc27-report { padding: 18px 14px; }
+  .fc27-report-grid { gap: 8px; }
+  .fc27-staff { margin-top: 16px; }
+  .fc27-staff-reading { font-size: 14px; }
+
+  /* ---------- Barre d'action collante (axe 5) ---------- */
+  .fc27--sectioned { padding-bottom: 76px; }
+  .fc27-actionbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; gap: 2px;
+                    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+                    background: rgba(10, 17, 40, .96); border-top: 2px solid rgba(242, 244, 248, .14); }
+  .fc27-actionbar-back { flex: 0 0 52px; border: 0; border-radius: 0; background: rgba(242, 244, 248, .12); color: var(--fc-craie);
+                         cursor: pointer; font: 800 20px/1 var(--fc-display); }
+  .fc27-actionbar-go { flex: 1 1 auto; min-height: 50px; border: 0; border-radius: 0; background: var(--fc-blue); color: #fff;
+                       cursor: pointer; font: 800 17px/1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; }
+  .fc27-actionbar-go:active { background: var(--p-ink); }
+  .fc27-actionbar button:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: -3px; }
+
+  /* Le bouton « Créer ma fiche » vit maintenant dans la barre du bas. */
+  .fc27--sectioned .fc27-player-actions { display: none; }
+}

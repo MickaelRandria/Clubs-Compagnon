@@ -1,0 +1,36 @@
+/* Playoffs */
+.fc-night { display: flex; min-height: 380px; background: var(--fc-abysse); }
+.fc-night-photo { position: absolute; top: 0; right: 0; bottom: 0; width: 64%; }
+.fc-night-photo img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: 100%; object-fit: cover; object-position: center 52%;
+                      filter: grayscale(1) contrast(1.1) brightness(1.1); }
+.fc-night-tint { position: absolute; inset: 0; background: var(--fc-blue); mix-blend-mode: multiply; opacity: .45; }
+.fc-night-edge { position: absolute; top: 0; bottom: 0; left: 0; width: calc(46% + 22px); background: var(--fc-glacier);
+                 clip-path: polygon(0 0, 100% 0, calc(100% - 110px) 100%, 0 100%); }
+.fc-night-panel { position: relative; z-index: 1; width: 46%; display: flex; flex-direction: column; gap: 14px; padding: 38px 130px 34px 38px;
+                  background: var(--fc-blue); color: var(--fc-craie); clip-path: polygon(0 0, 100% 0, calc(100% - 110px) 100%, 0 100%); }
+.fc-night-panel > :not(svg) { position: relative; }
+.fc-night-shards { position: absolute; top: 0; right: 0; width: 130px; height: 150px; }
+.fc-night-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 6px; }
+.fc-night-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.fc-story { display: flex; flex-direction: column; gap: 14px; padding: 32px 34px 34px; }
+.fc-story > :not(svg) { position: relative; }
+.fc-story-title { max-width: calc(100% - 90px); font: 800 clamp(26px, 2.6vw, 34px)/1.02 var(--fc-display); text-transform: uppercase; text-wrap: balance; }
+.fc-story-title span { display: block; }
+.fc-story-title em { font-style: normal; color: var(--fc-glacier); }
+.fc-story p { margin: 0; max-width: 62ch; font: 500 16px/1.65 var(--fc-text); }
+.fc-gallery { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-rows: 250px 250px; gap: 6px; }
+.fc-photo { display: flex; flex-direction: column; background: var(--fc-marine); }
+.fc-photo:first-child { grid-row: span 2; }
+.fc-photo img { display: block; flex: 1; min-height: 0; width: 100%; max-width: 100%; object-fit: cover; }
+.fc-photo-cap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; font: 600 14px/1.3 var(--fc-text); color: var(--fc-craie); }
+.fc-photo-cap svg { flex-shrink: 0; color: var(--fc-acier); }
+.fc-lightbox { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 40px; background: rgba(6,12,31,.94); }
+.fc-lightbox figure { position: relative; width: 100%; max-width: 900px; margin: 0; }
+.fc-lightbox img { display: block; width: 100%; max-height: 80vh; object-fit: contain; }
+.fc-lightbox figcaption { margin-top: 12px; text-align: center; font: 600 14px/1.4 var(--fc-text); color: var(--fc-acier); }
+.fc-lb-btn { position: absolute; display: grid; place-items: center; width: 44px; height: 44px; border: 0; cursor: pointer;
+             background: var(--fc-craie); color: var(--fc-marine); font: 800 22px/1 var(--fc-display); }
+.fc-lb-btn:hover, .fc-lb-btn:focus-visible { outline: none; background: var(--fc-glacier); }
+.fc-lb-prev { left: -22px; top: 40%; }
+.fc-lb-next { right: -22px; top: 40%; }
+.fc-lb-close { right: -22px; top: -22px; }

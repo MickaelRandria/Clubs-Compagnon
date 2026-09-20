@@ -1,0 +1,46 @@
+/* ============================================================
+   VUES DÉTAIL — Joueurs / Matchs / Stats / Playoffs
+   ============================================================ */
+.fc-view { display: flex; flex-direction: column; gap: 6px; }
+.fc-marine { background: var(--fc-marine); color: var(--fc-craie); }
+.fc-marine .fc-title--md { color: var(--fc-craie); }
+.fc-kicker { display: block; font: 700 14px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--fc-acier); }
+.fc-section { margin-top: 18px; margin-bottom: 4px; }
+.fc-muted { font: 600 13px/1.3 var(--fc-text); color: var(--fc-acier); }
+.fc-badge { align-self: flex-start; padding: 6px 10px; background: var(--fc-marine); color: var(--fc-glacier);
+            font: 700 14px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+
+/* Filtres — même bande que les onglets */
+.fc-controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 24px; margin-bottom: 8px; }
+.fc-view > .fc-controls:not(:first-child) { margin-top: 14px; }
+.fc-control { display: flex; align-items: center; gap: 12px; min-width: 0; max-width: 100%; }
+.fc-control .fc-tabs { overflow-x: auto; min-width: 0; }
+.fc-tabs--sm .fc-tab { padding: 10px 16px; font-size: 15px; }
+.fc-tab[aria-pressed="true"] { background: var(--fc-glacier); box-shadow: none; }
+.fc-tab-count { margin-left: 7px; color: var(--fc-ardoise); font-variant-numeric: tabular-nums; }
+.fc-tab[aria-pressed="true"] .fc-tab-count { color: var(--fc-marine); }
+
+/* Pastilles poste / type de match, badge OVR, jauges */
+.fc-pos { display: inline-block; padding: 4px 7px; font: 700 12px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase;
+          color: var(--fc-craie); box-shadow: inset 0 0 0 1px var(--fc-acier); }
+.fc-pos--hot { background: var(--fc-glacier); color: var(--fc-marine); box-shadow: none; }
+.fc-pos--solid { background: var(--fc-craie); color: var(--fc-marine); box-shadow: none; }
+.fc-card .fc-pos { color: var(--fc-marine); box-shadow: inset 0 0 0 1px var(--fc-ardoise); }
+.fc-card .fc-pos--hot { background: var(--fc-blue); color: var(--fc-craie); box-shadow: none; }
+.fc-ovr { display: inline-grid; place-items: center; min-width: 40px; height: 30px; padding: 0 6px; color: var(--fc-craie);
+          font: 800 17px/1 var(--fc-display); font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px var(--fc-acier); }
+.fc-ovr--elite { background: var(--fc-craie); color: var(--fc-marine); box-shadow: none; }
+.fc-ovr--high { background: var(--fc-blue); box-shadow: none; }
+.fc-ovr--good { box-shadow: inset 0 0 0 1px var(--fc-glacier); }
+.fc-meter { display: block; height: 8px; background: rgba(242,244,248,.1); }
+.fc-meter i { display: block; height: 100%; background: var(--fc-glacier); transform-origin: left;
+              clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%); animation: stretch .6s ease both; }
+
+/* Tiles de résumé clairs */
+.fc-stat { flex-direction: column; justify-content: space-between; gap: 10px; padding: 20px 20px 18px; }
+.fc-stat > :not(.fc-corner) { position: relative; }
+.fc-stat-value { display: block; font: italic 800 clamp(40px, 4vw, 54px)/.9 var(--fc-display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fc-stat-value--text { font-size: clamp(28px, 2.6vw, 36px); }
+.fc-stat .fc-mention { font-size: 13px; }
+.fc-corner { position: absolute; top: 0; right: 0; width: 48px; height: 56px; pointer-events: none; }
+.fc-corner-lg { position: absolute; top: 0; right: 0; width: 110px; height: 130px; pointer-events: none; }

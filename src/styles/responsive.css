@@ -1,0 +1,72 @@
+/* Mobile — importé en dernier pour garder la cascade d'origine */
+
+@media (max-width: 767px) {
+  .fc-frame { padding: 14px 16px 24px; }
+  .fc-top { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
+  .fc-profile { align-self: flex-end; margin-bottom: 0; }
+  .fc-tabs { overflow-x: auto; }
+  .fc-tab { padding: 12px 16px; font-size: 15px; }
+  .fc-row--top { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .fc-row--bottom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
+  .fc-card--match { grid-column: 1 / -1; }
+  .fc-hero { grid-template-columns: minmax(0, 1fr); }
+  .fc-hero-copy { padding: 26px 20px 20px; }
+  .fc-hero-art { min-height: 210px; }
+  .fc-clubs { min-height: 320px; }
+  .fc-clubs-copy { padding: 26px 20px 22px; }
+  .fc-card { min-height: 164px; }
+  .fc-card-copy { padding: 18px 6px 16px 18px; }
+  .fc-card--trophy .fc-card-art { display: none; }
+  .fc-mark-name { font-size: 24px; }
+
+  .fc-controls { flex-direction: column; align-items: stretch; }
+  .fc-control { justify-content: space-between; }
+  .fc-players-top, .fc-stats-top, .fc-night-row { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .fc-podium { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
+  .fc-podium .fc-card { flex-direction: column; }
+  .fc-podium .fc-card-art { flex-basis: auto; min-height: 100px; }
+  .fc-empty { padding: 26px 20px; }
+  .fc-matches-top { grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 0; }
+  .fc-matches-top .fc-hero { grid-column: 1 / -1; }
+  .fc-hero--compact .fc-hero-art { min-height: 150px; }
+  .fc-stat { padding: 14px 12px; }
+  .fc-stat .fc-title--md { font-size: 17px; }
+  .fc-stat-value { font-size: 34px; }
+  .fc-stat-value--text { font-size: 26px; }
+  .fc-career { grid-template-columns: minmax(0, 1fr); }
+  .fc-split-wrap { padding: 4px 20px 24px; }
+  .fc-avg { padding: 24px 20px; }
+  .fc-chart-block { padding: 20px 16px; }
+  .fc-plot, .fc-xlabels { gap: 4px; }
+  .fc-xlabels .full { display: none; }
+  .fc-xlabels .short { display: inline; }
+  .fc-stats-bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fc-night { flex-direction: column; min-height: 0; }
+  .fc-night-panel { width: 100%; padding: 26px 20px 52px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 28px), 0 100%); }
+  .fc-night-shards { width: 80px; height: 92px; }
+  .fc-night-edge { display: none; }
+  .fc-night-photo { position: relative; width: auto; height: 220px; margin-top: -28px; }
+  .fc-story { padding: 24px 20px; }
+  .fc-gallery { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: 260px; }
+  .fc-photo:first-child { grid-row: auto; }
+  .fc-lightbox { padding: 64px 12px 12px; }
+  .fc-lb-prev { left: 4px; }
+  .fc-lb-next { right: 4px; }
+  .fc-lb-close { right: 0; top: -54px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-tile { animation: none; }
+}
+
+/* Chargement, erreur, fiche match */
+@media (max-width: 767px) {
+  .fc-skel-row { grid-template-columns: minmax(0, 1fr); }
+  .fc-error { padding: 26px 20px; }
+  .fc-detail { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "sheet" "form" "notes"; }
+  .fc-sheet { min-height: 0; }
+  .fc-note-form { position: static; padding: 22px 20px 24px; }
+  .fc-notes { padding: 22px 20px 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-skel-cell { animation: none; }
+}

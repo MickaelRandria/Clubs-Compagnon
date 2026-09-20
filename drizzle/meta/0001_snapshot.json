@@ -1,0 +1,1547 @@
+{
+  "id": "144c8e3c-6112-43d5-b10e-88250c8dcf17",
+  "prevId": "b350c58b-8bed-436a-8072-033ebb67af8a",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.club_rating_snapshots": {
+      "name": "club_rating_snapshots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "club_rating_snapshots_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skill_rating": {
+          "name": "skill_rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "taken_at": {
+          "name": "taken_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "club_rating_snapshots_club_taken_idx": {
+          "name": "club_rating_snapshots_club_taken_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "taken_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "club_rating_snapshots_club_id_clubs_id_fk": {
+          "name": "club_rating_snapshots_club_id_clubs_id_fk",
+          "tableFrom": "club_rating_snapshots",
+          "tableTo": "clubs",
+          "columnsFrom": [
+            "club_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.clubs": {
+      "name": "clubs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "clubs_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "handle": {
+          "name": "handle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ea_club_id": {
+          "name": "ea_club_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "platform": {
+          "name": "platform",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "region": {
+          "name": "region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reputation": {
+          "name": "reputation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skill_rating": {
+          "name": "skill_rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "best_division": {
+          "name": "best_division",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wins": {
+          "name": "wins",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "draws": {
+          "name": "draws",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "losses": {
+          "name": "losses",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "games_played": {
+          "name": "games_played",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "wins + draws + losses",
+            "type": "stored"
+          }
+        },
+        "goals_for": {
+          "name": "goals_for",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "goals_against": {
+          "name": "goals_against",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "league_apps": {
+          "name": "league_apps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "playoff_apps": {
+          "name": "playoff_apps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "clubs_ea_club_id_unique": {
+          "name": "clubs_ea_club_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "ea_club_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.fc27_campaigns": {
+      "name": "fc27_campaigns",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "fc27_campaigns_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'preparation'"
+        },
+        "expected_voters": {
+          "name": "expected_voters",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "fc27_one_active_campaign": {
+          "name": "fc27_one_active_campaign",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"fc27_campaigns\".\"status\" = 'preparation'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "fc27_campaign_club_idx": {
+          "name": "fc27_campaign_club_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fc27_campaigns_club_id_clubs_id_fk": {
+          "name": "fc27_campaigns_club_id_clubs_id_fk",
+          "tableFrom": "fc27_campaigns",
+          "tableTo": "clubs",
+          "columnsFrom": [
+            "club_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "fc27_campaign_status_check": {
+          "name": "fc27_campaign_status_check",
+          "value": "\"fc27_campaigns\".\"status\" in ('preparation', 'archived')"
+        },
+        "fc27_quorum_check": {
+          "name": "fc27_quorum_check",
+          "value": "\"fc27_campaigns\".\"expected_voters\" between 1 and 1000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fc27_name_proposals": {
+      "name": "fc27_name_proposals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "fc27_name_proposals_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "author_pseudo": {
+          "name": "author_pseudo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "club_name": {
+          "name": "club_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fc27_proposal_campaign_idx": {
+          "name": "fc27_proposal_campaign_idx",
+          "columns": [
+            {
+              "expression": "campaign_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fc27_name_proposals_campaign_id_fc27_campaigns_id_fk": {
+          "name": "fc27_name_proposals_campaign_id_fc27_campaigns_id_fk",
+          "tableFrom": "fc27_name_proposals",
+          "tableTo": "fc27_campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fc27_proposal_campaign_key": {
+          "name": "fc27_proposal_campaign_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "campaign_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fc27_proposal_pseudo_check": {
+          "name": "fc27_proposal_pseudo_check",
+          "value": "char_length(\"fc27_name_proposals\".\"author_pseudo\") between 1 and 40 and \"fc27_name_proposals\".\"author_pseudo\" ~ '[^[:space:]]'"
+        },
+        "fc27_name_check": {
+          "name": "fc27_name_check",
+          "value": "char_length(\"fc27_name_proposals\".\"club_name\") between 1 and 60 and \"fc27_name_proposals\".\"club_name\" ~ '[^[:space:]]'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fc27_player_profiles": {
+      "name": "fc27_player_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "fc27_player_profiles_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pseudo": {
+          "name": "pseudo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "in_game_name": {
+          "name": "in_game_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "primary_position": {
+          "name": "primary_position",
+          "type": "fc27_position",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fc27_player_position_idx": {
+          "name": "fc27_player_position_idx",
+          "columns": [
+            {
+              "expression": "campaign_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "primary_position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fc27_player_profiles_campaign_id_fc27_campaigns_id_fk": {
+          "name": "fc27_player_profiles_campaign_id_fc27_campaigns_id_fk",
+          "tableFrom": "fc27_player_profiles",
+          "tableTo": "fc27_campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fc27_player_pseudo_key": {
+          "name": "fc27_player_pseudo_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "campaign_id",
+            "pseudo"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fc27_player_pseudo_check": {
+          "name": "fc27_player_pseudo_check",
+          "value": "char_length(\"fc27_player_profiles\".\"pseudo\") between 1 and 40 and \"fc27_player_profiles\".\"pseudo\" ~ '[^[:space:]]'"
+        },
+        "fc27_player_name_check": {
+          "name": "fc27_player_name_check",
+          "value": "char_length(\"fc27_player_profiles\".\"in_game_name\") <= 60"
+        },
+        "fc27_player_notes_check": {
+          "name": "fc27_player_notes_check",
+          "value": "char_length(\"fc27_player_profiles\".\"notes\") <= 1000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fc27_player_secondary_positions": {
+      "name": "fc27_player_secondary_positions",
+      "schema": "",
+      "columns": {
+        "profile_id": {
+          "name": "profile_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "fc27_position",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fc27_player_secondary_positions_profile_id_fc27_player_profiles_id_fk": {
+          "name": "fc27_player_secondary_positions_profile_id_fc27_player_profiles_id_fk",
+          "tableFrom": "fc27_player_secondary_positions",
+          "tableTo": "fc27_player_profiles",
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "fc27_player_secondary_positions_profile_id_position_pk": {
+          "name": "fc27_player_secondary_positions_profile_id_position_pk",
+          "columns": [
+            "profile_id",
+            "position"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.fc27_round_candidates": {
+      "name": "fc27_round_candidates",
+      "schema": "",
+      "columns": {
+        "round_id": {
+          "name": "round_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proposal_id": {
+          "name": "proposal_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "final_vote_count": {
+          "name": "final_vote_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "eliminated": {
+          "name": "eliminated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "fc27_candidate_proposal_idx": {
+          "name": "fc27_candidate_proposal_idx",
+          "columns": [
+            {
+              "expression": "proposal_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "campaign_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fc27_round_candidates_round_id_campaign_id_fc27_rounds_id_campaign_id_fk": {
+          "name": "fc27_round_candidates_round_id_campaign_id_fc27_rounds_id_campaign_id_fk",
+          "tableFrom": "fc27_round_candidates",
+          "tableTo": "fc27_rounds",
+          "columnsFrom": [
+            "round_id",
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id",
+            "campaign_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "fc27_round_candidates_proposal_id_campaign_id_fc27_name_proposals_id_campaign_id_fk": {
+          "name": "fc27_round_candidates_proposal_id_campaign_id_fc27_name_proposals_id_campaign_id_fk",
+          "tableFrom": "fc27_round_candidates",
+          "tableTo": "fc27_name_proposals",
+          "columnsFrom": [
+            "proposal_id",
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id",
+            "campaign_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "fc27_round_candidates_round_id_proposal_id_pk": {
+          "name": "fc27_round_candidates_round_id_proposal_id_pk",
+          "columns": [
+            "round_id",
+            "proposal_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "fc27_final_votes_check": {
+          "name": "fc27_final_votes_check",
+          "value": "\"fc27_round_candidates\".\"final_vote_count\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fc27_rounds": {
+      "name": "fc27_rounds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "fc27_rounds_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "quorum": {
+          "name": "quorum",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opened_at": {
+          "name": "opened_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deadline_at": {
+          "name": "deadline_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closed_at": {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "close_reason": {
+          "name": "close_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "eliminated_proposal_id": {
+          "name": "eliminated_proposal_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tie_break_applied": {
+          "name": "tie_break_applied",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "fc27_one_open_round": {
+          "name": "fc27_one_open_round",
+          "columns": [
+            {
+              "expression": "campaign_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"fc27_rounds\".\"status\" = 'open'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "fc27_round_deadline_idx": {
+          "name": "fc27_round_deadline_idx",
+          "columns": [
+            {
+              "expression": "deadline_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"fc27_rounds\".\"status\" = 'open' and \"fc27_rounds\".\"number\" > 0",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fc27_rounds_campaign_id_fc27_campaigns_id_fk": {
+          "name": "fc27_rounds_campaign_id_fc27_campaigns_id_fk",
+          "tableFrom": "fc27_rounds",
+          "tableTo": "fc27_campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "fc27_eliminated_campaign_fk": {
+          "name": "fc27_eliminated_campaign_fk",
+          "tableFrom": "fc27_rounds",
+          "tableTo": "fc27_name_proposals",
+          "columnsFrom": [
+            "eliminated_proposal_id",
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id",
+            "campaign_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fc27_round_number_key": {
+          "name": "fc27_round_number_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "campaign_id",
+            "number"
+          ]
+        },
+        "fc27_round_campaign_key": {
+          "name": "fc27_round_campaign_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "campaign_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fc27_round_status_check": {
+          "name": "fc27_round_status_check",
+          "value": "\"fc27_rounds\".\"status\" in ('open', 'closed')"
+        },
+        "fc27_round_phase_check": {
+          "name": "fc27_round_phase_check",
+          "value": "(\"fc27_rounds\".\"number\" = 0 and \"fc27_rounds\".\"quorum\" is null and \"fc27_rounds\".\"deadline_at\" is null) or (\"fc27_rounds\".\"number\" > 0 and \"fc27_rounds\".\"quorum\" between 1 and 1000 and \"fc27_rounds\".\"deadline_at\" is not null)"
+        },
+        "fc27_round_close_check": {
+          "name": "fc27_round_close_check",
+          "value": "(\"fc27_rounds\".\"status\" = 'open' and \"fc27_rounds\".\"closed_at\" is null and \"fc27_rounds\".\"close_reason\" is null) or (\"fc27_rounds\".\"status\" = 'closed' and \"fc27_rounds\".\"closed_at\" is not null and \"fc27_rounds\".\"close_reason\" in ('start', 'quorum', 'timeout', 'archive'))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fc27_votes": {
+      "name": "fc27_votes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "fc27_votes_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proposal_id": {
+          "name": "proposal_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "voter_pseudo": {
+          "name": "voter_pseudo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fc27_vote_candidate_idx": {
+          "name": "fc27_vote_candidate_idx",
+          "columns": [
+            {
+              "expression": "round_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "proposal_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fc27_votes_round_id_proposal_id_fc27_round_candidates_round_id_proposal_id_fk": {
+          "name": "fc27_votes_round_id_proposal_id_fc27_round_candidates_round_id_proposal_id_fk",
+          "tableFrom": "fc27_votes",
+          "tableTo": "fc27_round_candidates",
+          "columnsFrom": [
+            "round_id",
+            "proposal_id"
+          ],
+          "columnsTo": [
+            "round_id",
+            "proposal_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fc27_vote_pseudo_key": {
+          "name": "fc27_vote_pseudo_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "round_id",
+            "voter_pseudo"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fc27_vote_pseudo_check": {
+          "name": "fc27_vote_pseudo_check",
+          "value": "char_length(\"fc27_votes\".\"voter_pseudo\") between 1 and 40 and \"fc27_votes\".\"voter_pseudo\" ~ '[^[:space:]]'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.match_notes": {
+      "name": "match_notes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "match_notes_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "author_name": {
+          "name": "author_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "motm_member_id": {
+          "name": "motm_member_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "video_url": {
+          "name": "video_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "match_notes_match_created_idx": {
+          "name": "match_notes_match_created_idx",
+          "columns": [
+            {
+              "expression": "match_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "match_notes_match_id_matches_id_fk": {
+          "name": "match_notes_match_id_matches_id_fk",
+          "tableFrom": "match_notes",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "match_notes_motm_member_id_members_id_fk": {
+          "name": "match_notes_motm_member_id_members_id_fk",
+          "tableFrom": "match_notes",
+          "tableTo": "members",
+          "columnsFrom": [
+            "motm_member_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "match_notes_author_name_check": {
+          "name": "match_notes_author_name_check",
+          "value": "char_length(\"match_notes\".\"author_name\") between 1 and 40"
+        },
+        "match_notes_body_check": {
+          "name": "match_notes_body_check",
+          "value": "char_length(\"match_notes\".\"body\") between 1 and 2000"
+        },
+        "match_notes_video_url_check": {
+          "name": "match_notes_video_url_check",
+          "value": "\"match_notes\".\"video_url\" ~ '^https?://'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.matches": {
+      "name": "matches",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "matches_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ea_match_id": {
+          "name": "ea_match_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "played_at": {
+          "name": "played_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_type": {
+          "name": "match_type",
+          "type": "match_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opponent_name": {
+          "name": "opponent_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opponent_ea_club_id": {
+          "name": "opponent_ea_club_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "goals_for": {
+          "name": "goals_for",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "goals_against": {
+          "name": "goals_against",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result": {
+          "name": "result",
+          "type": "match_result",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "possession_pct": {
+          "name": "possession_pct",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "shots": {
+          "name": "shots",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "matches_club_played_idx": {
+          "name": "matches_club_played_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "played_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "matches_club_id_clubs_id_fk": {
+          "name": "matches_club_id_clubs_id_fk",
+          "tableFrom": "matches",
+          "tableTo": "clubs",
+          "columnsFrom": [
+            "club_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "matches_ea_match_id_unique": {
+          "name": "matches_ea_match_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "ea_match_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "matches_goals_for_check": {
+          "name": "matches_goals_for_check",
+          "value": "\"matches\".\"goals_for\" >= 0"
+        },
+        "matches_goals_against_check": {
+          "name": "matches_goals_against_check",
+          "value": "\"matches\".\"goals_against\" >= 0"
+        },
+        "matches_possession_pct_check": {
+          "name": "matches_possession_pct_check",
+          "value": "\"matches\".\"possession_pct\" between 0 and 100"
+        },
+        "matches_shots_check": {
+          "name": "matches_shots_check",
+          "value": "\"matches\".\"shots\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.members": {
+      "name": "members",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "members_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gamertag": {
+          "name": "gamertag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "player_position",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ovr": {
+          "name": "ovr",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "matches_played": {
+          "name": "matches_played",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "goals": {
+          "name": "goals",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "assists": {
+          "name": "assists",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "avg_rating": {
+          "name": "avg_rating",
+          "type": "numeric(3, 1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pass_pct": {
+          "name": "pass_pct",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "members_club_id_clubs_id_fk": {
+          "name": "members_club_id_clubs_id_fk",
+          "tableFrom": "members",
+          "tableTo": "clubs",
+          "columnsFrom": [
+            "club_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "members_club_gamertag_key": {
+          "name": "members_club_gamertag_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "club_id",
+            "gamertag"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "members_ovr_check": {
+          "name": "members_ovr_check",
+          "value": "\"members\".\"ovr\" between 0 and 99"
+        },
+        "members_avg_rating_check": {
+          "name": "members_avg_rating_check",
+          "value": "\"members\".\"avg_rating\" between 0 and 10"
+        },
+        "members_pass_pct_check": {
+          "name": "members_pass_pct_check",
+          "value": "\"members\".\"pass_pct\" between 0 and 100"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.fc27_position": {
+      "name": "fc27_position",
+      "schema": "public",
+      "values": [
+        "GK",
+        "CB",
+        "LB",
+        "RB",
+        "CDM",
+        "CM",
+        "CAM",
+        "LM",
+        "RM",
+        "LW",
+        "RW",
+        "ST"
+      ]
+    },
+    "public.match_result": {
+      "name": "match_result",
+      "schema": "public",
+      "values": [
+        "win",
+        "draw",
+        "loss"
+      ]
+    },
+    "public.match_type": {
+      "name": "match_type",
+      "schema": "public",
+      "values": [
+        "league",
+        "playoff",
+        "friendly"
+      ]
+    },
+    "public.player_position": {
+      "name": "player_position",
+      "schema": "public",
+      "values": [
+        "FW",
+        "MF",
+        "DF",
+        "GK"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

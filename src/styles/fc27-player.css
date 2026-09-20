@@ -1,0 +1,517 @@
+/* FC 27 — rapport tactique (module d'analyse façon EA Sports) et tunnel « Créer ma fiche ». Mêmes tokens que fc27.css. */
+
+.fc27-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.fc27-chips > span { padding: 3px 7px; font: 700 12px/1.2 var(--fc-display); letter-spacing: .04em; color: var(--fc-craie); box-shadow: inset 0 0 0 1px rgba(111,200,255,.45); }
+
+/* ---------- Rapport tactique & synergie ---------- */
+.fc27-report { padding: 28px 30px 30px; background: var(--p-night); color: #fff; }
+.fc27-report-meta { flex-shrink: 0; padding: 7px 10px 6px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.35); font: 800 13px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.fc27-report-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.1fr) minmax(0, 1.3fr); gap: 6px; margin-top: 22px; }
+.fc27-report-card { position: relative; min-width: 0; padding: 20px 22px 22px; }
+.fc27-report-label { display: flex; align-items: center; gap: 8px; margin: 0 0 16px; font: 800 14px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; }
+.fc27-report-label b { padding: 4px 7px 3px; background: var(--p-magenta); color: #fff; letter-spacing: 0; }
+
+/* Note du club : écusson blanc, note géante, palier coloré */
+.fc27-rating { --tier: var(--p-ambre); display: flex; flex-direction: column; align-items: center; overflow: hidden; background: var(--fc-blue); text-align: center; }
+.fc27-rating--solid { --tier: var(--p-vert); }
+.fc27-rating--elite { --tier: var(--fc-glacier); }
+.fc27-rating .fc27-report-label { position: relative; align-self: stretch; }
+.fc27-crest { position: relative; width: 156px; aspect-ratio: 160 / 184; }
+.fc27-crest svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fc27-crest-shape { fill: #fff; }
+.fc27-crest-band { fill: var(--tier); }
+.fc27-crest strong { position: absolute; inset: 17% 0 auto; font: 800 92px/.8 var(--fc-display); letter-spacing: -.03em; color: var(--p-ink); font-variant-numeric: tabular-nums; }
+.fc27-crest span { position: absolute; inset: 74% 0 auto; font: 800 12px/1 var(--fc-display); letter-spacing: .16em; text-transform: uppercase; color: var(--p-ink); }
+.fc27-rating-tier { position: relative; margin-top: 16px; padding: 8px 12px 7px; background: var(--tier); color: var(--p-ink); font: 800 19px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
+.fc27-rating-scale { position: relative; align-self: stretch; height: 12px; margin-top: auto; background: rgba(6,12,31,.35); }
+.fc27-rating-scale i { display: block; height: 100%; background: #fff; }
+.fc27-rating-scale::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 3px), var(--fc-blue) calc(10% - 3px) 10%); }
+
+/* Style de jeu : tuile craie, badge de formation massif, accent magenta */
+.fc27-identity { padding-left: 30px; background: var(--p-chalk); color: var(--p-ink); box-shadow: inset 8px 0 0 var(--p-magenta); }
+.fc27-identity .fc27-report-label { color: var(--p-muted); }
+.fc27-formation-row { display: flex; align-items: center; gap: 16px; }
+.fc27-formation { white-space: nowrap; padding: 10px 16px 6px; background: var(--fc-blue); color: #fff; box-shadow: 6px 6px 0 var(--p-ink); font: 800 56px/.84 var(--fc-display); letter-spacing: -.01em; }
+.fc27-formation-row > span:last-child { font: 800 14px/1.05 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: var(--p-muted); }
+.fc27-identity h3 { margin: 24px 0 8px; font: 800 32px/.92 var(--fc-display); text-transform: uppercase; text-wrap: balance; }
+.fc27-identity p:not(.fc27-report-label) { margin: 0; font: 500 15px/1.5 var(--fc-text); color: var(--p-body); }
+
+/* Points d'attention : pastilles d'alerte nettes */
+.fc27-deficits { background: var(--p-night-2); }
+.fc27-deficits ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.fc27-deficits li { display: flex; align-items: flex-start; gap: 12px; padding: 9px 12px 9px 0; background: rgba(255,255,255,.06); box-shadow: inset 4px 0 0 var(--p-ambre);
+                    font: 600 14px/1.4 var(--fc-text); }
+.fc27-alert-icon { flex-shrink: 0; display: grid; place-items: center; width: 26px; height: 26px; margin-left: 12px; background: var(--p-ambre); color: var(--p-ink); font: 800 18px/1 var(--fc-display); }
+.fc27-ok { display: flex; align-items: center; gap: 12px; margin: 0; padding: 10px 12px 10px 0; background: rgba(61,220,151,.12); box-shadow: inset 4px 0 0 var(--p-vert); font: 600 14px/1.4 var(--fc-text); }
+.fc27-ok .fc27-alert-icon { background: var(--p-vert); }
+
+/* Conseils : carrousel de mini-cartes joueurs */
+.fc27-tips { margin-top: 24px; }
+.fc27-tips-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.fc27-tips-head .fc27-report-label { margin: 0; }
+.fc27-tips-head > span { font: 800 13px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; color: var(--fc-glacier); }
+.fc27-tips-scroller { overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; scrollbar-color: var(--fc-blue) rgba(255,255,255,.08); }
+.fc27-tips-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, calc((100% - 18px) / 4)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fc27-tip { display: flex; flex-direction: column; min-width: 0; scroll-snap-align: start; background: var(--p-chalk); color: var(--p-ink); box-shadow: inset 0 -5px 0 var(--fc-blue); }
+.fc27-tip-visual { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--p-night); }
+.fc27-tip-photo { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+svg.fc27-tip-photo { padding: 18px; }
+.fc27-tip-number { position: absolute; left: 0; bottom: 0; padding: 7px 12px 5px; background: var(--fc-blue); color: #fff; font: 800 24px/1 var(--fc-display); }
+.fc27-tip-role { position: absolute; top: 0; right: 0; padding: 6px 9px 5px; background: #fff; color: var(--p-ink); font: 800 15px/1 var(--fc-display); letter-spacing: .04em; }
+.fc27-tip strong { padding: 14px 16px 0; font: 800 23px/1 var(--fc-display); text-transform: uppercase; overflow-wrap: anywhere; }
+.fc27-tip p { margin: 0; padding: 8px 16px 20px; font: 500 14px/1.5 var(--fc-text); color: var(--p-body); }
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  .fc27-report-grid { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); }
+  .fc27-deficits { grid-column: 1 / -1; }
+  .fc27-tips-list { grid-auto-columns: minmax(240px, calc((100% - 12px) / 3)); }
+}
+@media (max-width: 767px) {
+  .fc27-report { padding: 22px 16px; }
+  .fc27-report-meta { align-self: flex-start; }
+  .fc27-report-grid { grid-template-columns: minmax(0, 1fr); }
+  .fc27-report-card { padding: 18px 16px 20px; }
+  .fc27-identity { padding-left: 24px; }
+  .fc27-formation { font-size: 46px; }
+  .fc27-rating-scale { margin-top: 18px; }
+  .fc27-tips-list { grid-auto-columns: 80%; }
+}
+
+
+/* ============================================================
+   Tunnel « Créer ma fiche » — menu console FIFA 20
+   Aplats francs, tuiles claires sur bleu nuit mat, aucune lueur.
+   ============================================================ */
+.fc27-dialog--console {
+  --c-bg: #0A1128; --c-tile: #F1F5F9; --c-tile-hover: #DCE4F0; --c-steel: #C9D3E4;
+  --c-ink: #0B1A3A; --c-muted: #5C6781; --c-accent: #FF4FA3;
+  padding: 0; border: 0; border-radius: 0; background: var(--c-bg); color: var(--fc-craie); box-shadow: none;
+}
+.fc27-dialog--wide { width: min(880px, calc(100% - 32px)); }
+.fc27-dialog--console::backdrop { background: rgba(6,12,31,.86); backdrop-filter: none; }
+.fc27-dialog--console > :not(.fc27-dialog-head) { margin-inline: 28px; }
+.fc27-dialog--console > :last-child { margin-bottom: 28px; }
+.fc27-dialog--console > .fc27-wizard { margin-bottom: 0; }
+.fc27-dialog--console :focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+.fc27-dialog--console .fc27-muted { color: var(--fc-brume); }
+
+/* En-tête : titre condensé très dense, fermeture carrée */
+.fc27-dialog--console .fc27-dialog-head { align-items: center; padding: 22px 28px 16px; }
+.fc27-dialog--console .fc27-dialog-head .fc-title { font: 800 40px/.85 var(--fc-display); letter-spacing: -.02em; text-transform: uppercase; }
+.fc27-dialog--console .fc27-close { display: grid; place-items: center; width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0; border: 0; border-radius: 0;
+                                    background: var(--c-tile); color: var(--c-ink); font: 700 26px/1 var(--fc-text); }
+.fc27-dialog--console .fc27-close:hover { background: var(--fc-blue); color: #fff; }
+
+/* Bande d'étapes continue, segmentée */
+.fc27-dialog--console .fc27-stepper { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin-block: 0; padding: 0; }
+.fc27-dialog--console .fc27-stepper--duo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fc27-dialog--console .fc27-stepper li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 13px 16px; border: 0; background: var(--c-tile); color: var(--c-ink);
+                                         font: 800 16px/1 var(--fc-display); letter-spacing: .03em; text-transform: uppercase; }
+.fc27-dialog--console .fc27-stepper li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc27-dialog--console .fc27-stepper b { width: auto; height: auto; min-width: 14px; box-shadow: none; background: none; font: 800 20px/1 var(--fc-display); color: var(--fc-blue); }
+.fc27-dialog--console .fc27-stepper li.is-done { background: var(--c-steel); }
+.fc27-dialog--console .fc27-stepper li.is-done b { background: none; color: var(--c-ink); }
+.fc27-dialog--console .fc27-stepper li[aria-current='step'] { background: var(--fc-blue); color: #fff; box-shadow: inset 0 -4px 0 var(--c-accent); }
+.fc27-dialog--console .fc27-stepper li[aria-current='step'] b { background: none; color: #fff; }
+.fc27-dialog--console .fc27-stepper-bar { display: none; }
+
+/* Corps */
+.fc27-dialog--console .fc27-wizard { display: grid; gap: 22px; margin-top: 24px; }
+.fc27-dialog--console .fc27-step-title { margin: 0; font: 800 32px/.9 var(--fc-display); letter-spacing: -.01em; text-transform: uppercase; }
+.fc27-dialog--console .fc27-step-title:focus { outline: none; }
+.fc27-dialog--console .fc27-step-intro { margin: 0; font-size: 15px; line-height: 1.45; color: var(--fc-brume); }
+.fc27-dialog--console legend, .fc27-dialog--console .fc27-form > label, .fc27-dialog--console .fc27-advanced-body > label,
+.fc27-dialog--console .fc27-identity-fields > label, .fc27-dialog--console .fc27-field-block > label {
+  display: block; padding: 0; font: 800 14px/1.1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--fc-craie); }
+.fc27-dialog--console legend { margin-bottom: 10px; }
+.fc27-dialog--console legend .fc27-muted, .fc27-dialog--console label .fc27-muted { font: 500 12px/1 var(--fc-text); letter-spacing: 0; text-transform: none; }
+.fc27-dialog--console .fc27-counter { margin-left: 8px; padding: 3px 7px; background: var(--fc-glacier); color: var(--c-ink); font: 800 13px/1 var(--fc-display); letter-spacing: .04em; }
+
+/* Champs : aplats clairs, soulignement bleu franc au focus */
+.fc27-dialog--console .fc27-form input:not([type='radio']):not([type='checkbox']):not([type='range']),
+.fc27-dialog--console .fc27-form textarea {
+  display: block; margin-top: 8px; padding: 12px 14px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; box-shadow: none;
+  background: var(--c-tile); color: var(--c-ink); font: 600 17px/1.3 var(--fc-text); }
+.fc27-dialog--console .fc27-form input::placeholder, .fc27-dialog--console .fc27-form textarea::placeholder { color: var(--c-muted); }
+.fc27-dialog--console .fc27-form input:hover:not([readonly]), .fc27-dialog--console .fc27-form textarea:hover { background: #fff; border-bottom-color: var(--c-steel); }
+.fc27-dialog--console .fc27-form input:focus, .fc27-dialog--console .fc27-form input:focus-visible,
+.fc27-dialog--console .fc27-form textarea:focus, .fc27-dialog--console .fc27-form textarea:focus-visible {
+  outline: none; background: #fff; border-bottom-color: var(--fc-blue); box-shadow: none; }
+.fc27-dialog--console .fc27-form input[readonly] { background: var(--c-steel); color: var(--c-ink); }
+.fc27-dialog--console .fc27-feedback { background: var(--c-tile); color: var(--c-ink); border-left: 6px solid var(--fc-blue); }
+.fc27-dialog--console .fc27-feedback[role='alert'], .fc27-dialog--console .fc27-field-alert, .fc27-dialog--console .fc27-step-errors {
+  background: #FFE3E7; color: var(--c-ink); border-left: 6px solid var(--fc-rouge); }
+.fc27-dialog--console .fc27-field-alert { margin: -8px 0 0; padding: 9px 12px; font: 600 14px/1.35 var(--fc-text); }
+.fc27-dialog--console .fc27-step-errors { margin: 0; padding: 12px 14px 12px 34px; font: 600 14px/1.45 var(--fc-text); }
+.fc27-dialog--console .fc27-taken { margin: -8px 0 0; color: var(--fc-brume); }
+
+/* Étape 1 : identité + maillot sur carte claire */
+.fc27-dialog--console .fc27-identity-step { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 24px; align-items: start; }
+.fc27-dialog--console .fc27-identity-fields { display: grid; gap: 18px; min-width: 0; align-content: start; }
+.fc27-dialog--console .fc27-jersey { width: 100%; height: 100%; padding: 22px; background: var(--c-tile); filter: none; transform: none; }
+.fc27-dialog--console .fc27-number { display: flex; gap: 2px; margin-top: 8px; max-width: 260px; }
+.fc27-dialog--console .fc27-number button { flex-shrink: 0; width: 56px; border: 0; border-radius: 0; background: var(--c-steel); color: var(--c-ink); font: 800 28px/1 var(--fc-display); cursor: pointer; }
+.fc27-dialog--console .fc27-number button:hover { background: var(--fc-blue); color: #fff; }
+.fc27-dialog--console .fc27-form .fc27-number input:not([type='radio']) { margin-top: 0; text-align: center; font: 800 30px/1 var(--fc-display); -moz-appearance: textfield; }
+.fc27-dialog--console .fc27-number input::-webkit-outer-spin-button, .fc27-dialog--console .fc27-number input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Tuiles de menu : claires par défaut, aplat bleu roi + liseré latéral une fois choisies */
+.fc27-dialog--console .fc27-picker { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.fc27-dialog--console .fc27-picker-options { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.fc27-dialog--console .fc27-picker--positions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; }
+.fc27-dialog--console .fc27-picker-line { display: grid; gap: 8px; align-content: start; }
+.fc27-dialog--console .fc27-picker-line > span { padding-bottom: 6px; border-bottom: 2px solid rgba(242,244,248,.16);
+                                                 font: 800 14px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; color: var(--fc-glacier); }
+.fc27-dialog--console .fc27-picker-line .fc27-picker-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+
+.fc27-dialog--console .fc27-choice { position: relative; display: block; text-transform: none; letter-spacing: 0; }
+.fc27-dialog--console .fc27-choice input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.fc27-dialog--console .fc27-choice input:disabled { cursor: not-allowed; }
+.fc27-dialog--console .fc27-choice > span { display: flex; align-items: baseline; gap: 8px; height: 100%; padding: 12px 14px 12px 16px; border: 0; border-radius: 0; box-shadow: none;
+                                            background: var(--c-tile); color: var(--c-ink); font: 600 14px/1.2 var(--fc-text); transition: none; }
+.fc27-dialog--console .fc27-choice b { font: 800 18px/1 var(--fc-display); letter-spacing: .02em; color: var(--fc-blue); }
+.fc27-dialog--console .fc27-choice:hover > span { background: var(--c-tile-hover); }
+.fc27-dialog--console .fc27-choice input:checked + span { background: var(--fc-blue); color: #fff; box-shadow: inset 6px 0 0 var(--c-accent); }
+.fc27-dialog--console .fc27-choice input:checked + span b { color: #fff; }
+.fc27-dialog--console .fc27-choice input:focus-visible + span { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+.fc27-dialog--console .fc27-choice input:disabled + span { background: #1C2740; color: #8A97B8; }
+.fc27-dialog--console .fc27-choice--compact > span { padding: 11px 13px; }
+.fc27-dialog--console .fc27-choice--chip > span { padding: 10px 13px; font: 600 14px/1.1 var(--fc-text); }
+.fc27-dialog--console .fc27-archetypes { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px; }
+.fc27-dialog--console .fc27-choice--card > span { flex-direction: column; align-items: flex-start; gap: 5px; padding: 14px 16px 14px 18px; }
+.fc27-dialog--console .fc27-choice--card strong { font: 800 20px/1 var(--fc-display); letter-spacing: .01em; text-transform: uppercase; }
+.fc27-dialog--console .fc27-choice--card small { font: 500 13px/1.4 var(--fc-text); color: var(--c-muted); }
+.fc27-dialog--console .fc27-choice--card input:checked + span small { color: #E6ECFF; }
+
+/* Catalogue commun : cartes lisibles, sélection bleue et accent magenta. */
+.fc27-dialog--console .fc27-archetypes { grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 6px; }
+.fc27-dialog--console .fc27-choice--archetype > span { flex-direction: column; align-items: stretch; gap: 7px; padding: 14px 16px; }
+.fc27-archetype-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fc27-archetype-head strong { font: 800 21px/1 var(--fc-display); text-transform: uppercase; }
+.fc27-archetype-head em { background: var(--c-ink); color: #fff; padding: 4px 6px; font: normal 700 10px/1 var(--fc-text); text-transform: uppercase; }
+.fc27-dialog--console .fc27-archetype-inspired { font-size: 12px; }
+.fc27-dialog--console .fc27-archetype-inspired b { font: inherit; font-weight: 800; color: inherit; }
+.fc27-archetype-specialty { line-height: 1.5; }
+.fc27-source { display: inline-block; margin: 8px 0 0 10px; padding: 5px 7px; border: 1px solid var(--fc-acier); font: 600 10px/1 var(--fc-text); letter-spacing: .04em; }
+.fc27-archetype-empty { margin: 0; padding: 20px; background: #1A2440; color: var(--fc-brume); line-height: 1.5; }
+.fc27-morpho-note { margin: -10px 0 0; font-size: 12px; line-height: 1.5; color: var(--fc-brume); }
+.fc27-dialog--console .fc27-jersey-card { display: flex; flex-direction: column; background: var(--c-tile); color: var(--c-ink); }
+.fc27-dialog--console .fc27-jersey { height: auto; flex: 1; min-height: 0; }
+.fc27-ovr { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0; padding: 14px; }
+.fc27-ovr strong { font: 800 40px/1 var(--fc-display); }
+.fc27-ovr span { max-width: 80px; font: 700 12px/1.25 var(--fc-text); text-transform: uppercase; }
+.fc27-signature { background: var(--c-tile); color: var(--c-ink); }
+.fc27-signature-head { padding: 20px 22px; background: var(--fc-blue); color: #fff; border-left: 6px solid var(--c-accent); }
+.fc27-signature-kicker { margin: 0 0 10px; font-size: 13px; line-height: 1.5; }
+.fc27-signature h4 { margin: 0; font: 800 26px/1 var(--fc-display); text-transform: uppercase; }
+.fc27-signature-body { padding: 22px; }
+.fc27-signature-name { display: grid; gap: 5px; margin: 0 0 16px; }
+.fc27-signature-name strong { font: 800 30px/1.1 var(--fc-display); color: var(--fc-blue); }
+.fc27-signature-name span { font-size: 13px; color: var(--c-muted); }
+.fc27-signature-match { margin: 0; font-size: 15px; line-height: 1.6; }
+/* Bonus de maîtrise : palier de niveau en aplat bleu, attribut débloqué à droite */
+.fc27-mastery { padding: 20px 22px 22px; border-top: 2px solid var(--c-steel); }
+.fc27-mastery h4 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; font: 800 22px/1 var(--fc-display); text-transform: uppercase; }
+.fc27-mastery-flag { padding: 5px 8px 4px; background: var(--c-ink); color: #fff; font: 800 11px/1 var(--fc-display); letter-spacing: .12em; }
+.fc27-mastery-lead { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--c-muted); }
+.fc27-mastery-row { display: grid; grid-template-columns: 82px minmax(0, 1fr); margin-top: 14px; background: #E0E7F1; border-top: 3px solid var(--fc-blue); }
+.fc27-mastery-level { display: grid; place-content: center; gap: 3px; padding: 12px 6px; background: var(--fc-blue); color: #fff; text-align: center; }
+.fc27-mastery-level b { font: 800 36px/.9 var(--fc-display); font-variant-numeric: tabular-nums; }
+.fc27-mastery-level i { font: 800 10px/1 var(--fc-text); font-style: normal; letter-spacing: .12em; text-transform: uppercase; }
+.fc27-mastery-gains { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; background: var(--c-steel); }
+.fc27-mastery-gains li { display: grid; grid-template-columns: 46px minmax(0, 1fr); align-items: center; gap: 12px; padding: 11px 16px 11px 0; background: #E0E7F1; }
+.fc27-mastery-gains b { justify-self: center; padding: 5px 7px 4px; background: var(--p-vert); color: var(--c-ink); font: 800 17px/1 var(--fc-display); font-variant-numeric: tabular-nums; }
+.fc27-mastery-gains strong { display: block; font: 800 19px/1.1 var(--fc-display); text-transform: uppercase; }
+.fc27-mastery-gains em { display: block; margin-top: 4px; font-style: normal; font-size: 13px; line-height: 1.5; color: var(--c-muted); }
+.fc27-mastery-note { margin: 12px 0 0; padding: 12px 14px; background: var(--c-ink); color: var(--fc-craie); font-size: 13px; line-height: 1.55; }
+.fc27-mastery-note b { color: var(--fc-glacier); }
+.fc27-mastery-later { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--c-muted); }
+
+/* Briefing FC 26 → FC 27, sous l'identité : tuile nuit, une ligne par changement */
+.fc27-briefing { grid-column: 1 / -1; background: var(--p-night-2, #101A35); }
+.fc27-briefing-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; padding: 16px 20px; background: var(--fc-blue); color: #fff; box-shadow: inset 6px 0 0 var(--c-accent); }
+.fc27-briefing-head h4 { margin: 0; font: 800 22px/1 var(--fc-display); letter-spacing: .02em; text-transform: uppercase; }
+.fc27-briefing-meta { font: 600 11px/1.3 var(--fc-text); color: #D7E0FF; }
+.fc27-briefing-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 0; list-style: none; background: rgba(242,244,248,.12); }
+.fc27-briefing-list > li { min-width: 0; padding: 15px 18px; background: var(--p-night-2, #101A35); }
+.fc27-briefing-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 9px; font: 800 16px/1.15 var(--fc-display); letter-spacing: .02em; text-transform: uppercase; color: #fff; }
+.fc27-briefing-title em { padding: 4px 6px 3px; background: var(--p-ambre); color: var(--c-ink); font: 800 10px/1 var(--fc-text); font-style: normal; letter-spacing: .08em; text-transform: uppercase; }
+.fc27-briefing-shift { display: grid; gap: 5px; margin: 0; }
+.fc27-briefing-shift > span { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; font: 500 13px/1.45 var(--fc-text); color: var(--fc-brume); }
+.fc27-briefing-shift i { padding: 3px 5px 2px; align-self: start; background: rgba(242,244,248,.14); color: var(--fc-craie); font: 800 10px/1.2 var(--fc-display); font-style: normal; letter-spacing: .08em; text-align: center; }
+.fc27-briefing-shift > span:last-child i { background: var(--fc-glacier); color: var(--c-ink); }
+.fc27-briefing-shift > span:last-child { color: var(--fc-craie); }
+.fc27-briefing-sowhat { margin: 10px 0 0; padding-left: 12px; box-shadow: inset 3px 0 0 var(--c-accent); font: 600 13px/1.45 var(--fc-text); color: #fff; }
+.fc27-signature-ideal { margin: 0; padding: 0 22px 20px; font-size: 13px; color: var(--c-muted); }
+.fc27-signature-ideal b { font: 800 15px/1 var(--fc-display); letter-spacing: .06em; color: var(--c-ink); }
+
+/* Profil conseillé du poste : répartition des 20 points, gabarit et PlayStyles.
+   Chiffres non confirmés par EA — le badge ambre fait partie du contrat d'affichage. */
+.fc27-profile { background: var(--p-night-2, #101A35); }
+.fc27-profile-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+                     padding: 15px 20px; background: var(--fc-blue); color: #fff; box-shadow: inset 6px 0 0 var(--c-accent); }
+.fc27-profile-kicker { margin: 0 0 6px; font: 800 11px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: #D7E0FF; }
+.fc27-profile-head h4 { margin: 0; font: 800 24px/1 var(--fc-display); letter-spacing: .01em; text-transform: uppercase; }
+.fc27-profile-flag { flex-shrink: 0; padding: 5px 8px 4px; background: var(--p-ambre); color: var(--c-ink);
+                     font: 800 11px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; cursor: help; }
+.fc27-profile-intent { margin: 0; padding: 14px 20px 0; font: 500 14px/1.5 var(--fc-text); color: var(--fc-brume); }
+.fc27-profile-body { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; padding: 16px 20px 20px; }
+.fc27-profile-spend .fc27-report-label { margin-bottom: 12px; color: var(--fc-glacier); }
+.fc27-profile-spend ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.fc27-tree { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.fc27-tree strong { font: 800 15px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; color: #fff; }
+.fc27-tree b { flex-shrink: 0; padding: 3px 7px 2px; background: var(--fc-glacier); color: var(--c-ink);
+               font: 800 14px/1 var(--fc-display); font-variant-numeric: tabular-nums; }
+.fc27-tree-bar { display: block; height: 8px; margin: 6px 0 5px; background: rgba(242,244,248,.14); }
+.fc27-tree-bar i { display: block; height: 100%; background: var(--fc-blue); }
+.fc27-profile-spend small { display: block; font: 500 12px/1.45 var(--fc-text); color: var(--fc-brume); }
+.fc27-profile-side { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.fc27-profile-options { display: flex; flex-wrap: wrap; gap: 2px; }
+.fc27-profile-options button { padding: 9px 12px; border: 0; border-radius: 0; background: rgba(242,244,248,.1); color: var(--fc-craie);
+                               cursor: pointer; font: 700 13px/1.1 var(--fc-text); }
+.fc27-profile-options button:hover { background: rgba(242,244,248,.2); }
+.fc27-profile-options button.is-on { background: var(--fc-blue); color: #fff; box-shadow: inset 4px 0 0 var(--c-accent); }
+.fc27-profile-size { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; margin: 0; }
+.fc27-profile-size b { font: 800 26px/1 var(--fc-display); color: #fff; font-variant-numeric: tabular-nums; }
+.fc27-profile-size span { flex: 1 1 100%; font: 500 13px/1.45 var(--fc-text); color: var(--fc-brume); }
+.fc27-profile-styles, .fc27-profile-arch { margin: 0; font: 700 14px/1.5 var(--fc-text); color: var(--fc-craie); }
+.fc27-profile-styles i, .fc27-profile-arch i { display: block; margin-bottom: 4px; font: 800 11px/1 var(--fc-display); font-style: normal;
+                                                letter-spacing: .12em; text-transform: uppercase; color: var(--fc-glacier); }
+.fc27-profile-warning { display: flex; align-items: flex-start; gap: 12px; margin: 0; padding: 12px 20px 14px 0;
+                         background: rgba(255,181,71,.12); box-shadow: inset 6px 0 0 var(--p-ambre);
+                         font: 600 13px/1.5 var(--fc-text); color: #fff; }
+.fc27-profile-warning b { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-left: 20px;
+                           background: var(--p-ambre); color: var(--c-ink); font: 800 16px/1 var(--fc-display); }
+
+/* Jauges : la fourchette conseillée au poste est matérialisée sur la piste */
+.fc27-dialog--console .fc27-slider--advised input[type='range'] {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(10% - 3px), var(--c-tile) calc(10% - 3px) 10%),
+    linear-gradient(90deg, transparent 0 var(--from), rgba(61,220,151,.5) var(--from) var(--to), transparent var(--to) 100%),
+    linear-gradient(90deg, var(--fc-blue) 0 var(--fill, 50%), var(--c-steel) var(--fill, 50%) 100%); }
+.fc27-advised { display: flex; align-items: center; gap: 8px; margin: 0; font: 700 12px/1.3 var(--fc-text); color: var(--c-muted); }
+.fc27-advised b { display: grid; place-items: center; width: 20px; height: 20px; background: var(--p-ambre); color: var(--c-ink);
+                  font: 800 13px/1 var(--fc-display); }
+.fc27-advised.is-inside { color: var(--c-ink); }
+.fc27-advised.is-inside b { background: var(--p-vert); }
+
+/* Ordre de dépense des points : liste numérotée réordonnable, dans le panneau de l'archétype */
+.fc27-spend { padding: 20px 22px 22px; border-top: 2px solid var(--c-steel); }
+.fc27-spend-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.fc27-spend-head h4 { margin: 0; font: 800 22px/1 var(--fc-display); text-transform: uppercase; }
+.fc27-spend-reset { padding: 6px 10px 5px; border: 0; border-radius: 0; background: var(--c-ink); color: #fff; cursor: pointer;
+                    font: 800 11px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.fc27-spend-reset:hover { background: var(--fc-blue); }
+.fc27-spend-list { display: grid; gap: 3px; margin: 14px 0 0; padding: 0; list-style: none; }
+.fc27-spend-list > li { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 7px 10px 7px 0; background: #E0E7F1; }
+.fc27-spend-list > li > b { display: grid; place-items: center; align-self: stretch; background: var(--fc-blue); color: #fff;
+                            font: 800 19px/1 var(--fc-display); font-variant-numeric: tabular-nums; }
+.fc27-spend-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.fc27-dialog--console .fc27-spend-pick select { min-width: 0; max-width: 100%; padding: 7px 10px; border: 0; border-radius: 0; box-shadow: none;
+                                                background: #fff; color: var(--c-ink); font: 700 16px/1.2 var(--fc-text); cursor: pointer; }
+.fc27-dialog--console .fc27-spend-pick select:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+.fc27-spend-pick em { padding: 4px 6px 3px; background: var(--p-vert); color: var(--c-ink); font: 800 10px/1 var(--fc-display); font-style: normal;
+                      letter-spacing: .1em; text-transform: uppercase; }
+.fc27-spend-moves { display: flex; gap: 2px; }
+.fc27-spend-moves button { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 0; background: var(--c-steel); color: var(--c-ink);
+                            font: 700 13px/1 var(--fc-text); cursor: pointer; }
+.fc27-spend-moves button:hover:not(:disabled) { background: var(--fc-blue); color: #fff; }
+.fc27-spend-moves button:disabled { color: #9AA6C0; cursor: not-allowed; }
+.fc27-spend-add { margin-top: 8px; padding: 10px 14px; border: 0; border-radius: 0; background: var(--c-ink); color: #fff; cursor: pointer;
+                  font: 800 13px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.fc27-spend-add:hover { background: var(--fc-blue); }
+
+/* Feuille à recopier : colonne d'étapes numérotées + cartes de rappel */
+.fc27-sheet-open { margin: 12px 0 0; padding: 11px 16px; border: 0; border-radius: 0; background: var(--fc-blue); color: #fff; cursor: pointer;
+                   font: 800 14px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.fc27-sheet-open:hover { background: var(--p-ink); }
+.fc27-sheet-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 6px; }
+.fc27-sheet-steps { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; counter-reset: sheet; }
+.fc27-sheet-steps > li { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 14px; padding: 11px 16px 11px 0;
+                          background: var(--c-tile); color: var(--c-ink); counter-increment: sheet; }
+.fc27-sheet-steps > li::before { content: counter(sheet); align-self: stretch; display: grid; place-items: center; background: var(--fc-blue); color: #fff;
+                                  font: 800 18px/1 var(--fc-display); font-variant-numeric: tabular-nums; }
+.fc27-sheet-step { font: 800 12px/1.2 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: var(--c-muted); }
+.fc27-sheet-value { display: block; margin-top: 3px; font: 800 20px/1.15 var(--fc-display); overflow-wrap: anywhere; }
+.fc27-sheet-steps > li > strong { grid-column: 2; }
+.fc27-sheet-steps > li > span { grid-column: 2; }
+.fc27-sheet-side { display: grid; gap: 6px; align-content: start; }
+.fc27-sheet-card { padding: 16px 18px 18px; background: var(--c-tile); color: var(--c-ink); }
+.fc27-sheet-card .fc27-report-label { margin-bottom: 12px; color: var(--c-muted); }
+.fc27-sheet-card .fc27-report-label b { background: var(--p-ambre); color: var(--c-ink); }
+.fc27-sheet-order { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; counter-reset: spend; }
+.fc27-sheet-order > li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; background: #E0E7F1; counter-increment: spend; }
+.fc27-sheet-order > li::before { content: counter(spend); flex-shrink: 0; display: grid; place-items: center; width: 22px; height: 22px;
+                                  background: var(--fc-blue); color: #fff; font: 800 13px/1 var(--fc-display); }
+.fc27-sheet-order strong { font: 800 17px/1.1 var(--fc-display); text-transform: uppercase; }
+.fc27-sheet-order em { padding: 3px 5px 2px; background: var(--p-vert); color: var(--c-ink); font: 800 10px/1 var(--fc-display); font-style: normal;
+                        letter-spacing: .08em; text-transform: uppercase; }
+.fc27-sheet-mastery { margin: 0; font: 500 15px/1.5 var(--fc-text); }
+.fc27-sheet-mastery b { font: 800 17px/1 var(--fc-display); color: var(--fc-blue); }
+.fc27-dialog--console .fc27-sheet-note { margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: var(--c-muted); }
+.fc27-dialog--console .fc27-sheet-empty { margin: 0; font-size: 14px; color: var(--c-muted); }
+.fc27-sheet-card .fc27-ovr { padding: 0; justify-content: flex-start; }
+
+/* Bloc « Affiner ma fiche » : replié par défaut, tuile claire qui passe en bleu roi une fois ouverte */
+.fc27-advanced { margin: 0; }
+.fc27-advanced > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 15px 18px; background: var(--c-tile); color: var(--c-ink); cursor: pointer; list-style: none; }
+.fc27-advanced > summary::-webkit-details-marker { display: none; }
+.fc27-advanced > summary::before { content: '+'; flex-shrink: 0; display: grid; place-items: center; width: 30px; height: 30px; background: var(--fc-blue); color: #fff; font: 800 24px/1 var(--fc-display); }
+.fc27-advanced[open] > summary::before { content: '\2013'; background: #fff; color: var(--fc-blue); }
+.fc27-advanced > summary:hover { background: var(--c-tile-hover); }
+.fc27-advanced > summary:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+.fc27-advanced[open] > summary { background: var(--fc-blue); color: #fff; box-shadow: inset 6px 0 0 var(--c-accent); }
+.fc27-advanced-title { font: 800 20px/1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; }
+.fc27-advanced-hint { flex: 1 1 140px; min-width: 0; font: 500 13px/1.35 var(--fc-text); color: var(--c-muted); }
+.fc27-advanced[open] .fc27-advanced-hint { color: #D7E0FF; }
+.fc27-advanced-state { padding: 5px 8px 4px; background: var(--c-steel); font: 800 11px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; }
+.fc27-advanced[open] .fc27-advanced-state { background: #0F2A7A; color: #fff; }
+.fc27-advanced-body { display: grid; gap: 22px; padding-top: 22px; }
+.fc27-advanced-lead { margin: 0; font: 500 14px/1.5 var(--fc-text); color: var(--fc-brume); }
+
+.fc27-dialog--console .fc27-styles { display: grid; gap: 12px; }
+.fc27-dialog--console .fc27-styles-group { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: start; gap: 12px; }
+.fc27-dialog--console .fc27-styles-title { display: flex; align-items: center; gap: 7px; padding-top: 10px; font: 800 14px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: var(--fc-glacier); }
+
+/* Morphologie & étoiles : fiche technique, grandes valeurs, jauges épaisses segmentées */
+.fc27-dialog--console .fc27-morpho { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.fc27-dialog--console .fc27-slider { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 18px; border: 0; background: var(--c-tile); color: var(--c-ink); }
+.fc27-dialog--console .fc27-slider > span { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
+.fc27-dialog--console .fc27-slider label { font: 800 16px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--c-ink); }
+.fc27-dialog--console .fc27-slider output { font: 800 48px/.8 var(--fc-display); letter-spacing: -.02em; text-transform: uppercase; color: var(--fc-blue); font-variant-numeric: tabular-nums; }
+.fc27-dialog--console .fc27-slider input[type='range'] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 26px; margin: 0; border-radius: 0; cursor: pointer;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(10% - 3px), var(--c-tile) calc(10% - 3px) 10%),
+    linear-gradient(90deg, var(--fc-blue) 0 var(--fill, 50%), var(--c-steel) var(--fill, 50%) 100%); }
+.fc27-dialog--console .fc27-slider input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 38px; border: 0; border-radius: 0; background: var(--c-ink); }
+.fc27-dialog--console .fc27-slider input[type='range']::-moz-range-thumb { width: 12px; height: 38px; border: 0; border-radius: 0; background: var(--c-ink); }
+.fc27-dialog--console .fc27-slider input[type='range']::-moz-range-track { background: transparent; }
+.fc27-dialog--console .fc27-slider input[type='range']:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 4px; }
+.fc27-dialog--console .fc27-slider small { display: block; padding: 10px 12px; background: var(--c-ink); color: var(--fc-craie);
+                                           font: 500 13px/1.4 var(--fc-text); text-transform: none; letter-spacing: 0; }
+
+.fc27-dialog--console .fc27-stars { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 18px; border: 0; background: var(--c-tile); color: var(--c-ink); }
+.fc27-dialog--console .fc27-stars legend { float: left; width: 100%; margin: 0; font: 800 16px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--c-ink); }
+.fc27-dialog--console .fc27-stars > div { display: flex; align-items: center; gap: 3px; clear: both; }
+.fc27-dialog--console .fc27-stars label { position: relative; display: grid; place-items: center; width: 42px; height: 42px; background: var(--c-steel); cursor: pointer; }
+.fc27-dialog--console .fc27-stars input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.fc27-dialog--console .fc27-stars label > span { font-size: 22px; line-height: 1; color: #7C89A6; text-shadow: none; }
+.fc27-dialog--console .fc27-stars label.is-lit { background: var(--fc-blue); }
+.fc27-dialog--console .fc27-stars label.is-lit > span { color: #fff; text-shadow: none; }
+.fc27-dialog--console .fc27-stars label:hover:not(.is-lit) { background: var(--c-tile-hover); }
+.fc27-dialog--console .fc27-stars label:has(input:focus-visible) { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+.fc27-dialog--console .fc27-stars output { margin-left: auto; font: 800 32px/1 var(--fc-display); color: var(--fc-blue); }
+
+/* Boutons : aplats francs, sans biseau ni halo */
+.fc27-dialog--console .fc27-button { color: #fff; filter: none; transition: none; }
+.fc27-dialog--console .fc27-button::before { clip-path: none; background: var(--fc-blue); box-shadow: none; transition: none; }
+.fc27-dialog--console .fc27-button:hover:not(:disabled), .fc27-dialog--console .fc27-button:focus-visible { color: var(--c-ink); filter: none; }
+.fc27-dialog--console .fc27-button:hover:not(:disabled)::before, .fc27-dialog--console .fc27-button:focus-visible::before { background: var(--fc-glacier); box-shadow: none; }
+.fc27-dialog--console .fc27-button--outline { color: var(--fc-brume); }
+.fc27-dialog--console .fc27-button--outline::before { background: #1A2440; box-shadow: none; }
+.fc27-dialog--console .fc27-button--outline:hover:not(:disabled), .fc27-dialog--console .fc27-button--outline:focus-visible { color: #fff; }
+.fc27-dialog--console .fc27-button--outline:hover:not(:disabled)::before, .fc27-dialog--console .fc27-button--outline:focus-visible::before { background: #26314F; box-shadow: none; }
+
+/* Barre d'actions ancrée en bas de la fenêtre */
+.fc27-dialog--console .fc27-wizard-actions { position: sticky; bottom: 0; z-index: 2; display: flex; align-items: stretch; gap: 2px; margin: 6px -28px 0; padding: 0;
+                                             background: var(--c-bg); border-top: 2px solid rgba(242,244,248,.12); }
+.fc27-dialog--console .fc27-wizard-actions .fc27-button { min-height: 66px; padding: 0 28px; font: 800 22px/1 var(--fc-display); letter-spacing: .02em; text-transform: uppercase; }
+.fc27-dialog--console .fc27-wizard-actions .fc27-button:not(.fc27-button--outline) { flex: 1 1 auto; justify-content: flex-end; margin-left: 0; }
+.fc27-dialog--console .fc27-wizard-actions .fc27-button--outline { flex: 0 0 auto; justify-content: flex-start; font-size: 18px; }
+
+@media (max-width: 767px) {
+  .fc27-dialog--console > :not(.fc27-dialog-head) { margin-inline: 16px; }
+  .fc27-dialog--console > :last-child { margin-bottom: 16px; }
+  .fc27-dialog--console .fc27-dialog-head { padding: 18px 16px 12px; }
+  .fc27-dialog--console .fc27-dialog-head .fc-title { font-size: 32px; }
+  .fc27-dialog--console .fc27-stepper li { padding: 11px 10px; font-size: 14px; }
+  .fc27-dialog--console .fc27-stepper li span { display: none; }
+  .fc27-dialog--console .fc27-stepper li[aria-current='step'] span { display: inline; }
+  .fc27-dialog--console .fc27-identity-step, .fc27-dialog--console .fc27-picker--positions,
+  .fc27-dialog--console .fc27-styles-group, .fc27-dialog--console .fc27-morpho { grid-template-columns: minmax(0, 1fr); }
+  .fc27-dialog--console .fc27-jersey { max-width: 200px; height: auto; justify-self: center; order: -1; padding: 14px; }
+  .fc27-dialog--console .fc27-styles-title { padding-top: 0; }
+  .fc27-dialog--console .fc27-wizard-actions { margin-inline: -16px; }
+  .fc27-dialog--console .fc27-wizard-actions .fc27-button { min-height: 58px; padding: 0 18px; font-size: 19px; }
+  .fc27-dialog--console .fc27-slider output { font-size: 40px; }
+  .fc27-dialog--console .fc27-archetypes { grid-template-columns: minmax(0, 1fr); }
+  .fc27-dialog--console .fc27-jersey-card { max-width: 200px; width: 100%; justify-self: center; order: -1; }
+  .fc27-dialog--console .fc27-jersey { width: 100%; }
+  .fc27-source { margin-left: 0; margin-right: 8px; }
+  .fc27-signature-head, .fc27-signature-body, .fc27-mastery { padding: 18px; }
+  .fc27-briefing-list { grid-template-columns: minmax(0, 1fr); }
+  .fc27-briefing-head { padding: 14px 16px; }
+  .fc27-briefing-list > li { padding: 14px 16px; }
+  .fc27-mastery-row { grid-template-columns: 64px minmax(0, 1fr); }
+  .fc27-mastery-level b { font-size: 28px; }
+  .fc27-mastery-gains li { grid-template-columns: 40px minmax(0, 1fr); gap: 8px; padding-right: 12px; }
+  .fc27-signature-ideal { padding: 0 18px 18px; }
+  .fc27-advanced > summary { padding: 14px; }
+  .fc27-spend { padding: 18px; }
+  .fc27-profile-head { padding: 14px 16px; }
+  .fc27-profile-intent { padding: 14px 16px 0; }
+  .fc27-profile-body { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 14px 16px 18px; }
+  .fc27-profile-warning { padding-right: 16px; }
+  .fc27-profile-warning b { margin-left: 16px; }
+  .fc27-spend-list > li { grid-template-columns: 32px minmax(0, 1fr); gap: 10px; padding: 7px 10px 9px 0; }
+  .fc27-spend-moves { grid-column: 2; }
+  .fc27-sheet-grid { grid-template-columns: minmax(0, 1fr); }
+  .fc27-advanced-title { font-size: 18px; }
+}
+
+/* ---------- Lecture du staff : analyse rédigée, posée sur les chiffres du moteur ---------- */
+.fc27-staff { margin-top: 24px; padding: 20px 22px 22px; background: var(--p-night-2); box-shadow: inset 5px 0 0 var(--p-magenta); }
+.fc27-staff--loading { box-shadow: inset 5px 0 0 var(--fc-acier); }
+.fc27-staff-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+.fc27-staff-head .fc27-report-label { margin: 0; color: var(--fc-glacier); }
+.fc27-staff-meta { font: 600 11px/1.3 var(--fc-text); letter-spacing: .04em; text-transform: uppercase; color: var(--fc-brume); cursor: help; }
+.fc27-staff-wait { margin: 12px 0 0; font: 500 14px/1.5 var(--fc-text); color: var(--fc-brume); }
+.fc27-staff-headline { margin: 14px 0 0; font: 800 24px/1.15 var(--fc-display); letter-spacing: -.01em; text-transform: uppercase; color: #fff; text-wrap: balance; }
+.fc27-staff-reading { margin: 10px 0 0; font: 500 15px/1.6 var(--fc-text); color: var(--fc-craie); }
+.fc27-staff-needs { margin-top: 20px; }
+.fc27-staff h4 { margin: 0 0 12px; font: 800 13px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; color: var(--fc-glacier); }
+.fc27-staff-needs > ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4px; margin: 0; padding: 0; list-style: none; }
+.fc27-staff-needs li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; padding: 11px 14px 12px 0; background: rgba(255,255,255,.06); }
+.fc27-staff-rank { display: grid; place-items: center; align-self: start; width: 30px; height: 30px; background: var(--p-magenta); color: var(--p-ink); font: 800 15px/1 var(--fc-display); }
+.fc27-staff-needs strong { display: block; font: 800 17px/1.15 var(--fc-display); text-transform: uppercase; color: #fff; }
+.fc27-staff-needs em { display: block; margin-top: 5px; font-style: normal; font: 500 13px/1.5 var(--fc-text); color: var(--fc-brume); }
+.fc27-staff-needs b { display: block; margin-top: 7px; padding-left: 10px; box-shadow: inset 3px 0 0 var(--p-vert); font: 700 13px/1.45 var(--fc-text); color: var(--fc-craie); }
+
+@media (max-width: 767px) {
+  .fc27-staff { padding: 18px 16px 20px; }
+  .fc27-staff-headline { font-size: 21px; }
+}
+
+/* ---------- « Je veux jouer comme… » : passerelle vers un build tout fait ---------- */
+.fc27-lookalike { position: relative; padding: 16px 18px 18px; background: var(--c-tile); color: var(--c-ink); box-shadow: inset 6px 0 0 var(--c-accent); }
+.fc27-lookalike-kicker { margin: 0; font: 800 14px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: var(--fc-blue); }
+.fc27-lookalike-lead { margin: 7px 0 12px; font: 500 13px/1.5 var(--fc-text); color: var(--c-muted); }
+.fc27-dialog--console input.fc27-lookalike-input { width: 100%; margin: 0; padding: 12px 14px; border: 0; border-bottom: 3px solid var(--c-steel);
+                                                   background: #fff; color: var(--c-ink); font: 600 17px/1.3 var(--fc-text); }
+.fc27-dialog--console input.fc27-lookalike-input:focus { border-bottom-color: var(--fc-blue); outline: none; }
+.fc27-lookalike-results { display: grid; gap: 2px; margin: 2px 0 0; padding: 0; list-style: none; max-height: 260px; overflow-y: auto; }
+.fc27-lookalike-results button { display: grid; gap: 3px; width: 100%; padding: 10px 14px; border: 0; border-radius: 0; background: #E0E7F1;
+                                 color: var(--c-ink); text-align: left; cursor: pointer; }
+.fc27-lookalike-results button:hover, .fc27-lookalike-results button:focus-visible { background: var(--fc-blue); color: #fff; outline: none; }
+.fc27-lookalike-results strong { font: 800 18px/1.1 var(--fc-display); text-transform: uppercase; }
+.fc27-lookalike-results span { font: 700 11px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: var(--c-muted); }
+.fc27-lookalike-results button:hover span, .fc27-lookalike-results button:focus-visible span { color: #D7E0FF; }
+.fc27-lookalike-results em { font-style: normal; font: 500 13px/1.45 var(--fc-text); }
+.fc27-lookalike-empty { padding: 12px 14px; background: #E0E7F1; font: 500 13px/1.45 var(--fc-text); color: var(--c-muted); }
+.fc27-lookalike--picked { box-shadow: inset 6px 0 0 var(--p-vert); }
+.fc27-lookalike-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.fc27-lookalike-clear { padding: 6px 10px 5px; border: 0; border-radius: 0; background: var(--c-ink); color: #fff; cursor: pointer;
+                        font: 800 11px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.fc27-lookalike-clear:hover { background: var(--fc-blue); }
+.fc27-lookalike-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin: 8px 0 0; }
+.fc27-lookalike-name strong { font: 800 27px/1 var(--fc-display); text-transform: uppercase; }
+.fc27-lookalike-name span { font: 700 12px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: var(--c-muted); }
+.fc27-lookalike-signature { margin: 8px 0 0; font: 500 15px/1.5 var(--fc-text); }
+.fc27-lookalike-why { margin: 8px 0 0; padding: 10px 12px; background: #E0E7F1; font: 500 13px/1.5 var(--fc-text); color: var(--c-muted); }
+.fc27-lookalike-why b { color: var(--c-ink); }
+.fc27-lookalike-source { margin: 8px 0 0; font: 700 12px/1.4 var(--fc-text); color: var(--fc-blue); }
+.fc27-lookalike-search { margin-top: 10px; padding: 12px 16px; border: 0; background: var(--fc-blue); color: #fff;
+                         font: 700 15px/1.3 var(--fc-text); cursor: pointer; }
+.fc27-lookalike-search:disabled { opacity: .65; cursor: wait; }
+.fc27-lookalike-search:focus-visible, .fc27-lookalike-clear:focus-visible { outline: 3px solid var(--fc-blue); outline-offset: 3px; }

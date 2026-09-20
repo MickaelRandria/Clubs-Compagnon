@@ -1,0 +1,56 @@
+/* Fiche match /matchs/:id — fiche, notes, formulaire de saisie */
+
+.fc-back { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; text-decoration: none;
+           font: 700 14px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--fc-acier); }
+.fc-back:hover, .fc-back:focus-visible { outline: none; color: var(--fc-glacier); }
+
+.fc-detail { display: grid; gap: 6px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); grid-template-rows: auto 1fr;
+             grid-template-areas: "sheet form" "notes form"; }
+.fc-sheet { grid-area: sheet; min-height: 300px; }
+.fc-sheet .fc-chip { align-self: flex-start; }
+.fc-sheet .fc-hero-num { font-size: clamp(72px, 8vw, 120px); }
+.fc-sheet .fc-hero-num .sep { color: var(--fc-glacier); }
+
+.fc-notes { grid-area: notes; display: flex; flex-direction: column; padding: 26px 28px 10px; }
+.fc-notes-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; padding-bottom: 16px; }
+.fc-note, .fc-notes-empty { box-shadow: inset 0 1px 0 rgba(242,244,248,.08); }
+.fc-note { display: flex; flex-direction: column; gap: 10px; padding: 18px 0; }
+.fc-note-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.fc-note-author { font: 700 19px/1.1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; overflow-wrap: anywhere; }
+.fc-note-body { margin: 0; max-width: 62ch; font: 500 16px/1.6 var(--fc-text); white-space: pre-line; overflow-wrap: anywhere; }
+.fc-note-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.fc-note-link { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--fc-glacier);
+                font: 700 14px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.fc-note-link:hover, .fc-note-link:focus-visible { outline: none; text-decoration: underline; }
+.fc-notes-empty { margin: 0; padding: 18px 0 22px; font: 500 15px/1.5 var(--fc-text); color: var(--fc-acier); }
+
+.fc-note-form { grid-area: form; align-self: start; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px);
+                display: flex; flex-direction: column; gap: 18px; padding: 28px 28px 30px; }
+.fc-note-form > :not(svg) { position: relative; }
+.fc-note-form .fc-body { color: var(--fc-acier); }
+.fc-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.fc-field > label, .fc-field > legend { padding: 0; font: 700 13px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--fc-acier); }
+.fc-field > legend { margin-bottom: 8px; }
+.fc-optional { margin-left: 8px; font: 600 12px/1 var(--fc-text); letter-spacing: 0; text-transform: none; }
+.fc-input { width: 100%; padding: 12px 14px; border: 1px solid rgba(242,244,248,.18); border-radius: 0; background: var(--fc-abysse);
+            color: var(--fc-craie); font: 500 16px/1.4 var(--fc-text); transition: border-color .15s, box-shadow .15s; }
+.fc-input::placeholder { color: var(--fc-acier); }
+.fc-input:focus { outline: none; border-color: var(--fc-glacier); box-shadow: 0 0 0 1px var(--fc-glacier); }
+.fc-input[aria-invalid="true"] { border-color: var(--fc-rouge); }
+textarea.fc-input { min-height: 150px; resize: vertical; }
+select.fc-input { appearance: none; padding-right: 42px; cursor: pointer; background-repeat: no-repeat; background-position: right 14px center;
+                  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236FC8FF' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+select.fc-input option { background: var(--fc-marine); color: var(--fc-craie); }
+.fc-field-error { font: 600 13px/1.3 var(--fc-text); color: var(--fc-rouge); }
+.fc-field-hint { align-self: flex-end; font: 600 12px/1 var(--fc-text); color: var(--fc-acier); font-variant-numeric: tabular-nums; }
+.fc-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.fc-tag { appearance: none; cursor: pointer; padding: 8px 12px; background: transparent; color: var(--fc-craie); border: 1px solid rgba(242,244,248,.28);
+          font: 700 14px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; transition: background .15s, border-color .15s; }
+.fc-tag:hover { border-color: var(--fc-glacier); }
+.fc-tag:focus-visible { outline: 2px solid var(--fc-glacier); outline-offset: 2px; }
+.fc-tag[aria-pressed="true"] { background: var(--fc-glacier); border-color: var(--fc-glacier); color: var(--fc-marine); }
+.fc-form-status { min-height: 1.4em; margin: 0; font: 600 14px/1.4 var(--fc-text); }
+.fc-form-status--ok { color: var(--fc-glacier); }
+.fc-form-status--error { color: var(--fc-rouge); }
+
+h2.fc-title { margin: 0; }

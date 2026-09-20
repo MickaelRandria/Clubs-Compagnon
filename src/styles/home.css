@@ -1,0 +1,35 @@
+/* Dashboard : tile photo, tiles clairs du bas */
+
+/* Tile photo — fond assombri */
+.fc-clubs { display: flex; background: var(--fc-abysse); color: var(--fc-craie); }
+.fc-clubs img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: 100%; object-fit: cover; object-position: center 52%;
+                filter: grayscale(1) contrast(1.1) brightness(1.15); }
+.fc-clubs-tint, .fc-clubs-shade { position: absolute; inset: 0; }
+.fc-clubs-tint { background: var(--fc-blue); mix-blend-mode: multiply; opacity: .6; }
+.fc-clubs-shade { background: linear-gradient(100deg, rgba(6,12,31,.9) 0%, rgba(6,12,31,.62) 45%, rgba(6,12,31,0) 85%); }
+.fc-clubs-shards { position: absolute; top: 0; right: 0; width: 60%; height: 100%; }
+.fc-clubs-copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 14px; max-width: 340px; padding: 34px 32px 30px; }
+.fc-clubs .fc-mention { color: var(--fc-craie); }
+
+/* Tiles du bas — Blanc Craie */
+.fc-card { display: flex; background: var(--fc-craie); color: var(--fc-marine); }
+.fc-card-copy { position: relative; z-index: 1; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 22px 8px 20px 24px; }
+.fc-card-sub { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 16px/1.3 var(--fc-text); }
+.fc-card .fc-mention { color: var(--fc-ardoise); }
+.fc-card-art { position: relative; flex: 0 0 42%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.fc-card-art > svg:first-child { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fc-card-art > :not(:first-child) { position: relative; }
+.fc-chip { display: inline-block; padding: 5px 9px; font: 700 12px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; }
+.fc-score { font: italic 800 clamp(56px, 6vw, 84px)/.85 var(--fc-display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--fc-marine); }
+.fc-score span { margin: 0 .06em; color: var(--fc-blue); }
+
+.fc-card--form { flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.fc-form-shard { position: absolute; top: 0; left: 0; width: 80px; height: 90px; }
+.fc-form { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 12px; }
+.fc-form-grid { display: grid; grid-template-columns: repeat(5, 22px); gap: 4px; margin-bottom: 8px; }
+.fc-form-cell { display: grid; place-items: center; height: 22px; font: 800 12px/1 var(--fc-display); }
+.fc-form-label { font: 800 20px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.fc-form-sub { font: 600 13px/1.2 var(--fc-text); color: var(--fc-ardoise); }
+.fc-dots { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 5px; }
+.fc-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--fc-acier); }
+.fc-dots i:first-child { background: var(--fc-blue); }

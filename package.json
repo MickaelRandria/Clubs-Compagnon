@@ -1,0 +1,48 @@
+{
+  "name": "dommage-bj-fc",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "assets:generate": "node scripts/generate-assets.js",
+    "test:assets": "node --test tests/generate-assets.test.js",
+    "test:fc27": "tsx --test tests/fc27.test.ts tests/tactical-advisor.test.ts tests/assets.test.ts tests/position-profiles.test.ts tests/tour.test.ts tests/staff-report.test.ts tests/club-policy.test.ts tests/lookalikes.test.ts tests/lookalike-lookup.test.ts",
+    "test:lookalikes:browser": "tsx tests/lookalikes.browser.ts",
+    "test:player-tour:browser": "tsx tests/player-tour.browser.ts",
+    "staff:check": "tsx scripts/staff-check.ts",
+    "test:fc27:serve": "tsx tests/browser-server.ts",
+    "test:fc27:browser": "tsx tests/fc27.browser.ts",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx server/db/migrate.ts",
+    "db:seed": "tsx server/db/seed.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@tanstack/react-query": "^5.103.0",
+    "drizzle-orm": "^0.45.2",
+    "proclubs-sdk": "^0.2.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router": "^7.18.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@types/node": "^22.20.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "drizzle-kit": "^0.31.10",
+    "playwright-core": "^1.63.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6"
+  }
+}

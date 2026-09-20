@@ -1,0 +1,93 @@
+/* ============================================================
+   Guide pas à pas — même langue que le reste : aplats francs,
+   bleu roi, accent magenta, angles droits, aucune lueur.
+   ============================================================ */
+
+.tour { --t-ink: #0B1A3A; --t-bg: #0A1128; --t-tile: #F1F5F9; --t-accent: #FF4FA3;
+        position: fixed; inset: 0; z-index: 900; width: 100%; height: 100%; max-width: none; max-height: none;
+        margin: 0; padding: 0; border: 0; background: transparent; overflow: hidden; }
+.tour::backdrop { background: transparent; }
+
+/* Voile + trou : le trou est un simple bloc dont l'ombre géante assombrit tout le reste. */
+.tour-veil { position: absolute; inset: 0; background: rgba(6, 12, 31, .82); }
+.tour-hole { position: absolute; box-shadow: 0 0 0 9999px rgba(6, 12, 31, .82);
+             outline: 3px solid var(--fc-blue); outline-offset: 0; background: transparent; }
+.tour-veil:has(.tour-hole) { background: transparent; }
+
+/* Bulle : tuile claire, liseré magenta du côté d'où elle pointe. */
+.tour-bubble { position: absolute; width: min(360px, calc(100vw - 24px)); padding: 20px 22px 18px;
+               max-height: calc(100dvh - 24px); overflow-y: auto;
+               background: var(--t-tile); color: var(--t-ink); box-shadow: 0 18px 0 -10px rgba(6, 12, 31, .5); }
+.tour-bubble:focus { outline: none; }
+.tour-bubble--bottom { box-shadow: inset 0 6px 0 var(--t-accent), 0 18px 0 -10px rgba(6, 12, 31, .5); }
+.tour-bubble--top { box-shadow: inset 0 -6px 0 var(--t-accent), 0 18px 0 -10px rgba(6, 12, 31, .5); }
+.tour-bubble--right { box-shadow: inset 6px 0 0 var(--t-accent), 0 18px 0 -10px rgba(6, 12, 31, .5); }
+.tour-bubble--left { box-shadow: inset -6px 0 0 var(--t-accent), 0 18px 0 -10px rgba(6, 12, 31, .5); }
+.tour-bubble--center { box-shadow: inset 0 6px 0 var(--t-accent), 0 18px 0 -10px rgba(6, 12, 31, .5); }
+
+.tour-count { margin: 0 0 8px; font: 800 11px/1 var(--fc-display); letter-spacing: .16em; text-transform: uppercase; color: var(--fc-blue); }
+.tour-title { margin: 0 0 8px; font: 800 26px/1 var(--fc-display); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; }
+.tour-body { margin: 0; font: 500 14px/1.55 var(--fc-text); color: #33405C; }
+
+.tour-dots { display: flex; gap: 3px; margin: 16px 0 0; padding: 0; list-style: none; }
+.tour-dots li { width: 100%; height: 5px; background: #C9D3E4; }
+.tour-dots li.is-done { background: var(--fc-blue); }
+.tour-dots li.is-on { background: var(--t-accent); }
+
+.tour-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 16px; }
+.tour-actions button { border: 0; border-radius: 0; cursor: pointer; font-family: var(--fc-display); }
+.tour-skip { margin-right: auto; padding: 9px 2px; background: none; color: #5C6781;
+             font: 700 13px/1 var(--fc-text); text-decoration: underline; text-underline-offset: 4px; }
+.tour-skip:hover { color: var(--t-ink); }
+.tour-back { padding: 11px 14px; background: #DCE4F0; color: var(--t-ink); font: 800 14px/1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; }
+.tour-back:hover { background: #C9D3E4; }
+.tour-next { padding: 11px 18px; background: var(--fc-blue); color: #fff; font: 800 15px/1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; }
+.tour-next:hover { background: var(--t-ink); }
+.tour-actions button:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+
+/* Invitation de première visite : une bande, jamais une fenêtre. */
+.tour-invite { position: relative; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+               padding: 12px 14px; margin: 0 0 10px; background: var(--fc-blue); color: #fff; box-shadow: inset 6px 0 0 #FF4FA3; }
+.tour-invite p { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; flex: 1 1 260px; min-width: 0; }
+.tour-invite b { font: 800 16px/1.1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; }
+.tour-invite span { font: 500 13px/1.45 var(--fc-text); color: #D7E0FF; }
+.tour-invite-go { flex-shrink: 0; padding: 10px 16px; border: 0; border-radius: 0; background: #fff; color: var(--fc-blue);
+                  cursor: pointer; font: 800 14px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
+.tour-invite-go:hover { background: var(--fc-glacier); }
+.tour-invite-close { flex-shrink: 0; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 0;
+                     background: rgba(255, 255, 255, .16); color: #fff; cursor: pointer; font: 700 16px/1 var(--fc-text); }
+.tour-invite-close:hover { background: rgba(255, 255, 255, .3); }
+.tour-invite button:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+
+/* Relance, dans le pied de page */
+.tour-replay { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 0; border-radius: 0;
+               background: rgba(242, 244, 248, .08); color: var(--fc-brume); cursor: pointer;
+               font: 700 13px/1 var(--fc-text); }
+.tour-replay span { display: grid; place-items: center; width: 18px; height: 18px; background: var(--fc-blue); color: #fff;
+                    font: 800 12px/1 var(--fc-display); }
+.tour-replay:hover:not(:disabled) { background: rgba(242, 244, 248, .16); color: var(--fc-craie); }
+.tour-replay:disabled { opacity: .5; cursor: default; }
+.tour-replay:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+
+/* Même invitation dans le tunnel, avec une relance toujours disponible. */
+.fc27-player-guide { margin-top: 14px; }
+.fc27-player-guide .tour-invite { margin-bottom: 8px; }
+
+/* Le guide déplace la page tout seul : on respecte le réglage système. */
+@media (prefers-reduced-motion: reduce) {
+  .tour-hole { transition: none; }
+}
+
+@media (max-width: 767px) {
+  /* Le bouton de validation peut ainsi remonter au-dessus de la bulle, comme les champs. */
+  .fc27-dialog--console:has(.fc27-player-guide--running) .fc27-wizard { padding-bottom: 70dvh; }
+  .fc27-dialog--console:has(.fc27-player-guide--running) .fc27-wizard-actions { position: static; }
+  /* Écran étroit : la bulle devient une barre ancrée en bas, jamais collée à la cible. */
+  .tour-bubble { top: auto !important; left: 0 !important; right: 0; bottom: 0; width: 100%;
+                 max-height: 70dvh; padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); box-shadow: inset 0 6px 0 var(--t-accent); }
+  .tour-title { font-size: 22px; }
+  .tour-actions { gap: 6px; }
+  .tour-skip { flex: 1 1 100%; order: 3; margin-right: 0; text-align: left; }
+  .tour-invite { margin-bottom: 8px; }
+  .tour-invite b { flex: 1 1 100%; }
+}

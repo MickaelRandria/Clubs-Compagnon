@@ -1,0 +1,38 @@
+/* ============================================================
+   FC 27 — visuels immersifs (public/images, sources PNG dans design/images)
+   Portraits d'archétypes et badges PlayStyles du tunnel, motif FIFA 20 des tuiles bleues.
+   Fond de page, terrain et mini-cartes : fc27.css ; rapport : fc27-player.css.
+   ============================================================ */
+
+/* ---------- Tuiles bleu roi : coups de pinceau FIFA 20 dans l'angle, rognés par la tuile ---------- */
+.fc27-player-tile::before, .fc27-rating::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: url('/images/ui/fifa20-pattern.webp') right -140px bottom -170px / 520px no-repeat; opacity: .45; }
+.fc27-rating::before { background-position: left -220px top -200px; background-size: 460px; opacity: .35; }
+.fc27-rating > * { position: relative; }
+
+/* ---------- Tunnel : éclats derrière l'en-tête de la fenêtre ---------- */
+.fc27-dialog--console::before { content: ''; position: absolute; z-index: 0; top: 0; right: 0; width: min(420px, 100%); height: 150px;
+                                background: url('/images/ui/fifa20-pattern.webp') right -60px top -330px / 480px no-repeat; opacity: .5; pointer-events: none; }
+.fc27-dialog--console > * { position: relative; z-index: 1; }
+
+/* Cartes d'archétype : portrait en tête de tuile, comme une carte de menu */
+.fc27-dialog--console .fc27-choice--archetype > span { overflow: hidden; }
+.fc27-dialog--console .fc27-archetype-photo { display: block; width: calc(100% + 32px); max-width: none; margin: -14px -16px 3px; height: auto; aspect-ratio: 16 / 10;
+                                              object-fit: cover; object-position: 50% 18%; background: #081533; border-bottom: 4px solid transparent; }
+.fc27-dialog--console .fc27-choice input:checked + span .fc27-archetype-photo { border-bottom-color: var(--c-accent); }
+
+/* Panneau « PlayStyle signature » : portrait plein cadre + badge de famille */
+.fc27-signature { display: grid; grid-template-columns: minmax(0, .42fr) minmax(0, 1fr); align-items: stretch; }
+.fc27-signature-photo { display: block; width: 100%; height: 100%; max-width: none; min-height: 280px; object-fit: cover; object-position: 50% 18%; background: #081533; }
+.fc27-signature-content { min-width: 0; }
+.fc27-signature-body { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 18px; align-items: start; }
+.fc27-signature-badge { display: block; width: 104px; height: 104px; }
+.fc27-signature-family { margin: 0 0 6px; font: 800 12px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--c-muted, #5C6781); }
+
+@media (max-width: 767px) {
+  .fc27-dialog--console::before { width: min(240px, 100%); height: 100px; background-position: right -120px top -260px; background-size: 360px; }
+  .fc27-signature { grid-template-columns: minmax(0, 1fr); }
+  .fc27-signature-photo { height: auto; min-height: 0; aspect-ratio: 16 / 9; }
+  .fc27-signature-body { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; }
+  .fc27-signature-badge { width: 72px; height: 72px; }
+}

@@ -1,0 +1,11 @@
+/* Base : reset, fond, animations partagées */
+
+html, body, #root { margin: 0; padding: 0; background: #060C1F; color: #F2F4F8; -webkit-text-size-adjust: 100%; }
+* { box-sizing: border-box; }
+button { font-family: inherit; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #8A97B8; }
+::-webkit-scrollbar-track { background: transparent; }
+@keyframes fcGrow { from { transform: scaleY(0); } }
+@keyframes stretch { from { transform: scaleX(0);} to { transform: scaleX(1);} }
+@keyframes fcIn { from { opacity: .35; transform: translateX(16px); } to { opacity: 1; transform: none; } }

@@ -1,0 +1,42 @@
+/* Tiles et blocs : base commune, titres, tile principal, éclats */
+
+/* ---------- Grille de tiles ---------- */
+.fc-grid { display: grid; gap: 6px; }
+.fc-row { display: grid; gap: 6px; }
+.fc-row--top { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); min-height: 420px; }
+.fc-row--bottom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .58fr); min-height: 196px; }
+
+.fc-tile { appearance: none; border: 0; margin: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: none;
+           position: relative; display: block; width: 100%; overflow: hidden;
+           animation: fcIn .5s cubic-bezier(.2,.7,.2,1) both; transition: box-shadow .15s; }
+.fc-tile:hover, .fc-tile:focus-visible { outline: none; z-index: 4;
+           box-shadow: 0 0 0 3px var(--fc-glacier), 0 0 26px rgba(111,200,255,.4); }
+/* Blocs non cliquables des vues détail — même entrée que les tiles */
+.fc-block { position: relative; overflow: hidden; animation: fcIn .5s cubic-bezier(.2,.7,.2,1) both; }
+
+.fc-title { display: block; font-family: var(--fc-display); font-weight: 800; text-transform: uppercase; line-height: .92; letter-spacing: .005em; text-wrap: balance; }
+.fc-title--xl { font-size: clamp(40px, 4.6vw, 58px); }
+.fc-title--lg { font-size: clamp(32px, 3.3vw, 42px); }
+.fc-title--md { font-size: clamp(22px, 2.1vw, 28px); color: var(--fc-blue); }
+.fc-body { display: block; max-width: 32ch; font: 500 16px/1.4 var(--fc-text); }
+.fc-mention { display: flex; align-items: center; gap: 7px; font: 600 14px/1.25 var(--fc-text); }
+.fc-mention svg { flex-shrink: 0; }
+.fc-mention--end { margin-top: auto; }
+
+/* Tile principal — aplat Bleu Dommage */
+.fc-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); overflow: visible; z-index: 2;
+           background: var(--fc-blue); color: var(--fc-craie); }
+.fc-hero-copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 14px; padding: 34px 12px 30px 36px; }
+.fc-hero-art { position: relative; overflow: hidden; }
+.fc-hero-art svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fc-hero-num { position: absolute; right: 7%; bottom: 9%; font: italic 800 clamp(96px, 11.5vw, 156px)/.8 var(--fc-display);
+               letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--fc-craie); text-shadow: 7px 7px 0 var(--fc-marine); }
+.fc-hero-trend { position: absolute; top: 28px; right: 7%; padding: 6px 10px; background: var(--fc-marine); color: var(--fc-glacier);
+                 font: 700 14px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.fc-kpis { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: auto; padding-top: 16px; box-shadow: inset 0 1px 0 rgba(242,244,248,.3); }
+.fc-kpi-value { display: block; font: 800 36px/1 var(--fc-display); font-variant-numeric: tabular-nums; }
+.fc-kpi-label { display: block; margin-top: 4px; font: 600 12px/1 var(--fc-text); letter-spacing: .08em; text-transform: uppercase; }
+.fc-spill { position: absolute; z-index: 3; pointer-events: none; }
+.fc-spill--bottom { left: 34%; bottom: -20px; width: 120px; height: 44px; }
+.fc-spill--edge { right: -16px; top: -14px; width: 50px; height: 110px; }
+.fc-spill--side { right: -16px; top: 38%; width: 50px; height: 110px; }

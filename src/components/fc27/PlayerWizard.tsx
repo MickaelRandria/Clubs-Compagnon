@@ -298,12 +298,14 @@ function ArchetypePayoff({ archetype, position, priorities, onPriorities }: {
   </section>;
 }
 
-export function PlayerWizard({ state, mode, onClose }: { state: FC27State; mode: 'create' | 'edit'; onClose: () => void }) {
+export function PlayerWizard({ state, mode, myProfile, onClose }: {
+  state: FC27State; mode: 'create' | 'edit'; myProfile: FC27Player | null; onClose: () => void;
+}) {
   const mutation = useFC27Action();
-  const [profile, setProfile] = useState<FC27Player | null>(null);
-  const [lookup, setLookup] = useState('');
-  const [lookupError, setLookupError] = useState('');
-  const [draft, setDraft] = useState<Draft>(EMPTY);
+  // En modification, on part directement de SA fiche : elle est identifiée par le compte,
+  // pas par un pseudo saisi à la main comme avant les comptes.
+  const [profile] = useState<FC27Player | null>(mode === 'edit' ? myProfile : null);
+  const [draft, setDraft] = useState<Draft>(() => (mode === 'edit' && myProfile ? draftFrom(myProfile) : EMPTY));
   const [step, setStep] = useState(0);
   const [guideActive, setGuideActive] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -311,7 +313,7 @@ export function PlayerWizard({ state, mode, onClose }: { state: FC27State; mode:
   const titleRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
   /** Champs du bloc « Affiner » réglés à la main : l'archétype ne les écrase plus. */
-  const tuned = useRef(new Set<TunedKey>());
+  const tuned = useRef(new Set<TunedKey>(mode === 'edit' && myProfile ? TUNED_KEYS : []));
   /** Gabarit conseillé retenu quand le poste en propose deux (ex. buteur vitesse ou pivot). */
   const [option, setOption] = useState(0);
   /** Joueur de référence choisi, tant que le joueur ne s'en écarte pas à la main. */
@@ -407,7 +409,7 @@ export function PlayerWizard({ state, mode, onClose }: { state: FC27State; mode:
     const errors: string[] = [];
     if (index === 0) {
       if (!draft.pseudo.trim()) errors.push('Saisis ton pseudo.');
-      if (pseudoTaken) errors.push('Ce pseudo possède déjà une fiche. Utilise « Modifier une fiche ».');
+      if (pseudoTaken) errors.push('Ce pseudo est déjà utilisé par une autre fiche. Choisis-en un autre.');
       if (!draft.kitName.trim()) errors.push('Indique le nom floqué sur ton maillot.');
       if (draft.kitNumber === '' || !Number.isInteger(draft.kitNumber) || draft.kitNumber < LIMITS.kitNumber.min || draft.kitNumber > LIMITS.kitNumber.max) errors.push('Choisis un numéro entre 1 et 99.');
       if (numberHolder) errors.push(`Le numéro ${draft.kitNumber} est déjà porté par ${numberHolder.in_game_name || numberHolder.pseudo}.`);
@@ -419,15 +421,6 @@ export function PlayerWizard({ state, mode, onClose }: { state: FC27State; mode:
     return errors;
   }
 
-  function findProfile(event: FormEvent) {
-    event.preventDefault();
-    const found = state.players.find((player) => player.pseudo === lookup);
-    if (!found) { setLookupError('Aucune fiche pour ce pseudo exact. Vérifie les majuscules et les espaces.'); return; }
-    // Une fiche existante garde ses valeurs : aucun pré-remplissage ne doit les écraser.
-    TUNED_KEYS.forEach((key) => tuned.current.add(key));
-    setProfile(found); setDraft(draftFrom(found)); setLookupError('');
-  }
-
   function submit(event: FormEvent) {
     event.preventDefault();
     if (guideActive) return;
@@ -435,7 +428,7 @@ export function PlayerWizard({ state, mode, onClose }: { state: FC27State; mode:
     setAttempted(false);
     if (step < STEPS.length - 1) { setStep(step + 1); return; }
     mutation.mutate({
-      action: 'player', campaignId: state.campaign.id, pseudo: draft.pseudo, profileId: profile?.id,
+      action: 'player', campaignId: state.campaign.id, pseudo: draft.pseudo,
       kitName: draft.kitName, kitNumber: Number(draft.kitNumber), primaryPosition: draft.primary as FC27Position,
       secondaryPosition: draft.secondary || undefined, archetype: draft.archetype,
       preferredFoot: draft.foot, heightCm: draft.height, weightKg: draft.weight,
@@ -447,15 +440,12 @@ export function PlayerWizard({ state, mode, onClose }: { state: FC27State; mode:
     });
   }
 
-  const title = mode === 'create' ? 'Créer ma fiche' : 'Modifier une fiche';
+  const title = mode === 'create' ? 'Créer ma fiche' : 'Modifier ma fiche';
   if (mode === 'edit' && !profile) {
+    // Ne devrait pas arriver : le bouton « Modifier ma fiche » n'apparaît que si elle existe.
     return <FC27Dialog title={title} onClose={onClose} console>
-      <p className="fc27-muted">Retrouve ta fiche avec ton pseudo exact. Pas de compte : chacun respecte les fiches des autres.</p>
-      <form className="fc27-form" onSubmit={findProfile}>
-        <label>Pseudo exact de la fiche<input autoFocus required maxLength={40} value={lookup} onChange={(e) => setLookup(e.target.value)} autoComplete="off" /></label>
-        {lookupError && <p className="fc27-feedback" role="alert">{lookupError}</p>}
-        <button className="fc27-button" disabled={!lookup.trim()}>Retrouver la fiche</button>
-      </form>
+      <p className="fc27-muted">Ta fiche est introuvable. Recharge la page, puis réessaie.</p>
+      <button className="fc27-button" onClick={onClose}>Fermer</button>
     </FC27Dialog>;
   }
 
@@ -480,7 +470,8 @@ export function PlayerWizard({ state, mode, onClose }: { state: FC27State; mode:
         <div className="fc27-identity-fields" data-player-guide="identity">
           <p className="fc27-step-intro">Ton identité dans le vestiaire : le pseudo qui te représente, le nom et le numéro floqués sur ton maillot.</p>
           <label>Pseudo<input autoFocus={mode === 'create' && !guideActive} maxLength={40} value={draft.pseudo} readOnly={!!profile} onChange={(e) => set('pseudo', e.target.value)} autoComplete="off" /></label>
-          {pseudoTaken && <p className="fc27-field-alert" role="alert">Ce pseudo possède déjà une fiche. Utilise « Modifier une fiche ».</p>}
+          {profile && <p className="fc27-small fc27-taken">Le pseudo est fixé à la création de la fiche.</p>}
+          {pseudoTaken && <p className="fc27-field-alert" role="alert">Ce pseudo est déjà utilisé par une autre fiche. Choisis-en un autre.</p>}
           <label>Nom sur le maillot<input maxLength={LIMITS.kitName} value={draft.kitName} onChange={(e) => set('kitName', e.target.value)} placeholder="Ex. MBAPPÉ" autoComplete="off" /></label>
           <div className="fc27-field-block">
             <label htmlFor="fc27-kit-number">Numéro de maillot</label>

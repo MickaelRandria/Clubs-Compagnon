@@ -3,13 +3,15 @@ import { ARCHETYPE_IDS, ATTRIBUTE_KEYS, archetypeById, LINE_OF_POSITION } from '
 import { FEET, POSITION_CODES } from './fc27.js';
 import { LIMITS } from './fc27-player.js';
 
-// Preserve the exact input. Identity is deliberately based on trust, without normalization.
+// Le pseudo du joueur reste tel que saisi ; l'identité est celle du compte Discord.
 const pseudo = z.string().min(1).max(40).refine((value) => value.trim().length > 0, 'Saisis un pseudo.');
 const id = z.number().int().positive().max(2_147_483_647);
 const campaign = { campaignId: id };
 export const fc27ActionSchema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('propose'), ...campaign, pseudo, name: z.string().trim().min(1).max(60) }),
-  z.object({ action: z.literal('vote'), ...campaign, proposalId: id, pseudo }),
+  // `pseudo` a disparu de ces deux actions : l'auteur et le votant viennent du compte
+  // connecté, lu côté serveur. Un pseudo envoyé par le client serait invérifiable.
+  z.object({ action: z.literal('propose'), ...campaign, name: z.string().trim().min(1).max(60) }),
+  z.object({ action: z.literal('vote'), ...campaign, proposalId: id }),
   z.object({ action: z.literal('start'), ...campaign }),
   z.object({ action: z.literal('close'), ...campaign, winnerProposalId: id.optional() }),
   z.object({ action: z.literal('archive'), ...campaign }),

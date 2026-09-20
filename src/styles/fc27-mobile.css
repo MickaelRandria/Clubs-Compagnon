@@ -92,7 +92,8 @@
   .fc27-actionbar-go { flex: 1 1 auto; min-height: 50px; border: 0; border-radius: 0; background: var(--fc-blue); color: #fff;
                        cursor: pointer; font: 800 17px/1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; }
   .fc27-actionbar-go:active { background: var(--p-ink); }
-  .fc27-actionbar button:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: -3px; }
+  a.fc27-actionbar-go { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; text-decoration: none; }
+  .fc27-actionbar :is(button, a):focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: -3px; }
 
   /* Le bouton « Créer ma fiche » vit maintenant dans la barre du bas. */
   .fc27--sectioned .fc27-player-actions { display: none; }

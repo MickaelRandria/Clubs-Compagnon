@@ -11,7 +11,7 @@ export const PLAYER_TOUR_STEPS: readonly PlayerTourStep[] = [
   {
     id: 'identity', page: 0, target: '[data-player-guide="identity"]', placement: 'right',
     title: 'Ton identité dans le vestiaire',
-    body: 'Choisis ton pseudo, le nom sur ton maillot et un numéro libre de 1 à 99. Garde ton pseudo exact : il te servira à retrouver ta fiche. Cette visite conserve tes choix et te ramène ensuite à ton formulaire.',
+    body: 'Choisis ton pseudo, le nom sur ton maillot et un numéro libre de 1 à 99. Ta fiche est liée à ton compte Discord : tu la retrouveras à ta prochaine connexion. Cette visite conserve tes choix et te ramène ensuite à ton formulaire.',
   },
   {
     id: 'jersey', page: 0, target: '.fc27-jersey-card', placement: 'left',

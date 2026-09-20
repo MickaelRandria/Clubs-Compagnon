@@ -2,12 +2,11 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import type { FC27State } from '../shared/fc27.js';
+import { signIn, resetCampaign } from './browser-auth.js';
 
 // Only the isolated test server is targeted; never accepts a production URL.
 const origin = 'http://127.0.0.1:5174';
 const readState = async () => (await (await fetch(`${origin}/api/fc27`)).json()) as FC27State;
-const initial = await readState();
-await fetch(`${origin}/api/fc27`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reset', campaignId: initial.campaign.id }) });
 await mkdir('artifacts', { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME_EXECUTABLE ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
@@ -31,12 +30,14 @@ const enterArena = async () => {
   await page.locator('#arena-title').waitFor();
 };
 const vote = async (pseudo: string, card: string) => {
+  await signIn(page, pseudo, new URL(page.url()).pathname + new URL(page.url()).search);
   await pickCard(card);
-  await page.getByRole('textbox', { name: 'Ton pseudo', exact: true }).fill(pseudo);
   await click(/confirmer mon vote/i);
 };
 
 try {
+  await signIn(page, 'Alex');
+  await resetCampaign(page);
   // ---- Entrée : l'onglet FC 27 mène à l'arène plein écran ----
   await page.goto(`${origin}/fc27`);
   await page.getByRole('heading', { name: /cap sur fc 27/i }).waitFor();
@@ -45,17 +46,17 @@ try {
   assert.equal(await page.locator('.fc-top').count(), 0, "L'arène s'affiche hors de la mise en page habituelle.");
   await page.screenshot({ path: 'artifacts/fc27-arena-empty.png', fullPage: true });
 
-  // ---- Phase 1 : propositions illimitées, pseudo exact conservé ----
+  // ---- Phase 1 : trois propositions signées par le compte ----
   for (const name of ['Dommage United', 'Les Diagonales', 'Collectif 27']) {
     await click(/^proposer un nom/i);
-    await page.getByRole('textbox', { name: 'Ton pseudo', exact: true }).fill(' Alex ');
     await page.getByRole('textbox', { name: 'Nom du club proposé' }).fill(name);
     await click(/ajouter ma proposition/i); await waitClosed();
     await page.getByRole('heading', { name, exact: true }).waitFor();
   }
-  assert.ok((await readState()).proposals.every((p) => p.author_pseudo === ' Alex '));
+  assert.ok((await readState()).proposals.every((p) => p.author_pseudo === 'Alex'));
+  assert.equal(await button(/tes 3 noms sont proposés/i).isDisabled(), true);
   await page.screenshot({ path: 'artifacts/fc27-arena-proposals.png', fullPage: true });
-  console.log('PASS: arena entry, unlimited proposals as cards, exact pseudo preserved.');
+  console.log('PASS: arena entry, three proposals per Discord account, fourth disabled.');
 
   // ---- Fiches joueurs : tunnel en 2 étapes + rapport tactique ----
   await page.getByRole('link', { name: /retour à fc 27/i }).click();
@@ -116,6 +117,7 @@ try {
     ['Alexinho', 9, 'BU', ['AG'], 'Gauche', 189, 'target', 4]);
 
   // Sam : numéro déjà pris, puis corrigé.
+  await signIn(page, 'Sam');
   await click(/créer ma fiche/i);
   await dialog.getByRole('textbox', { name: 'Pseudo', exact: true }).fill('Sam');
   await dialog.getByRole('textbox', { name: 'Nom sur le maillot' }).fill('SAMY');
@@ -154,9 +156,8 @@ try {
   await page.setViewportSize({ width: 1440, height: 1000 });
 
   // Modification : pré-remplissage, changement de poste, archétype à re-choisir.
-  await click(/modifier une fiche/i);
-  await dialog.getByLabel('Pseudo exact de la fiche').fill('Alex');
-  await click(/retrouver la fiche/i);
+  await signIn(page, 'Alex');
+  await click(/modifier ma fiche/i);
   assert.equal(await dialog.getByRole('textbox', { name: 'Nom sur le maillot' }).inputValue(), 'Alexinho');
   assert.equal(await dialog.getByRole('spinbutton', { name: /Numéro de maillot/ }).inputValue(), '9');
   await next();
@@ -173,7 +174,7 @@ try {
   await page.getByText(/Maestro .* OVR 65/).waitFor();
   console.log('PASS: 2-step player wizard (validation, kit numbers, position filters), edit, tactical report with AI defence.');
 
-  // ---- Phase 2 : vote, une seule voix par pseudo ----
+  // ---- Phase 2 : vote, une seule voix par compte ----
   await enterArena();
   await click(/réglages fc 27/i);
   await click(/lancer le vote/i); await click(/^confirmer$/i); await waitClosed();
@@ -182,14 +183,14 @@ try {
   await vote('Alex', 'Dommage United');
   await page.getByText('Ton vote est enregistré. Rendez-vous au verdict !', { exact: true }).waitFor();
   await vote('Alex', 'Les Diagonales');
-  await page.getByRole('alert').getByText('Ce pseudo a déjà voté. Un seul vote est possible.', { exact: true }).waitFor();
+  await page.getByRole('alert').getByText('Tu as déjà voté. Un seul vote est possible.', { exact: true }).waitFor();
   await vote('Sam', 'Les Diagonales');
   await page.getByText('Ton vote est enregistré. Rendez-vous au verdict !', { exact: true }).waitFor();
   const voting = await readState();
   assert.deepEqual(voting.proposals.map((p) => p.votes), [1, 1, 0]);
   await pickCard('Dommage United');
   await page.screenshot({ path: 'artifacts/fc27-arena-voting.png', fullPage: true });
-  console.log('PASS: manual start, proposals locked, one vote per exact pseudo.');
+  console.log('PASS: manual start, proposals locked, one vote per account across logins.');
 
   // ---- Mobile ----
   await page.setViewportSize({ width: 390, height: 844 });
@@ -215,7 +216,7 @@ try {
   assert.equal(closed.election.phase, 'closed');
   assert.equal(closed.winner?.club_name, 'Dommage United');
   assert.deepEqual(closed.proposals.map((p) => [p.club_name, p.author_pseudo, p.votes]),
-    [['Dommage United', ' Alex ', 1], ['Les Diagonales', ' Alex ', 1], ['Collectif 27', ' Alex ', 0]]);
+    [['Dommage United', 'Alex', 1], ['Les Diagonales', 'Alex', 1], ['Collectif 27', 'Alex', 0]]);
   assert.equal(await page.getByRole('radio').count(), 0, 'Plus de vote après la clôture.');
   await page.screenshot({ path: 'artifacts/fc27-arena-winner.png', fullPage: true });
   console.log('PASS: manual close, tie resolved by admin, winner and final scores kept.');

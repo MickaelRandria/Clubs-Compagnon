@@ -79,23 +79,38 @@ Appliquer les migrations avec `npm run db:migrate` ; la première visite initial
 
 ### Choix du nom du club
 
-1. **Les idées** — n'importe qui saisit un pseudo et propose un nom. Propositions illimitées, chacune affichée comme une carte.
+1. **Les idées** — chaque compte Discord peut proposer trois noms par campagne. L’auteur vient du compte connecté.
 2. **Le vote** — ouvert manuellement depuis **Réglages FC 27** (au moins une proposition). Les propositions sont alors figées.
-   Chaque **pseudo exact** vote une seule fois ; un second vote du même pseudo est refusé.
+   Chaque **compte Discord** vote une seule fois ; changer de nom affiché ou se reconnecter ne permet pas de revoter.
 3. **Le verdict** — clôture manuelle depuis les réglages (au moins un vote). Le nom le plus voté gagne.
    En cas d'égalité en tête, les réglages demandent de choisir le gagnant parmi les ex æquo ; le départage est mentionné dans le résultat.
 
 Aucun tour, minuteur, quorum ni tâche planifiée. Après la clôture, l'arène affiche le gagnant et le classement final :
 chaque proposition, son auteur et son nombre de votes définitif.
 
-- Les pseudos sont conservés tels que saisis ; aucune authentification ni normalisation.
-- Les réglages sont publics, comme les autres actions : ne pas présenter le profil décoratif du bandeau comme une authentification.
-- Une fiche joueur par pseudo exact, un poste secondaire facultatif. La modification exige de ressaisir le pseudo, sans vérifier l'identité.
+- La lecture reste libre ; proposer, voter, enregistrer une fiche et utiliser les commandes des réglages exigent une connexion Discord.
+- Les commandes de gestion restent accessibles à tous les comptes connectés, sur la confiance ; aucun rôle administrateur n’est ajouté.
+- Une fiche joueur par compte et par campagne, modifiable uniquement par son propriétaire. Le pseudo du joueur reste personnalisable à la création.
 - Les compteurs de postes utilisent les postes principaux ; les alternatives sont listées séparément.
 - Terminer (impossible pendant un vote ouvert) archive la campagne en lecture seule et masque l'onglet. L'arène reste consultable via `/fc27/nom?campagne=ID`.
 - Recommencer archive la campagne actuelle et en crée une vide (propositions, votes et fiches).
 - Toutes les actions passent par une fonction PostgreSQL verrouillée : un vote arrive avant la clôture et compte, ou après et il est refusé.
 - La migration `0004` a remplacé le vote à élimination sans supprimer ses données historiques (tables `fc27_rounds` / `fc27_votes`).
+- Les migrations `0009` et `0010` ajoutent les comptes sans effacer les fiches, propositions ou votes existants. Les anciens enregistrements restent sans propriétaire ; aucun compte n’est associé sur la seule base d’un pseudo identique.
+
+### Connexion Discord
+
+Configurer `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` et `SESSION_SECRET` (au moins 32 caractères aléatoires) côté serveur, puis appliquer `npm run db:migrate`.
+Dans l’application du [portail Discord](https://discord.com/developers/applications), enregistrer les URI de retour exactes :
+`http://localhost:5173/api/auth/callback` en local et `https://VOTRE-DOMAINE/api/auth/callback` en production.
+Le [flux OAuth2 Discord](https://docs.discord.com/developers/topics/oauth2) utilise le scope `identify`.
+Le retour conserve la page FC 27 et la campagne consultées. La session signée dure 30 jours ; le bouton « Se déconnecter » est disponible dans FC 27 et dans l’arène.
+Une configuration incomplète laisse la consultation disponible et affiche « Connexion indisponible ».
+
+Vérification : `npm run test:fc27` pour les règles métier et l’authentification. Pour les parcours navigateur,
+lancer `npm run test:fc27:serve`, puis exécuter successivement `npm run test:fc27:browser`,
+`npm run test:auth:browser`, `npm run test:lookalikes:browser` et `npm run test:player-tour:browser`.
+Ces parcours utilisent une base PGlite isolée et une réponse Discord simulée ; ils n’écrivent pas dans la base du club.
 
 ### Fiche joueur (tunnel en 2 étapes)
 

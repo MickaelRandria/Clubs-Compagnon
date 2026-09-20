@@ -3,13 +3,11 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import type { FC27State } from '../shared/fc27.js';
 import { lookalikeById } from '../shared/data/lookalikes.js';
+import { signIn, resetCampaign } from './browser-auth.js';
 
 // Serveur isolé exclusivement : aucune écriture dans la base du club.
 const origin = 'http://127.0.0.1:5174';
 const readState = async () => (await (await fetch(`${origin}/api/fc27`)).json()) as FC27State;
-const initial = await readState();
-await fetch(`${origin}/api/fc27`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ action: 'reset', campaignId: initial.campaign.id }) });
 await mkdir('artifacts', { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME_EXECUTABLE ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -21,6 +19,7 @@ page.on('request', (request) => { if (request.url().includes('/api/fc27/lookalik
 const dialog = page.getByRole('dialog');
 const input = () => dialog.getByRole('searchbox', { name: 'Joueur de référence' });
 const create = async (pseudo: string, number: number) => {
+  await signIn(page, pseudo);
   await page.getByRole('button', { name: /créer ma fiche/i }).click();
   await dialog.getByLabel('Pseudo', { exact: true }).fill(pseudo);
   await dialog.getByLabel('Nom sur le maillot').fill(pseudo);
@@ -32,6 +31,8 @@ const save = async () => {
   await dialog.waitFor({ state: 'hidden' });
 };
 try {
+  await signIn(page, 'LookalikeSetup');
+  await resetCampaign(page);
   await page.goto(`${origin}/fc27`);
   await page.getByRole('button', { name: 'Gardien 0 Tenu par l’IA', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Défenseur central 0 Tenu par l’IA', exact: true }).waitFor();
@@ -50,9 +51,7 @@ try {
   assert.deepEqual([saved.primary_position, saved.archetype, saved.height_cm, saved.preferred_foot, saved.attribute_priorities],
     [zidane.position, zidane.archetype, zidane.heightCm, zidane.foot, zidane.priorities]);
   await page.reload();
-  await page.getByRole('button', { name: /modifier une fiche/i }).click();
-  await dialog.getByLabel('Pseudo exact de la fiche').fill('ZizouTest');
-  await dialog.getByRole('button', { name: /retrouver la fiche/i }).click();
+  await page.getByRole('button', { name: /modifier ma fiche/i }).click();
   await dialog.getByRole('button', { name: /^suivant/i }).click();
   assert.equal(await dialog.locator('.fc27-spend-list select').evaluateAll((nodes) => nodes.map((node) => (node as HTMLSelectElement).value)).then(JSON.stringify), JSON.stringify(zidane.priorities));
   await dialog.locator('details.fc27-advanced > summary').click();

@@ -88,7 +88,7 @@ export function BuildSheet({ player, onClose }: { player: FC27Player; onClose: (
               </li>)}
             </ol>}
           {!chosenOrder && priorities.length > 0
-            && <p className="fc27-sheet-note">Ordre conseillé par défaut. Ouvre « Modifier une fiche » pour le réorganiser.</p>}
+            && <p className="fc27-sheet-note">Ordre conseillé par défaut. Le propriétaire peut le réorganiser depuis « Modifier ma fiche ».</p>}
         </div>
 
         {archetype && <div className="fc27-sheet-card">

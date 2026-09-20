@@ -4,7 +4,7 @@ import {
   archetypeById, attributesForLine,
 } from './data/archetypes.js';
 import type { Lookalike } from './data/lookalikes.js';
-import { FEET, POSITION_CODES, POSITION_LABELS } from './fc27.js';
+import { FEET, POSITION_CODES, POSITION_LABELS, type PositionRole } from './fc27.js';
 
 // Repli du « Je veux jouer comme… » pour les joueurs absents de la liste curée.
 // La structure est contrainte au catalogue puis revérifiée ici. Cela ne vérifie pas
@@ -32,9 +32,24 @@ const era = z.string().transform((text) => {
   return single ? `${single[0]}-` : text.replace(/[*_`]/g, '').trim().slice(0, 20);
 }).pipe(z.string().min(4).max(20));
 
+/**
+ * Raccourcit proprement au lieu de rejeter. Un modèle léger déborde régulièrement sur
+ * la prose ; perdre toute la fiche d'un joueur pour une phrase de trop serait absurde.
+ * On coupe à la dernière fin de phrase sous le plafond, sinon au dernier mot.
+ */
+export function shorten(text: string, limit: number): string {
+  const clean = text.replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= limit) return clean;
+  const head = clean.slice(0, limit);
+  const sentence = Math.max(head.lastIndexOf('. '), head.lastIndexOf('! '), head.lastIndexOf('? '));
+  if (sentence > limit * 0.4) return head.slice(0, sentence + 1).trim();
+  const word = head.lastIndexOf(' ');
+  return `${head.slice(0, word > 0 ? word : limit).trim()}…`;
+}
+
 const plainText = (min: number, budget: number) => z.string()
-  .transform((text) => text.replace(/[*_`]/g, '').trim())
-  .pipe(z.string().min(min).max(Math.round(budget * MARGIN)));
+  .transform((text) => shorten(text, Math.round(budget * MARGIN)))
+  .pipe(z.string().min(min));
 
 export const lookupSchema = z.object({
   /** Nom usuel du joueur ; sa véracité ne peut pas être garantie par le schéma. */
@@ -109,6 +124,29 @@ export const lookupPrompt = (query: string) => [
 ].join('\n');
 
 /**
+ * Postes équivalents d'une ligne à l'autre.
+ *
+ * Le modèle donne souvent le poste réel du joueur et l'archétype qui décrit vraiment son
+ * jeu, et les deux ne tombent pas sur la même ligne de notre catalogue : Olise est un
+ * « milieu gauche » qui joue comme un ailier, or aucun archétype d'ailier n'existe en MG.
+ * Plutôt que de refuser la fiche, on glisse le poste vers son équivalent le plus proche
+ * dans la ligne de l'archétype. Un seul pas, et seulement entre postes réellement voisins.
+ */
+const NEAREST: Partial<Record<PositionRole, PositionRole[]>> = {
+  MG: ['AG'], MD: ['AD'], MOC: ['AT'],
+  AG: ['MG'], AD: ['MD'], AT: ['MOC'],
+  DG: ['MG'], DD: ['MD'],
+};
+
+/** Poste retenu pour cet archétype : celui du modèle s'il colle, sinon son voisin compatible. */
+export function reconcilePosition(position: PositionRole, archetypeId: string): PositionRole | null {
+  const archetype = archetypeById(archetypeId);
+  if (!archetype) return null;
+  if (archetype.line === LINE_OF_POSITION[position]) return position;
+  return NEAREST[position]?.find((candidate) => LINE_OF_POSITION[candidate] === archetype.line) ?? null;
+}
+
+/**
  * Contrôle tout ce que le schéma JSON ne peut pas garantir : cohérence archétype/poste,
  * attributs proposables à cette ligne, doublons. Renvoie `null` si quoi que ce soit cloche.
  */
@@ -116,10 +154,14 @@ export function validateLookup(result: LookupResult): Lookalike | null {
   if (!result.known) return null;
   const archetype = archetypeById(result.archetype);
   if (!archetype) return null;
-  // Un archétype hors ligne ne serait pas sélectionnable dans le tunnel : la fiche serait invalide.
-  if (archetype.line !== LINE_OF_POSITION[result.position]) return null;
+  // Un archétype hors ligne ne serait pas sélectionnable dans le tunnel : on rapproche
+  // le poste, et on ne refuse que si aucun voisin ne convient.
+  const position = reconcilePosition(result.position, result.archetype);
+  if (!position) return null;
 
   const pool = new Set(attributesForLine(archetype.line));
+  // Un attribut hors de la ligne (un plongeon pour un attaquant) est une vraie erreur du
+  // modèle, pas une limite de notre catalogue : on refuse au lieu de corriger en silence.
   const priorities = result.priorities;
   if (new Set(priorities).size !== priorities.length || priorities.some((key) => !pool.has(key))) return null;
 
@@ -127,7 +169,7 @@ export function validateLookup(result: LookupResult): Lookalike | null {
     id: `modele:${encodeURIComponent(result.name.normalize('NFC').toLowerCase())}`,
     name: result.name,
     era: result.era,
-    position: result.position,
+    position,
     archetype: result.archetype,
     heightCm: result.heightCm,
     foot: result.foot,

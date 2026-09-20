@@ -154,6 +154,9 @@ export const fc27Campaigns = pgTable('fc27_campaigns', {
 export const fc27NameProposals = pgTable('fc27_name_proposals', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   campaignId: integer('campaign_id').notNull().references(() => fc27Campaigns.id, { onDelete: 'cascade' }),
+  /** Compte auteur (migration 0010). Null pour les propositions d'avant les comptes. */
+  authorAccountId: integer('author_account_id').references(() => clubAccounts.id, { onDelete: 'set null' }),
+  /** Nom affiché au moment de la proposition, copié depuis le compte. */
   authorPseudo: text('author_pseudo').notNull(),
   clubName: text('club_name').notNull(),
   finalVotes: integer('final_votes'),
@@ -161,6 +164,7 @@ export const fc27NameProposals = pgTable('fc27_name_proposals', {
 }, (t) => [
   unique('fc27_proposal_campaign_key').on(t.id, t.campaignId),
   index('fc27_proposal_campaign_idx').on(t.campaignId),
+  index('fc27_proposal_author_idx').on(t.campaignId, t.authorAccountId),
   check('fc27_proposal_pseudo_check', sql`char_length(${t.authorPseudo}) between 1 and 40 and ${t.authorPseudo} ~ '[^[:space:]]'`),
   check('fc27_name_check', sql`char_length(${t.clubName}) between 1 and 60 and ${t.clubName} ~ '[^[:space:]]'`),
   check('fc27_proposal_final_votes_check', sql`${t.finalVotes} >= 0`),
@@ -230,6 +234,20 @@ export const fc27StaffReports = pgTable('fc27_staff_reports', {
   check('fc27_staff_report_hash_check', sql`char_length(${t.squadHash}) between 1 and 80`),
 ]);
 
+export const clubAccounts = pgTable('club_accounts', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  /** Identifiant Discord : c'est lui qui fait l'unicité d'un compte, pas le pseudo. */
+  discordId: text('discord_id').notNull(),
+  username: text('username').notNull(),
+  displayName: text('display_name'),
+  avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('club_account_discord_key').on(t.discordId),
+  check('club_account_username_check', sql`char_length(${t.username}) between 1 and 60`),
+]);
+
 export const fc27PlayerProfiles = pgTable('fc27_player_profiles', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   campaignId: integer('campaign_id').notNull().references(() => fc27Campaigns.id, { onDelete: 'cascade' }),
@@ -246,6 +264,8 @@ export const fc27PlayerProfiles = pgTable('fc27_player_profiles', {
   playStyles: text('play_styles').array().notNull().default(sql`'{}'::text[]`),
   // Ordre de dépense des points choisi par le joueur (migration 0007), vide pour les fiches antérieures.
   attributePriorities: text('attribute_priorities').array().notNull().default(sql`'{}'::text[]`),
+  /** Compte propriétaire (migration 0009). Null pour les fiches d'avant les comptes. */
+  accountId: integer('account_id').references(() => clubAccounts.id, { onDelete: 'set null' }),
   weakFoot: smallint('weak_foot'),
   skillMoves: smallint('skill_moves'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -253,6 +273,8 @@ export const fc27PlayerProfiles = pgTable('fc27_player_profiles', {
 }, (t) => [
   unique('fc27_player_pseudo_key').on(t.campaignId, t.pseudo),
   uniqueIndex('fc27_player_kit_number_key').on(t.campaignId, t.kitNumber).where(sql`${t.kitNumber} is not null`),
+  // Une seule fiche par compte et par campagne.
+  uniqueIndex('fc27_player_account_key').on(t.campaignId, t.accountId).where(sql`${t.accountId} is not null`),
   index('fc27_player_position_idx').on(t.campaignId, t.primaryPosition),
   check('fc27_player_pseudo_check', sql`char_length(${t.pseudo}) between 1 and 40 and ${t.pseudo} ~ '[^[:space:]]'`),
   check('fc27_player_name_check', sql`char_length(${t.inGameName}) <= 60`),
@@ -294,10 +316,12 @@ export const fc27NameVotes = pgTable('fc27_name_votes', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   campaignId: integer('campaign_id').notNull().references(() => fc27NameElections.campaignId, { onDelete: 'cascade' }),
   proposalId: integer('proposal_id').notNull(),
+  /** Compte votant (migration 0010). Une voix par compte et par campagne. */
+  voterAccountId: integer('voter_account_id').references(() => clubAccounts.id, { onDelete: 'set null' }),
   voterPseudo: text('voter_pseudo').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  unique('fc27_name_vote_pseudo_key').on(t.campaignId, t.voterPseudo),
+  uniqueIndex('fc27_name_vote_account_key').on(t.campaignId, t.voterAccountId).where(sql`${t.voterAccountId} is not null`),
   foreignKey({ columns: [t.proposalId, t.campaignId], foreignColumns: [fc27NameProposals.id, fc27NameProposals.campaignId] }),
   index('fc27_name_vote_proposal_idx').on(t.proposalId, t.campaignId),
   check('fc27_name_vote_pseudo_check', sql`char_length(${t.voterPseudo}) between 1 and 40 and ${t.voterPseudo} ~ '[^[:space:]]'`),

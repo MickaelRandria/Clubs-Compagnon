@@ -339,3 +339,38 @@ svg.fc27-player-thumb { padding: 6px 4px; }
 .fc27-position--ai .fc27-position-free { color: var(--fc-brume); letter-spacing: .1em; }
 .fc27-policy-note { color: var(--fc-glacier); font-weight: 700; }
 .fc27-status--ai { background: var(--p-steel); color: var(--p-ink); }
+
+/* ---------- Compte connecté ----------
+   Le bandeau est CLAIR (--p-chalk) : le texte doit être sombre, sinon le pseudo
+   disparaît sur le fond. Première version invisible faute d'avoir vérifié le contexte. */
+.fc27-account { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; padding: 5px 6px 5px 8px;
+                background: var(--p-ink); color: #fff; }
+.fc27-account img, .fc27-account b { width: 26px; height: 26px; flex-shrink: 0; }
+.fc27-account img { object-fit: cover; }
+.fc27-account b { display: grid; place-items: center; background: var(--fc-blue); color: #fff; font: 800 11px/1 var(--fc-display); }
+.fc27-account-label { font: 800 10px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; color: var(--fc-glacier); }
+.fc27-account-name { display: block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                     font: 800 14px/1.1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; color: #fff; }
+.fc27-account button { padding: 7px 10px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .16); color: #fff;
+                       cursor: pointer; font: 700 11px/1 var(--fc-text); }
+.fc27-account button:hover:not(:disabled) { background: var(--fc-rouge); }
+.fc27-account button:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+/* Le bouton des réglages perd son `margin-left: auto` quand la pastille le précède. */
+.fc27-account + .fc27-text-button { margin-left: 0; }
+.fc27-pad--waiting { opacity: .6; cursor: default; }
+.fc27-signin-notice { margin: 10px 0 0; padding: 10px 12px; background: #FFE3E7; color: var(--p-ink);
+                      box-shadow: inset 4px 0 0 var(--fc-rouge); font: 600 13px/1.4 var(--fc-text); }
+/* Rappel du compte là où l'action se fait, pas seulement dans le bandeau du haut. */
+.fc27-player-signed { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 10px; padding: 5px 10px 5px 6px;
+                      background: rgba(6, 12, 31, .35); }
+.fc27-player-signed img, .fc27-player-signed b { width: 22px; height: 22px; flex-shrink: 0; }
+.fc27-player-signed b { display: grid; place-items: center; background: #fff; color: var(--fc-blue); font: 800 10px/1 var(--fc-display); }
+.fc27-player-signed span { font: 700 12px/1.2 var(--fc-text); color: #DCE6FF; }
+.fc27-player-signed strong { font: 800 13px/1.2 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; color: #fff; }
+
+@media (max-width: 767px) {
+  .fc27-account-label { display: none; }
+  .fc27-account-name { max-width: 90px; }
+}
+
+a.fc27-pad { display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }

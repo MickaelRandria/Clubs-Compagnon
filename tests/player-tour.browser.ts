@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import { PLAYER_TOUR_KEY, PLAYER_TOUR_STEPS } from '../src/lib/player-tour.js';
+import { signIn } from './browser-auth.js';
 
 const origin = 'http://127.0.0.1:5174';
 await mkdir('artifacts', { recursive: true });
@@ -33,6 +34,7 @@ const visibleStep = async (index: number) => {
   assert.equal(await page.evaluate(() => document.querySelector('dialog.tour')?.matches(':modal')), true);
 };
 try {
+  await signIn(page, 'GuideTest');
   await page.goto(`${origin}/fc27`);
   await page.getByRole('button', { name: /créer ma fiche/i }).click();
   await wizard.getByRole('complementary', { name: 'Guide de création du joueur' }).waitFor();
@@ -107,6 +109,7 @@ try {
     await tour.waitFor({ state: 'detached' });
   }
   await wizard.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.reload();
   await page.getByRole('button', { name: /créer ma fiche/i }).click();
   assert.equal(await wizard.getByRole('complementary', { name: 'Guide de création du joueur' }).count(), 0);

@@ -1,6 +1,8 @@
 import { fc27ActionSchema } from '../shared/fc27-validation.js';
 import type { FC27Request } from './fc27-service.js';
 import { handle, HttpError } from './http.js';
+import { readSession } from './session.js';
+import { requestOrigin } from './discord.js';
 
 const headers = { 'Cache-Control': 'no-store' };
 export function createFC27Handlers(service: FC27Request) {
@@ -12,10 +14,15 @@ export function createFC27Handlers(service: FC27Request) {
       return Response.json(await service('state', id), { headers });
     }),
     POST: (request: Request) => handle(async () => {
+      const accountId = readSession(request);
+      if (accountId === null) throw new HttpError(401, 'Connecte-toi avec Discord pour participer.');
+      const origin = request.headers.get('origin');
+      if (origin && origin !== requestOrigin(request)) throw new HttpError(403, 'Cette action doit être envoyée depuis le site.');
       const payload: unknown = await request.json().catch(() => { throw new HttpError(400, 'JSON invalide.'); });
       const result = fc27ActionSchema.safeParse(payload);
       if (!result.success) throw new HttpError(400, 'Vérifie les champs du formulaire.', result.error.flatten().fieldErrors);
-      return Response.json(await service(result.data), { headers });
+      // L'identité vient du cookie signé, pas du corps de la requête.
+      return Response.json(await service(result.data, undefined, accountId), { headers });
     }),
   };
 }

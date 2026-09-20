@@ -19,7 +19,11 @@ export const FEET = ['Droit', 'Gauche'] as const;
 export type Foot = typeof FEET[number];
 
 export type { FC27Action } from './fc27-validation.js';
-export interface FC27Proposal { id: number; author_pseudo: string; club_name: string; created_at: string; votes: number }
+export interface FC27Proposal {
+  id: number; author_pseudo: string; club_name: string; created_at: string; votes: number;
+  /** Compte auteur. Null pour les propositions d'avant les comptes (migration 0010). */
+  author_account_id?: number | null;
+}
 export interface FC27Election {
   phase: 'proposing' | 'voting' | 'closed' | 'cancelled'; started_at: string | null; closed_at: string | null;
   winner_proposal_id: number | null; tie_break_applied: boolean;
@@ -34,6 +38,8 @@ export interface FC27Player {
   /** Ordre de dépense des points, clés de ATTRIBUTES. Vide = pas encore choisi (ordre par défaut calculé à l'affichage).
    *  Absent des fiches renvoyées par une base où la migration 0007 n'est pas encore passée. */
   attribute_priorities?: string[];
+  /** Compte propriétaire de la fiche. `null` pour les fiches créées avant les comptes (migration 0009). */
+  account_id?: number | null;
 }
 export interface FC27State {
   campaign: { id: number; status: 'preparation' | 'archived'; created_at: string; archived_at: string | null };

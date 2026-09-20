@@ -76,3 +76,35 @@ test('le helper partagé masque la clé dans les erreurs réseau et HTTP', async
       (error: unknown) => error instanceof StaffUnavailable && !error.message.includes(apiKey));
   }
 });
+
+test('un poste hors ligne est rapproché au lieu d’être refusé', async () => {
+  const { reconcilePosition } = await import('../shared/lookalike-lookup.js');
+  // Cas réel : le modèle décrit Olise en « milieu gauche » avec un archétype d'ailier.
+  assert.equal(reconcilePosition('MG', 'spark'), 'AG');
+  assert.equal(reconcilePosition('MD', 'spark'), 'AD');
+  assert.equal(reconcilePosition('MOC', 'magician'), 'AT');
+  assert.equal(reconcilePosition('AG', 'creator'), 'MG');
+  // Déjà cohérent : on n'y touche pas.
+  assert.equal(reconcilePosition('BU', 'finisher'), 'BU');
+  assert.equal(reconcilePosition('MC', 'maestro'), 'MC');
+  // Aucun voisin plausible : on refuse plutôt que d'inventer.
+  assert.equal(reconcilePosition('G', 'finisher'), null);
+  assert.equal(reconcilePosition('BU', 'boss'), null);
+  assert.equal(reconcilePosition('MC', 'spark'), null);
+});
+
+test('une prose trop longue est raccourcie proprement, pas rejetée', async () => {
+  const { shorten } = await import('../shared/lookalike-lookup.js');
+  const deux = 'Première phrase complète et lisible. Seconde phrase qui déborde largement du plafond fixé.';
+  const coupe = shorten(deux, 45);
+  assert.equal(coupe, 'Première phrase complète et lisible.', 'on coupe à la fin de phrase');
+  assert.ok(!coupe.endsWith('…'));
+  // Sans fin de phrase exploitable, on coupe au mot et on le signale.
+  const long = shorten('un mot '.repeat(40), 30);
+  assert.ok(long.length <= 31 && long.endsWith('…'), long);
+  assert.ok(!long.endsWith(' …'));
+  // Sous le plafond, rien ne change.
+  assert.equal(shorten('Court et net.', 100), 'Court et net.');
+  // Le formatage est retiré au passage.
+  assert.equal(shorten('Un **gras** ici.', 100), 'Un gras ici.');
+});

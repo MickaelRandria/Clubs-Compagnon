@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import type { FC27Proposal, FC27State } from '../../shared/fc27';
 import { useFC27, useFC27Action } from '../api/fc27';
+import { useMe } from '../api/auth';
+import { AccountChip, SignInButton, SignInNotice } from '../components/fc27/SignIn';
 import { ActionFeedback, FC27Dialog } from '../components/fc27/FC27Dialog';
 import { FC27Settings } from '../components/fc27/FC27Settings';
 import { usePageTitle } from '../lib/hooks';
@@ -30,30 +32,43 @@ function NameCard({ proposal, number, winner = false }: { proposal: FC27Proposal
   </div>;
 }
 
-function ProposalDialog({ state, onClose }: { state: FC27State; onClose: () => void }) {
+/** Nombre de propositions qu'un compte peut porter. Doit rester aligné sur `fc27_dispatch`. */
+const MAX_PROPOSALS = 3;
+
+function ProposalDialog({ state, mine, onClose }: { state: FC27State; mine: number; onClose: () => void }) {
   const mutation = useFC27Action();
-  const [pseudo, setPseudo] = useState('');
   const [name, setName] = useState('');
+  const full = mine >= MAX_PROPOSALS;
   function submit(event: FormEvent) {
     event.preventDefault();
-    mutation.mutate({ action: 'propose', campaignId: state.campaign.id, pseudo, name }, { onSuccess: onClose });
+    mutation.mutate({ action: 'propose', campaignId: state.campaign.id, name }, { onSuccess: onClose });
   }
   return <FC27Dialog title="Le prochain nom, c’est le tien ?" onClose={onClose}>
-    <p className="fc27-muted">Une idée, une carte. Propose autant de noms que tu veux.</p>
+    <p className="fc27-muted">
+      Ton nom d’auteur vient de ton compte Discord. {full
+        ? `Tu portes déjà ${MAX_PROPOSALS} propositions, le maximum.`
+        : `Il te reste ${MAX_PROPOSALS - mine} proposition${MAX_PROPOSALS - mine > 1 ? 's' : ''} sur ${MAX_PROPOSALS}.`}
+    </p>
     <form className="fc27-form" onSubmit={submit}>
-      <label>Ton pseudo<input required autoFocus maxLength={40} autoComplete="off" value={pseudo} onChange={(e) => setPseudo(e.target.value)} /></label>
-      <label>Nom du club proposé<input required maxLength={60} placeholder="Un nom qui résonne dans le stade" value={name} onChange={(e) => setName(e.target.value)} /></label>
+      <label>Nom du club proposé<input required autoFocus maxLength={60} disabled={full}
+        placeholder="Un nom qui résonne dans le stade" value={name} onChange={(e) => setName(e.target.value)} /></label>
       <ActionFeedback error={mutation.error} />
-      <button className="fc27-button" disabled={mutation.isPending || !pseudo.trim() || !name.trim()}>{mutation.isPending ? 'Création de la carte…' : 'Ajouter ma proposition ↗'}</button>
+      <button className="fc27-button" disabled={mutation.isPending || full || !name.trim()}>
+        {mutation.isPending ? 'Création de la carte…' : 'Ajouter ma proposition ↗'}
+      </button>
     </form>
   </FC27Dialog>;
 }
 
 function Arena({ state }: { state: FC27State }) {
+  const [params] = useSearchParams();
   const [dialog, setDialog] = useState<'propose' | 'settings' | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
-  const [pseudo, setPseudo] = useState('');
   const mutation = useFC27Action();
+  const me = useMe();
+  const account = me.data?.signedIn ? me.data.account : null;
+  // Propositions déjà portées par ce compte : la limite s'affiche avant de cliquer.
+  const mine = account ? state.proposals.filter((p) => p.author_account_id === account.id).length : 0;
   const phase = state.election.phase;
   const active = state.campaign.status === 'preparation';
   const canVote = active && phase === 'voting';
@@ -65,7 +80,8 @@ function Arena({ state }: { state: FC27State }) {
   function vote(event: FormEvent) {
     event.preventDefault();
     if (!selectedProposal || !canVote) return;
-    mutation.mutate({ action: 'vote', campaignId: state.campaign.id, proposalId: selectedProposal.id, pseudo }, { onSuccess: () => { setPseudo(''); setSelected(null); } });
+    mutation.mutate({ action: 'vote', campaignId: state.campaign.id, proposalId: selectedProposal.id },
+      { onSuccess: () => setSelected(null) });
   }
   return <div className={`naming-arena${canVote ? ' naming-arena--voting' : ''}${state.winner ? ' naming-arena--result' : ''}`}>
     <div className="arena-stadium" aria-hidden="true"><div className="arena-beam arena-beam--left" /><div className="arena-beam arena-beam--right" /><div className="arena-floodlights arena-floodlights--left" /><div className="arena-floodlights arena-floodlights--right" /><div className="arena-stands" /><div className="arena-pitch" /></div>
@@ -75,14 +91,19 @@ function Arena({ state }: { state: FC27State }) {
       <button className="arena-settings" onClick={() => setDialog('settings')}>Réglages FC 27 <span aria-hidden="true">↗</span></button>
     </header>
     <main className="arena-main">
+      <AccountChip />
+      <SignInNotice reason={params.get('connexion')} />
       <nav className="arena-phases" aria-label="Étapes du choix du nom">
         {(['proposing', 'voting', 'closed'] as const).map((step, index) => <span key={step} aria-current={phase === step ? 'step' : undefined}><b>{String(index + 1).padStart(2, '0')}</b>{['Les idées', 'Le vote', 'Le verdict'][index]}</span>)}
       </nav>
       <section className={`arena-intro${state.winner ? ' arena-intro--winner' : ''}`} aria-labelledby="arena-title">
         <div className="arena-intro-copy"><p className="arena-kicker"><span /> {phaseLabel}</p>
           <h1 id="arena-title">{state.winner ? <><span className="arena-winner-pretitle">Notre nom pour FC 27</span>{state.winner.club_name}<em>Une nouvelle ère.</em></> : phase === 'cancelled' ? <>Les noms de<br /><em>notre histoire.</em></> : <>Un club.<br />Un nom.<br /><em>Notre choix.</em></>}</h1>
-          <p className="arena-description">{state.winner ? `Proposé par ${state.winner.author_pseudo}. Porté par ${state.winner.votes} voix sur ${total}. Le prochain chapitre peut commencer.` : canPropose ? 'Avant le premier coup de sifflet, écrivons notre identité. Le prochain nom du club commence avec ton idée.' : canVote ? 'Un pseudo. Une voix. Choisis la carte qui portera nos couleurs sur FC 27.' : 'Les propositions et leurs scores sont conservés ici, en mémoire du collectif.'}</p>
-          {canPropose && <button className="arena-primary" onClick={() => setDialog('propose')}>Proposer un nom <span aria-hidden="true">↗</span></button>}
+          <p className="arena-description">{state.winner ? `Proposé par ${state.winner.author_pseudo}. Porté par ${state.winner.votes} voix sur ${total}. Le prochain chapitre peut commencer.` : canPropose ? 'Avant le premier coup de sifflet, écrivons notre identité. Le prochain nom du club commence avec ton idée.' : canVote ? 'Un compte. Une voix. Choisis la carte qui portera nos couleurs sur FC 27.' : 'Les propositions et leurs scores sont conservés ici, en mémoire du collectif.'}</p>
+          {canPropose && (account
+            ? <button className="arena-primary" disabled={mine >= MAX_PROPOSALS} onClick={() => setDialog('propose')}>{mine >= MAX_PROPOSALS ? 'Tes 3 noms sont proposés' : 'Proposer un nom'} <span aria-hidden="true">↗</span></button>
+            : <SignInButton className="arena-primary" />)}
+          {canPropose && <p className="fc27-small">{account ? `${mine} / ${MAX_PROPOSALS} noms proposés` : 'Trois propositions maximum par compte Discord.'}</p>}
           {canVote && <a className="arena-primary" href="#arena-cards">Choisir ma carte <span aria-hidden="true">↓</span></a>}
           {state.winner && <>
             <p className="arena-result-note">Vote clos le {new Date(state.election.closed_at!).toLocaleString('fr-FR')}{state.election.tie_break_applied ? ' · Égalité départagée manuellement parmi les premiers.' : ''}</p>
@@ -95,8 +116,10 @@ function Arena({ state }: { state: FC27State }) {
         <div className="arena-collection-head"><div><p className="arena-kicker">{phase === 'closed' ? 'Le vote, pour mémoire' : 'La collection du collectif'}</p><h2 id="arena-collection-title">{phase === 'closed' ? 'Le classement final' : phase === 'cancelled' ? 'Les propositions archivées' : 'Les noms en jeu'}<span> / {String(proposals.length).padStart(2, '0')}</span></h2></div>
           <span className="arena-total"><strong>{total}</strong> vote{total > 1 ? 's' : ''} {phase === 'closed' ? 'au total' : 'exprimé(s)'}</span>
         </div>
-        {canVote && <p className="arena-collection-help" id="arena-choice-help">Sélectionne une carte, puis saisis ton pseudo pour confirmer ton vote définitif.</p>}
-        {proposals.length === 0 ? <div className="arena-empty"><ClubCrest /><h3>La première carte est à écrire.</h3><p>Un nom, une idée, une nouvelle histoire pour le club.</p>{canPropose && <button className="arena-secondary" onClick={() => setDialog('propose')}>Créer la première carte ↗</button>}</div> : <div className="arena-card-grid" role={canVote ? 'radiogroup' : undefined} aria-label={canVote ? 'Choix du nom du club' : undefined} aria-describedby={canVote ? 'arena-choice-help' : undefined}>
+        {canVote && <p className="arena-collection-help" id="arena-choice-help">Sélectionne une carte, puis confirme ton vote définitif. Une seule voix par compte.</p>}
+        {proposals.length === 0 ? <div className="arena-empty"><ClubCrest /><h3>La première carte est à écrire.</h3><p>Un nom, une idée, une nouvelle histoire pour le club.</p>{canPropose && (account
+              ? <button className="arena-secondary" onClick={() => setDialog('propose')}>Créer la première carte ↗</button>
+              : <SignInButton className="arena-secondary" />)}</div> : <div className="arena-card-grid" role={canVote ? 'radiogroup' : undefined} aria-label={canVote ? 'Choix du nom du club' : undefined} aria-describedby={canVote ? 'arena-choice-help' : undefined}>
           {proposals.map((proposal, index) => canVote ? <label className={`arena-card-slot${selected === proposal.id ? ' is-selected' : ''}`} key={proposal.id}>
             <input className="arena-card-radio" type="radio" name="club-name" value={proposal.id} checked={selected === proposal.id} onChange={() => { setSelected(proposal.id); mutation.reset(); }} aria-label={proposal.club_name} disabled={mutation.isPending} />
             <NameCard proposal={proposal} number={index + 1} />
@@ -104,17 +127,21 @@ function Arena({ state }: { state: FC27State }) {
           </label> : <article className="arena-card-slot" key={proposal.id}><NameCard proposal={proposal} number={index + 1} winner={state.winner?.id === proposal.id} /><span className="arena-card-prompt">{state.winner?.id === proposal.id ? '★ Nom gagnant' : phase === 'proposing' ? 'En attente du vote' : `${proposal.votes} vote(s) · Score final`}</span></article>)}
         </div>}
       </section>
-      <footer className="arena-footer"><span>FC 27 · Phase de préparation</span><span>{canPropose ? 'Toutes les idées ont leur place.' : canVote ? 'Un vote par pseudo exact · Clôture manuelle' : 'Les choix du collectif, conservés.'}</span></footer>
+      <footer className="arena-footer"><span>FC 27 · Phase de préparation</span><span>{canPropose ? 'Toutes les idées ont leur place.' : canVote ? 'Une voix par compte · Clôture manuelle' : 'Les choix du collectif, conservés.'}</span></footer>
     </main>
     {canVote && <form className="arena-vote-dock" onSubmit={vote}>
       <div className="arena-vote-dock-inner"><div className="arena-selection"><span>Ta sélection</span><strong>{selectedProposal?.club_name ?? 'Choisis une carte au-dessus'}</strong></div>
-        <label className="arena-pseudo">Ton pseudo<input required maxLength={40} autoComplete="off" placeholder="Pseudo exact" value={pseudo} onChange={(event) => setPseudo(event.target.value)} /></label>
-        <button className="arena-primary" disabled={mutation.isPending || !selectedProposal || !pseudo.trim()}>{mutation.isPending ? 'Enregistrement…' : 'Confirmer mon vote'} <span aria-hidden="true">↗</span></button>
+        {account
+          ? <span className="arena-voter"><span>Tu votes en tant que</span><strong><bdi>{account.displayName || account.username}</bdi></strong></span>
+          : <span className="arena-voter"><span>Une voix par personne</span><strong>Connexion requise</strong></span>}
+        {account
+          ? <button className="arena-primary" disabled={mutation.isPending || !selectedProposal}>{mutation.isPending ? 'Enregistrement…' : 'Confirmer mon vote'} <span aria-hidden="true">↗</span></button>
+          : <SignInButton className="arena-primary" />}
         <div className="arena-vote-feedback"><ActionFeedback error={mutation.error} success={mutation.isSuccess && 'Ton vote est enregistré. Rendez-vous au verdict !'} /></div>
       </div>
     </form>}
     {dialog === 'settings' && <FC27Settings state={state} onClose={() => setDialog(null)} />}
-    {dialog === 'propose' && canPropose && <ProposalDialog state={state} onClose={() => setDialog(null)} />}
+    {dialog === 'propose' && canPropose && account && <ProposalDialog state={state} mine={mine} onClose={() => setDialog(null)} />}
   </div>;
 }
 

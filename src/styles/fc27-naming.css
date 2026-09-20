@@ -190,3 +190,11 @@ label.arena-card-slot { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .name-card, .arena-primary { transition: none; }
 }
+
+/* Identité du votant : le pseudo n'est plus saisi, il vient du compte. */
+.arena-voter { display: grid; gap: 3px; min-width: 0; }
+.arena-voter > span { font: 700 11px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; color: var(--fc-brume); }
+.arena-voter strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                      font: 800 17px/1.1 var(--fc-display); letter-spacing: .02em; text-transform: uppercase; color: #fff; }
+/* Le bouton de connexion prend la place du bouton d'action : même gabarit. */
+a.arena-primary, a.arena-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }

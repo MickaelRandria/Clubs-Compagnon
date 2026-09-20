@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { FC27Action, FC27State } from '../../shared/fc27';
 import type { StaffResponse } from '../../server/staff-http';
 import type { LookupResponse } from '../../server/lookalike-http';
-import { apiRequest } from './client';
+import { apiRequest, ApiError } from './client';
 
 export function useFC27(campaignId?: number) {
   return useQuery({
@@ -18,6 +18,9 @@ export function useFC27Action() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (action: FC27Action) => apiRequest<FC27State>('/api/fc27', { method: 'POST', body: JSON.stringify(action) }),
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 401) void client.invalidateQueries({ queryKey: ['me'] });
+    },
     // Refresh after conflicts too: another visitor may have closed the ballot.
     onSettled: () => client.invalidateQueries({ queryKey: ['fc27'] }),
   });

@@ -10,6 +10,7 @@ import { createLookalikeHandler } from '../server/lookalike-http.js';
 import { StaffUnavailable } from '../server/staff-mistral.js';
 import { LOOKALIKES } from '../shared/data/lookalikes.js';
 import { createAuthHandlers, type Account } from '../server/auth-http.js';
+import { createAuthRouter } from '../server/auth-router.js';
 import { createProfileHandlers, createProfileService } from '../server/profile-http.js';
 
 // Identifiants factices, jamais ceux de l'application Discord du club.
@@ -48,6 +49,7 @@ const auth = createAuthHandlers({
     return result.rows[0];
   },
 }, { exchange: async code => ({ discordId: code === 'AdminProfil' ? '777000000000000001' : `test-${code}`, username: code, displayName: code, avatarUrl: null }) });
+const authRouter = createAuthRouter(auth);
 // Seul le fournisseur est simulé : validation et handlers de production sont exercés.
 const lookalikes = createLookalikeHandler({
   hasKey: () => true,
@@ -71,17 +73,14 @@ const server = await createServer({ configFile: false, optimizeDeps: { entries: 
         res.statusCode = response.status; response.headers.forEach((value, key) => res.setHeader(key, value));
         res.end(await response.text()); return;
       }
-      const authRoutes: Record<string, (request: Request) => Promise<Response>> = {
-        '/api/auth/me': auth.me, '/api/auth/discord': auth.start,
-        '/api/auth/callback': auth.callback, '/api/auth/logout': auth.logout,
-      };
-      if (url.pathname !== '/api/fc27' && url.pathname !== '/api/profile' && !authRoutes[url.pathname]) { res.statusCode = 404; res.end('{}'); return; }
+      const isAuth = url.pathname.startsWith('/api/auth/');
+      if (url.pathname !== '/api/fc27' && url.pathname !== '/api/profile' && !isAuth) { res.statusCode = 404; res.end('{}'); return; }
       const chunks: Buffer[] = []; for await (const chunk of req) chunks.push(chunk as Buffer);
       const body = req.method === 'POST' ? Buffer.concat(chunks).toString() : undefined;
       const headers = new Headers();
       for (const [key, value] of Object.entries(req.headers)) if (typeof value === 'string') headers.set(key, value);
       const request = new Request(url, { method: req.method, headers, body });
-      const response = authRoutes[url.pathname] ? await authRoutes[url.pathname](request)
+      const response = isAuth ? (req.method === 'POST' ? await authRouter.POST(request) : await authRouter.GET(request))
         : url.pathname === '/api/profile' ? (req.method === 'POST' ? await profiles.POST(request) : await profiles.GET(request))
         : req.method === 'POST' ? await handlers.POST(request) : await handlers.GET(request);
       res.statusCode = response.status;

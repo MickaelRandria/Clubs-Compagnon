@@ -19,7 +19,7 @@
     "test:profile": "tsx --test tests/profile.test.ts",
     "test:profile:browser": "tsx tests/profile.browser.ts",
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/check-functions.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",

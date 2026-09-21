@@ -100,6 +100,10 @@ chaque proposition, son auteur et son nombre de votes définitif.
 
 ### Connexion Discord
 
+Les quatre URL `/api/auth/me`, `/api/auth/discord`, `/api/auth/callback` et `/api/auth/logout` partagent
+la fonction `api/auth/[action].ts`. Cela maintient le déploiement à 10 fonctions, sous la limite de 12 du plan Vercel Hobby.
+`npm run build` vérifie ce budget avant la compilation pour détecter un dépassement dès le développement.
+
 Configurer `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` et `SESSION_SECRET` (au moins 32 caractères aléatoires) côté serveur, puis appliquer `npm run db:migrate`.
 Dans l’application du [portail Discord](https://discord.com/developers/applications), enregistrer les URI de retour exactes :
 `http://localhost:5173/api/auth/callback` en local et `https://VOTRE-DOMAINE/api/auth/callback` en production.

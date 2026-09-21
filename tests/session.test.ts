@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createAuthHandlers } from '../server/auth-http.js';
+import { createAuthRouter } from '../server/auth-router.js';
 import {
   createToken, parseCookies, readToken, newState, stateMatches, MissingSecret,
   sessionCookie, clearedSessionCookie,
@@ -217,6 +218,38 @@ const withEnv = async (env: Record<string, string | undefined>, run: () => Promi
   }
 };
 const CONFIGURED = { DISCORD_CLIENT_ID: 'abc', DISCORD_CLIENT_SECRET: 'def-secret-long', SESSION_SECRET: KEY };
+
+test('la fonction Discord commune conserve les URL, redirections et cookies du parcours', async () => {
+  await withEnv(CONFIGURED, async () => {
+    const ok = (async () => ({ discordId: '1', username: 'rina', displayName: null, avatarUrl: null })) as never;
+    const router = createAuthRouter(handlers(ok));
+    const me = await router.GET(new Request('https://x/api/auth/me'));
+    assert.deepEqual(await me.json(), { signedIn: false, canSignIn: true });
+    const start = await router.GET(new Request('https://x/api/auth/discord?returnTo=%2Fprofil'));
+    assert.equal(start.status, 302);
+    assert.equal(start.headers.getSetCookie().length, 2);
+    const cookie = start.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
+    const state = new URL(start.headers.get('location')!).searchParams.get('state');
+    const callback = await router.GET(new Request(`https://x/api/auth/callback?code=c&state=${state}`, { headers: { cookie } }));
+    assert.equal(callback.headers.get('location'), '/profil');
+    assert.equal(callback.headers.getSetCookie().length, 3);
+    const logout = await router.POST(new Request('https://x/api/auth/logout', { method: 'POST' }));
+    assert.match(logout.headers.get('set-cookie')!, /dommage_session=; .*Max-Age=0/);
+  });
+});
+
+test('la fonction commune refuse une mauvaise méthode sans exécuter la route', async () => {
+  const router = createAuthRouter(handlers());
+  for (const [path, method, allow] of [['logout', 'GET', 'POST'], ['callback', 'POST', 'GET'], ['discord', 'POST', 'GET'], ['me', 'POST', 'GET']]) {
+    const response = await router.GET(new Request(`https://x/api/auth/${path}`, { method }));
+    assert.equal(response.status, 405);
+    assert.equal(response.headers.get('allow'), allow);
+    assert.equal(response.headers.has('set-cookie'), false);
+  }
+  for (const path of ['inconnue', '__proto__', 'callback/suite']) {
+    assert.equal((await router.GET(new Request(`https://x/api/auth/${path}`))).status, 404);
+  }
+});
 
 test('sans session, la route « moi » dit si la connexion est possible', async () => {
   await withEnv({ ...CONFIGURED }, async () => {

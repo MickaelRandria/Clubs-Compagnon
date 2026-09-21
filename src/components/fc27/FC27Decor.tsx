@@ -1,6 +1,24 @@
 import { useId } from 'react';
 import { UI_IMAGES } from '../../../shared/data/archetypes';
 
+/**
+ * Coup de pinceau du fond, en deux résolutions.
+ *
+ * La source fait 1024 px pour 226 Ko, alors que le motif est affiché à 289 px de large
+ * sur un téléphone. Un `srcset` ne suffirait pas : à partir de DPR 2 le navigateur
+ * choisirait quand même la grande, et il aurait arithmétiquement raison. On tranche
+ * donc explicitement par media query — un décor flou à 30-55 % d'opacité n'a pas besoin
+ * de la densité d'un écran Retina.
+ */
+function Brush({ place }: { place: 'top' | 'bottom' }) {
+  const bas = place === 'bottom';
+  return <picture>
+    <source media="(max-width: 767px)" srcSet={UI_IMAGES.fifaPatternSmall} />
+    <img className={`fc27-backdrop-brush fc27-backdrop-brush--${place}`} src={UI_IMAGES.fifaPattern}
+      alt="" width={1024} height={1024} decoding="async" {...(bas ? { loading: 'lazy' as const } : {})} />
+  </picture>;
+}
+
 /** Fond de l'onglet FC 27 : bleu nuit béton, coups de pinceau, trames et projections asymétriques (couvre le mur global). */
 export function FC27Backdrop() {
   const id = useId();
@@ -38,8 +56,8 @@ export function FC27Backdrop() {
       <polygon points="1470,610 1300,690 1380,700 1260,800 1470,770" fill="#6FC8FF" opacity=".75" />
       <rect width="1440" height="900" filter={`url(#${id}-concrete)`} opacity=".07" />
     </svg>
-    <img className="fc27-backdrop-brush fc27-backdrop-brush--top" src={UI_IMAGES.fifaPattern} alt="" width={1024} height={1024} decoding="async" />
-    <img className="fc27-backdrop-brush fc27-backdrop-brush--bottom" src={UI_IMAGES.fifaPattern} alt="" width={1024} height={1024} loading="lazy" decoding="async" />
+    <Brush place="top" />
+    <Brush place="bottom" />
   </div>;
 }
 

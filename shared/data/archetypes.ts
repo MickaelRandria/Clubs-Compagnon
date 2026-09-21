@@ -87,6 +87,8 @@ export const archetypeImage = (id: string) => `/images/archetypes/${id}.webp`;
 
 export const UI_IMAGES = {
   fifaPattern: '/images/ui/fifa20-pattern.webp',
+  /** Variante mobile du motif de fond, générée par scripts/resize-ui-images.mjs. */
+  fifaPatternSmall: '/images/ui/fifa20-pattern-512.webp',
   tacticalPitch: '/images/ui/tactical-pitch.webp',
   /** Tuile « Ton joueur » : joueur mi-corps sans fond (portrait « finisher » détouré, source design/images/ui/player_cutout.png). */
   playerCutout: '/images/ui/player-cutout.webp',

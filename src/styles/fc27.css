@@ -29,6 +29,8 @@
 /* ---------- Fond de page : béton bleu nuit, pinceaux, trames (couvre le mur global) ---------- */
 .fc27-backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #050A1C; }
 .fc27-backdrop svg { display: block; width: 100%; height: 100%; }
+/* Le <picture> ne sert qu'a choisir la resolution : il ne doit rien peser dans la mise en page. */
+.fc27-backdrop picture { display: contents; }
 .fc27-backdrop-brush { position: absolute; width: min(920px, 74vw); height: auto; opacity: .55; }
 .fc27-backdrop-brush--top { top: -26%; right: -18%; transform: rotate(6deg); }
 .fc27-backdrop-brush--bottom { bottom: -34%; left: -26%; transform: rotate(192deg); opacity: .3; }

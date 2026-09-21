@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { FC27Player } from '../../../shared/fc27';
 import { profileFromPlayer } from '../../../shared/fc27-player';
-import { squadFingerprint } from '../../../shared/staff-report';
+import { squadFingerprint } from '../../../shared/squad-fingerprint';
 import { analyzeSquad } from '../../../shared/tacticalAdvisor';
 import { useStaffReport } from '../../api/fc27';
 import { PlayerPhoto } from './PlayersPreparation';

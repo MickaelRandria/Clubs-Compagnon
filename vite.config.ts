@@ -105,7 +105,9 @@ export default defineConfig(({ mode }) => {
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webp}'],
+        // woff2 : les polices sont servies par l'app depuis qu'elles ne viennent plus de
+        // Google. Sans elles dans le precache, l'app hors ligne retombe sur Arial.
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         navigateFallback: '/index.html',
         // OAuth redirects and all personal/club data always go to the network.
         navigateFallbackDenylist: [/^\/api(?:\/|$)/],

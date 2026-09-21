@@ -29,7 +29,9 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "@tanstack/query-sync-storage-persister": "^5.103.2",
     "@tanstack/react-query": "^5.103.0",
+    "@tanstack/react-query-persist-client": "^5.103.2",
     "drizzle-orm": "^0.45.2",
     "proclubs-sdk": "^0.2.1",
     "react": "^19.3.0",

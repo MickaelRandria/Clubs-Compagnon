@@ -11,12 +11,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Dommage FC" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;1,800&family=Barlow:wght@500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Polices servies par l'app, declarees dans src/styles/fonts.css.
+         Pas de <link rel="preload"> : sur un reseau mobile les fontes passeraient
+         devant la feuille de styles, qui elle bloque le rendu. Elles arrivent
+         juste apres, et font-display: swap couvre l'intervalle. -->
   </head>
   <body>
     <div id="root"></div>

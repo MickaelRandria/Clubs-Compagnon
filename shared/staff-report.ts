@@ -3,6 +3,9 @@ import { ATTRIBUTES, archetypeById, formatSignature } from './data/archetypes.js
 import { AI_LINES, CLUB_POLICY } from './data/club-policy.js';
 import { POSITION_LABELS, type FC27Player } from './fc27.js';
 import { profileFromPlayer } from './fc27-player.js';
+// Réexportée pour que le serveur garde un point d'entrée unique ; l'implémentation vit
+// dans un module sans zod, pour ne pas l'embarquer dans le bundle du navigateur.
+export { squadFingerprint } from './squad-fingerprint.js';
 import { analyzeSquad } from './tacticalAdvisor.js';
 
 // Lecture du staff : une analyse rédigée par un modèle, posée SUR les faits du moteur déterministe.
@@ -43,26 +46,6 @@ export const staffReportSchema = z.object({
 });
 export type StaffReport = z.infer<typeof staffReportSchema>;
 
-/**
- * Empreinte de l'effectif : tout ce qui change l'analyse, et rien d'autre.
- * Deux effectifs identiques donnent la même empreinte, donc la même analyse en cache ;
- * la moindre fiche modifiée ou ajoutée en produit une nouvelle.
- */
-export function squadFingerprint(players: FC27Player[]): string {
-  const rows = players
-    .map((p) => [
-      p.id, p.pseudo, p.in_game_name ?? '', p.primary_position, [...p.secondary_positions].sort().join('+'),
-      p.archetype ?? '', p.height_cm ?? '', p.weight_kg ?? '', p.preferred_foot ?? '',
-      p.weak_foot ?? '', p.skill_moves ?? '', (p.attribute_priorities ?? []).join('>'), p.notes ?? '',
-    ].join('|'))
-    .sort();
-  // djb2 : suffisant pour une clé de cache, jamais utilisé pour de la sécurité.
-  let hash = 5381;
-  // Invalide aussi les rapports antérieurs à la politique de club, à effectif identique.
-  const text = ['staff-v2', [...AI_LINES].sort().join(','), ...rows].join('\n');
-  for (let i = 0; i < text.length; i += 1) hash = ((hash * 33) ^ text.charCodeAt(i)) >>> 0;
-  return `${players.length}-${hash.toString(36)}`;
-}
 
 /** Fiche d'un joueur, telle que le modèle doit la lire : lisible, sans jargon interne. */
 function describePlayer(player: FC27Player): string {

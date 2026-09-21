@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { markTourSeen, stepsFor, tourSeen } from '../../lib/tour';
 import { useMe } from '../../api/auth';
 import { Tour } from './Tour';
@@ -17,10 +17,11 @@ export function TourHost({ children }: { children: ReactNode }) {
   const me = useMe();
   const steps = stepsFor(me.data?.signedIn === true);
   const [running, setRunning] = useState(false);
-  const [invited, setInvited] = useState(false);
+  // Lu pendant le rendu initial, pas dans un effet : `localStorage` est synchrone, et
+  // faire apparaitre le bandeau apres coup poussait toute l'app vers le bas.
+  const [invited, setInvited] = useState(() => !tourSeen());
 
   // Lu après le montage : le premier rendu ne doit pas dépendre du stockage du navigateur.
-  useEffect(() => { setInvited(!tourSeen()); }, []);
 
   const start = useCallback(() => { setInvited(false); setRunning(true); }, []);
   const dismiss = useCallback(() => { setInvited(false); markTourSeen('dismissed'); }, []);

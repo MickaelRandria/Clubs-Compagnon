@@ -63,6 +63,7 @@ export function GoalsChart({ matches }: { matches: Match[] }) {
                 onMouseLeave={() => setHovered(null)}
                 onFocus={() => setHovered(m.id)}
                 onBlur={() => setHovered(null)}
+                onClick={() => setHovered((prev) => (prev === m.id ? null : m.id))}
               >
                 {hovered === m.id && (
                   <span className="fc-tip" style={{ bottom: height + 30 }}>

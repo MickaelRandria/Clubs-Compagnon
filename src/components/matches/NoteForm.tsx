@@ -2,8 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { NOTE_TAGS, validateNote, type NoteFieldErrors, type NoteTag } from '../../../shared/notes';
 import type { Member } from '../../../shared/types';
 import { ApiError } from '../../api/client';
+import { useMatchDebrief } from '../../api/match-debrief';
 import { useAddMatchNote } from '../../api/queries';
 import { CornerShardLg } from '../ui/CornerShardLg';
+import { Glyph } from '../ui/Glyph';
 import { FormField } from './FormField';
 
 const AUTHOR_KEY = 'dommage:note-author';
@@ -27,6 +29,7 @@ function storeAuthor(name: string) {
 /** Ajout d'une note à un match existant (aucune modification du score ni du match). */
 export function NoteForm({ matchId, members }: { matchId: number; members: Member[] }) {
   const addNote = useAddMatchNote(matchId);
+  const debriefQuery = useMatchDebrief(matchId);
   const [authorName, setAuthorName] = useState(readStoredAuthor);
   const [body, setBody] = useState('');
   const [motm, setMotm] = useState('');
@@ -36,6 +39,33 @@ export function NoteForm({ matchId, members }: { matchId: number; members: Membe
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
 
   const toggleTag = (tag: NoteTag) => setTags((current) => (current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]));
+
+  const handleInspireWithCoach = () => {
+    if (!debriefQuery.data?.available) {
+      setStatus({
+        kind: 'error',
+        text: 'Le débrief tactique du Coach n\'est pas disponible pour ce match.',
+      });
+      return;
+    }
+    const { debrief } = debriefQuery.data;
+    setBody(debrief.suggestedNote);
+    if (debrief.suggestedTags.length > 0) {
+      setTags(Array.from(new Set([...tags, ...debrief.suggestedTags])));
+    }
+    if (debrief.suggestedMotm) {
+      const matchMember = members.find(
+        (m) => m.gamertag.toLowerCase() === debrief.suggestedMotm?.toLowerCase(),
+      );
+      if (matchMember) {
+        setMotm(String(matchMember.id));
+      }
+    }
+    setStatus({
+      kind: 'ok',
+      text: '✨ Note, tags et joueur pré-remplis avec l\'œil du Coach ! Tu peux les retoucher.',
+    });
+  };
 
   const fieldProps = (id: string, error?: string[]) => ({
     id,
@@ -123,6 +153,18 @@ export function NoteForm({ matchId, members }: { matchId: number; members: Membe
           ))}
         </div>
       </fieldset>
+
+      <div className="fc-note-inspire-row">
+        <button
+          type="button"
+          className="fc-note-inspire-btn"
+          disabled={debriefQuery.isLoading}
+          onClick={handleInspireWithCoach}
+        >
+          <Glyph name="bolt" size={14} />
+          <span>{debriefQuery.isLoading ? 'Le Coach analyse…' : '✨ Inspirer ma note avec le Coach IA'}</span>
+        </button>
+      </div>
 
       <FormField id="note-body" label="Note" error={errors.body?.[0]} hint={`${body.length} / 2000`}>
         <textarea

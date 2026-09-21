@@ -40,8 +40,20 @@ export function CareerTile({ club }: { club: Club }) {
         </div>
         <div className="fc-legend">
           {split.map(([result, pct, count, label]) => (
-            <span key={result}>
-              <span className="fc-legend-value">{pct}%</span>
+            <span key={result} className="fc-legend-item">
+              <span
+                className="fc-legend-value"
+                style={{
+                  color:
+                    result === 'win'
+                      ? 'var(--fc-glacier)'
+                      : result === 'loss'
+                        ? 'var(--fc-rouge)'
+                        : 'var(--fc-acier)',
+                }}
+              >
+                {pct}%
+              </span>
               <span className="fc-legend-label">
                 <i className="fc-swatch" style={{ background: RESULT[result].bg }} />
                 {label} · {count}

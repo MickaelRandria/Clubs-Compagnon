@@ -15,3 +15,15 @@ export const MATCH_TYPE_LABEL: Record<MatchType, string> = {
 
 export const POS_LABEL: Record<Position, string> = { FW: 'Attaquant', MF: 'Milieu', DF: 'Défenseur', GK: 'Gardien' };
 export const POS_SHORT: Record<Position, string> = { FW: 'ATT', MF: 'MIL', DF: 'DÉF', GK: 'GK' };
+
+export const POS_COLOR_CLASS: Record<Position, string> = {
+  FW: 'fc-pos--fw',
+  MF: 'fc-pos--mf',
+  DF: 'fc-pos--df',
+  GK: 'fc-pos--gk',
+};
+
+export function posColorClass(pos: Position): string {
+  return POS_COLOR_CLASS[pos] ?? 'fc-pos--df';
+}
+

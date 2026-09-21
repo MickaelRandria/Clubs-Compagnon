@@ -1,4 +1,5 @@
 import { useClub, useMatches, useMembers } from '../api/queries';
+import { CoachHomeBanner } from '../components/home/CoachHomeBanner';
 import { FormTile } from '../components/home/FormTile';
 import { HeroTile } from '../components/home/HeroTile';
 import { InhouseTile } from '../components/home/InhouseTile';
@@ -31,6 +32,7 @@ export function HomeView() {
             <TopScorerTile members={members.data!} />
             <FormTile matches={matches.data!} />
           </div>
+          <CoachHomeBanner />
         </div>
       )}
     </DataGate>

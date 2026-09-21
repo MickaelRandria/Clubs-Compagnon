@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 type Photo = { src: string; caption: string };
 
-/** Visionneuse plein écran — Échap pour fermer, ← → pour naviguer. */
+/** Visionneuse plein écran — Échap pour fermer, ← → pour naviguer, swipe tactile sur mobile. */
 export function Lightbox({
   photos,
   index,
@@ -14,6 +14,8 @@ export function Lightbox({
   onChange: (index: number) => void;
   onClose: () => void;
 }) {
+  const touchStartX = useRef<number | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -26,8 +28,28 @@ export function Lightbox({
 
   const photo = photos[index];
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (diff > 50 && index < photos.length - 1) onChange(index + 1);
+    else if (diff < -50 && index > 0) onChange(index - 1);
+    touchStartX.current = null;
+  };
+
   return (
-    <div className="fc-lightbox" onClick={onClose} role="dialog" aria-modal="true" aria-label="Photo en plein écran">
+    <div
+      className="fc-lightbox"
+      onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo en plein écran"
+    >
       <figure onClick={(e) => e.stopPropagation()}>
         <img src={photo.src} alt={photo.caption} />
         <figcaption>

@@ -25,14 +25,22 @@ export function AveragesTile({ club }: { club: Club }) {
         <span className="fc-avg-value">{frNum(conceded)}</span>
         <span className="fc-avg-label">buts encaissés</span>
       </span>
-      <span className="fc-duel" role="img" aria-label="Part des buts marqués et encaissés">
-        <i style={{ width: `${share}%`, background: FC.glacier }} />
-        <i style={{ flex: 1, background: FC.acier }} />
-      </span>
-      <span className="fc-muted">
-        Différence : {diff > 0 ? '+' : ''}
-        {frNum(diff)} but par match
-      </span>
+      <div className="fc-duel-wrap">
+        <div className="fc-duel-labels">
+          <span>{Math.round(share)}% marqués</span>
+          <span>{100 - Math.round(share)}% encaissés</span>
+        </div>
+        <span className="fc-duel" role="img" aria-label="Part des buts marqués et encaissés">
+          <i style={{ width: `${share}%`, background: FC.glacier }} />
+          <i style={{ flex: 1, background: FC.acier }} />
+        </span>
+      </div>
+      <div className="fc-avg-foot">
+        <span className={`fc-diff-badge ${diff >= 0 ? 'fc-diff-badge--pos' : 'fc-diff-badge--neg'}`}>
+          Différence : {diff > 0 ? '+' : ''}
+          {frNum(diff)} but{Math.abs(diff) >= 2 ? 's' : ''}/m
+        </span>
+      </div>
     </div>
   );
 }

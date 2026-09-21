@@ -17,7 +17,16 @@ export function Strip<T extends string>({
       <span className="fc-kicker">{label}</span>
       <div className="fc-tabs fc-tabs--sm" role="group" aria-label={label}>
         {options.map(([v, l, count]) => (
-          <button key={v} type="button" className="fc-tab" aria-pressed={value === v} onClick={() => onChange(v)}>
+          <button
+            key={v}
+            type="button"
+            className="fc-tab"
+            aria-pressed={value === v}
+            onClick={(e) => {
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+              onChange(v);
+            }}
+          >
             {l}
             {count !== undefined && <span className="fc-tab-count">{count}</span>}
           </button>

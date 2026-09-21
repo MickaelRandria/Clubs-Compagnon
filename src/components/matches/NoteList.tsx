@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { MatchNote } from '../../../shared/types';
 import { timeAgo } from '../../lib/format';
 import { Glyph } from '../ui/Glyph';
@@ -23,13 +24,17 @@ export function NoteList({ notes }: { notes: MatchNote[] }) {
             <div className="fc-note-head">
               <span className="fc-note-author">{note.authorName}</span>
               <span className="fc-muted">{timeAgo(note.createdAt)}</span>
-              {note.motm && <span className="fc-pos fc-pos--hot">★ {note.motm.gamertag}</span>}
+              {note.motm && (
+                <Link to="/joueurs" className="fc-motm" title="Voir dans l'effectif">
+                  ★ {note.motm.gamertag}
+                </Link>
+              )}
             </div>
             <p className="fc-note-body">{note.body}</p>
             {(note.tags.length > 0 || note.videoUrl) && (
               <div className="fc-note-foot">
                 {note.tags.map((tag) => (
-                  <span key={tag} className="fc-pos">
+                  <span key={tag} className="fc-note-tag">
                     {tag}
                   </span>
                 ))}

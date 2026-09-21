@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import type { ClubProfile } from '../../shared/profile';
 import type { Account } from '../../server/auth-http';
 import { useMe } from '../api/auth';
@@ -8,6 +8,7 @@ import { AccountChip, SignInButton, SignInNotice } from '../components/fc27/Sign
 import { ActionFeedback } from '../components/fc27/FC27Dialog';
 import { MyPlayerCard } from '../components/players/MyPlayerCard';
 import { PlayerClaimAdmin } from '../components/players/PlayerClaimAdmin';
+import { Glyph } from '../components/ui/Glyph';
 import { usePageTitle } from '../lib/hooks';
 import { POS_LABEL } from '../lib/labels';
 import '../styles/profile.css';
@@ -56,14 +57,35 @@ function ProfileContent({ profile, account }: { profile: ClubProfile; account: A
 
 export function ProfileView() {
   usePageTitle('Mon profil');
+  const navigate = useNavigate();
   const me = useMe();
   const profile = useProfile();
   const [params] = useSearchParams();
   const account = me.data?.signedIn ? me.data.account : null;
-  return <div className="fc-view profile-view"><header className="profile-heading"><div><p className="profile-eyebrow">Le club, à ton nom</p><h1 className="fc-title">Mon profil</h1></div><AccountChip /></header>
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
+  return (
+    <div className="fc-view profile-view">
+      <button type="button" onClick={handleBack} className="fc-back">
+        <Glyph name="back" /> Retour
+      </button>
+      <header className="profile-heading">
+        <div>
+          <p className="profile-eyebrow">Le club, à ton nom</p>
+          <h1 className="fc-title">Mon profil</h1>
+        </div>
+        <AccountChip />
+      </header>
     <SignInNotice reason={params.get('connexion')} />
     {me.isLoading ? <p role="status">Chargement de ton compte…</p> : !account ? <section className="profile-panel"><h2>Retrouve ton joueur Club Pro</h2><p>Connecte-toi avec Discord, choisis ton joueur et fais valider la correspondance par un administrateur.</p><SignInButton /></section>
       : !profile.data ? <section className="profile-panel">{profile.isError ? <><p role="alert">{profile.error.message}</p><button className="profile-button" onClick={() => void profile.refetch()}>Réessayer</button></> : <p role="status">Chargement de ton profil…</p>}</section>
         : <>{profile.isError && <p className="profile-notice" role="alert">Actualisation impossible. Les dernières informations restent affichées.</p>}<ProfileContent key={account.id} profile={profile.data} account={account} /></>}
-  </div>;
+  </div>);
 }

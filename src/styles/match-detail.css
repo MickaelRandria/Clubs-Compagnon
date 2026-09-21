@@ -1,13 +1,26 @@
 /* Fiche match /matchs/:id — fiche, notes, formulaire de saisie */
 
 .fc-back { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; text-decoration: none;
+           background: none; border: 0; cursor: pointer; padding: 0;
            font: 700 14px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--fc-acier); }
 .fc-back:hover, .fc-back:focus-visible { outline: none; color: var(--fc-glacier); }
 
 .fc-detail { display: grid; gap: 6px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); grid-template-rows: auto 1fr;
              grid-template-areas: "sheet form" "notes form"; }
 .fc-sheet { grid-area: sheet; min-height: 300px; }
+.fc-sheet-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .fc-sheet .fc-chip { align-self: flex-start; }
+.fc-sheet-type { display: inline-block; padding: 4px 8px; font: 800 11px/1 var(--fc-display); letter-spacing: .1em;
+                 text-transform: uppercase; color: var(--fc-glacier); background: rgba(111,200,255,.1);
+                 border: 1px solid rgba(111,200,255,.3); clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%); }
+.fc-sheet-type--playoff { color: var(--fc-magenta); background: rgba(255,79,163,.12); border-color: rgba(255,79,163,.35); }
+.fc-sheet-possession { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; max-width: 320px; }
+.fc-sheet-poss-labels { display: flex; justify-content: space-between; font: 700 11px/1 var(--fc-display); letter-spacing: .08em;
+                        text-transform: uppercase; color: var(--fc-acier); }
+.fc-sheet-poss-labels span:first-child { color: var(--fc-glacier); }
+.fc-sheet-poss-bar { height: 8px; background: rgba(242, 244, 248, .18); overflow: hidden;
+                     clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+.fc-sheet-poss-fill { height: 100%; background: var(--fc-glacier); transition: width .6s ease; }
 .fc-sheet .fc-hero-num { font-size: clamp(72px, 8vw, 120px); }
 .fc-sheet .fc-hero-num .sep { color: var(--fc-glacier); }
 
@@ -17,8 +30,19 @@
 .fc-note { display: flex; flex-direction: column; gap: 10px; padding: 18px 0; }
 .fc-note-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
 .fc-note-author { font: 700 19px/1.1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; overflow-wrap: anywhere; }
+.fc-motm { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px;
+           background: linear-gradient(135deg, #FFB547, #FF9500); color: #060c1f; text-decoration: none;
+           font: 800 12px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase;
+           clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+           box-shadow: 0 2px 8px rgba(255, 181, 71, .3); transition: transform .12s, filter .15s; }
+.fc-motm:hover, .fc-motm:focus-visible { filter: brightness(1.15); transform: translateY(-1px); }
+.fc-motm:active { transform: scale(0.95); }
 .fc-note-body { margin: 0; max-width: 62ch; font: 500 16px/1.6 var(--fc-text); white-space: pre-line; overflow-wrap: anywhere; }
 .fc-note-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.fc-note-tag { display: inline-block; padding: 3px 8px; font: 700 11px/1 var(--fc-display); letter-spacing: .08em;
+               text-transform: uppercase; color: var(--fc-craie); background: rgba(242, 244, 248, .07);
+               box-shadow: inset 0 0 0 1px rgba(242, 244, 248, .18);
+               clip-path: polygon(0 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
 .fc-note-link { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--fc-glacier);
                 font: 700 14px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
 .fc-note-link:hover, .fc-note-link:focus-visible { outline: none; text-decoration: underline; }
@@ -54,3 +78,156 @@ select.fc-input option { background: var(--fc-marine); color: var(--fc-craie); }
 .fc-form-status--error { color: var(--fc-rouge); }
 
 h2.fc-title { margin: 0; }
+
+/* --- L'œil du Coach IA sur la fiche de match --- */
+.fc-coach-debrief {
+  position: relative;
+  border-left: 3px solid var(--fc-glacier);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(111, 200, 255, 0.08);
+}
+
+.fc-coach-debrief-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.fc-coach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(111, 200, 255, 0.15);
+  border: 1px solid var(--fc-glacier);
+  color: var(--fc-glacier);
+  font: 800 12px/1 var(--fc-display);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.fc-coach-meta {
+  font: 500 12px/1 var(--fc-text);
+  color: var(--fc-acier);
+}
+
+.fc-coach-headline {
+  margin: 0 0 10px;
+  font: 800 24px/1.1 var(--fc-display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--fc-craie);
+}
+
+.fc-coach-summary {
+  margin: 0 0 16px;
+  font: 400 15px/1.5 var(--fc-text);
+  color: var(--fc-brume);
+}
+
+.fc-coach-advice-box {
+  background: rgba(6, 12, 31, 0.6);
+  border: 1px solid rgba(111, 200, 255, 0.15);
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+}
+
+.fc-coach-advice-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 12px/1 var(--fc-display);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fc-glacier);
+  margin-bottom: 6px;
+}
+
+.fc-coach-advice {
+  margin: 0;
+  font: italic 400 14px/1.4 var(--fc-text);
+  color: var(--fc-craie);
+}
+
+.fc-coach-footer-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fc-coach-pill {
+  font: 700 12px/1 var(--fc-display);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--fc-acier);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.fc-coach-pill--motm {
+  background: rgba(255, 181, 71, 0.15);
+  border-color: #FFB547;
+  color: #FFB547;
+}
+
+.fc-coach-pill--motm strong {
+  color: #fff;
+}
+
+.fc-coach-debrief--loading {
+  opacity: 0.8;
+}
+
+.fc-coach-skeleton-bar {
+  height: 18px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.fc-coach-skeleton-bar--short {
+  width: 60%;
+}
+
+/* Bouton d'inspiration IA dans NoteForm */
+.fc-note-inspire-row {
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.fc-note-inspire-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(111, 200, 255, 0.12);
+  border: 1px solid var(--fc-glacier);
+  color: var(--fc-glacier);
+  font: 800 13px/1 var(--fc-display);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.fc-note-inspire-btn:hover:not(:disabled) {
+  background: var(--fc-glacier);
+  color: var(--fc-marine);
+  box-shadow: 0 0 12px rgba(111, 200, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.fc-note-inspire-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

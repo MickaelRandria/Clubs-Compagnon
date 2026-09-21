@@ -1,6 +1,6 @@
 import type { Member } from '../../../shared/types';
 import { pad2 } from '../../lib/format';
-import { POS_SHORT } from '../../lib/labels';
+import { POS_SHORT, posColorClass } from '../../lib/labels';
 import { FC } from '../../lib/tokens';
 import { formatStat, type SortKey } from './playerSort';
 
@@ -24,7 +24,7 @@ export function PodiumCard({
         <span className="fc-rank">{pad2(rank)}</span>
         <span className="fc-title fc-title--md fc-name">{player.gamertag}</span>
         <span className="fc-mention fc-mention--end">
-          <span className={`fc-pos${player.position === 'FW' ? ' fc-pos--hot' : ''}`}>{POS_SHORT[player.position]}</span>
+          <span className={`fc-pos ${posColorClass(player.position)}`}>{POS_SHORT[player.position]}</span>
           <span>OVR {player.ovr}</span>
         </span>
       </span>

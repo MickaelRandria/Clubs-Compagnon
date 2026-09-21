@@ -18,19 +18,26 @@ export function MatchRow({ match, mobile }: { match: Match; mobile: boolean }) {
     <span className="fc-opp">
       <small>vs</small>
       <strong>{match.opponent}</strong>
+      {mobile && (
+        <span className={`fc-mtype-badge${match.type === 'playoff' ? ' fc-mtype-badge--playoff' : ''}`}>
+          {type}
+        </span>
+      )}
     </span>
   );
   const score = (
-    <span className="fc-mscore">
-      {match.goalsFor}
-      <span>–</span>
-      {match.goalsAgainst}
+    <span className="fc-mscore-wrap">
+      <span className="fc-mscore">
+        {match.goalsFor}
+        <span>–</span>
+        {match.goalsAgainst}
+      </span>
+      {mobile && <span className="fc-mscore-arrow" aria-hidden="true">›</span>}
     </span>
   );
 
   if (mobile) {
     const details = [
-      type,
       timeAgo(match.playedAt),
       match.possessionPct !== null && `${match.possessionPct}% poss.`,
       match.shots !== null && `${match.shots} tirs`,

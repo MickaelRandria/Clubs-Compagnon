@@ -1,43 +1,145 @@
 /* Mobile — importé en dernier pour garder la cascade d'origine */
 
 @media (max-width: 767px) {
-  .fc-frame { padding: 14px 16px 24px; }
-  .fc-top { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
-  .fc-profile { align-self: flex-end; margin-bottom: 0; }
-  /* Six colonnes egales plutot qu'une rangee qui defile : tous les onglets sont
-     visibles d'un coup, y compris FC 27. Les libelles courts viennent de TopNav. */
-  .fc-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); overflow: visible; }
-  .fc-tab { display: grid; place-items: center; min-height: 44px; padding: 10px 2px;
-            font-size: 11px; letter-spacing: .04em; text-align: center; }
-  /* Le trait de separation part du bord gauche, pas du bord du texte. */
-  .fc-tab + .fc-tab { box-shadow: inset 1px 0 0 rgba(11,26,58,.14); }
-  /* Sans la place pour le badge « Prepa », un trait magenta suffit a signaler que
-     FC 27 n'est pas un onglet de stats comme les autres. */
-  .fc-tab--preparation { box-shadow: inset 1px 0 0 rgba(11,26,58,.14), inset 0 -3px 0 var(--fc-magenta); }
-  .fc-tab--preparation[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--fc-magenta); }
+  .fc-frame { padding: 14px 16px calc(76px + env(safe-area-inset-bottom, 12px)); }
+  .fc-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .fc-top-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .fc-top-brand svg {
+    width: 22px;
+    height: 25px;
+  }
+  .fc-top-brand-text {
+    font-size: 16px;
+  }
+  .fc-top-brand-text span {
+    font-size: 0.6em;
+  }
+  .fc-top .fc-tabs { display: none; }
+
+  .fc-coach-nav-trigger {
+    padding: 5px 9px;
+    font-size: 12px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .fc-profile {
+    align-self: auto;
+    margin-bottom: 0;
+    padding: 4px 8px 4px 14px;
+    gap: 6px;
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%);
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .fc-profile .fc-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .fc-profile .fc-avatar img {
+    width: 28px;
+    height: 28px;
+  }
+  .fc-profile-name {
+    max-width: 76px;
+    font-size: 13px;
+  }
+  .fc-profile-sr {
+    padding-left: 6px;
+    font-size: 15px;
+  }
+  .fc-profile-role { display: none; }
+
+  /* Barre de navigation basse (Mobile Companion) */
+  .fc-bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 35;
+    height: 56px;
+    padding-inline: 8px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+    background: rgba(6, 12, 31, .96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(111, 200, 255, .25);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, .55);
+  }
+  body:has(.fc27-actionbar) .fc-bottom-nav { display: none; }
+
+  /* Masquer les éclats qui débordent sur les côtés sur mobile */
+  .fc-spill { display: none !important; }
+
+  /* Tuiles du Dashboard optimisées Mobile First */
+  .fc-grid { gap: 8px; }
+  .fc-row { gap: 8px; }
   .fc-row--top { grid-template-columns: minmax(0, 1fr); min-height: 0; }
-  .fc-row--bottom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
-  .fc-card--match { grid-column: 1 / -1; }
+  .fc-row--bottom { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .fc-card--match { grid-column: auto; }
   .fc-hero { grid-template-columns: minmax(0, 1fr); }
-  .fc-hero-copy { padding: 26px 20px 20px; }
-  .fc-hero-art { min-height: 210px; }
-  .fc-clubs { min-height: 320px; }
-  .fc-clubs-copy { padding: 26px 20px 22px; }
-  .fc-card { min-height: 164px; }
-  .fc-card-copy { padding: 18px 6px 16px 18px; }
-  .fc-card--trophy .fc-card-art { display: none; }
+  .fc-hero-copy { padding: 22px 18px 18px; }
+  .fc-hero-art { min-height: 120px; overflow: hidden; position: relative; }
+  /* Recentrage des éclairs pour éviter qu'ils ne soient décalés à droite */
+  .fc-hero-art svg { width: 132%; left: -16%; height: 100%; }
+  .fc-hero-num { font-size: clamp(72px, 17vw, 98px); right: 18px; bottom: 8px; }
+  .fc-hero-trend { top: 12px; right: 18px; font-size: 11px; padding: 4px 8px; }
+  .fc-hero--compact .fc-hero-art { min-height: 120px; }
+  .fc-hero--compact .fc-hero-num { right: 18px; bottom: 8px; font-size: clamp(42px, 11vw, 54px); }
+  .fc-hero--compact .fc-hero-trend { top: 12px; right: 18px; }
+  .fc-career .fc-hero-art { min-height: 120px; }
+  .fc-kpis { padding-top: 12px; gap: 8px 22px; }
+  .fc-kpi-value { font-size: 28px; }
+  .fc-kpi-label { font-size: 11px; }
+
+  .fc-clubs { min-height: 230px; }
+  .fc-clubs-copy { padding: 22px 18px 20px; }
+
+  .fc-card { min-height: 104px; max-height: 124px; }
+  .fc-card-copy { padding: 16px 12px 14px 18px; }
+  .fc-card--trophy { min-height: 104px; max-height: 116px; overflow: hidden; }
+  .fc-card--trophy .fc-card-copy { padding: 14px 12px 14px 18px; gap: 4px; justify-content: center; }
+  .fc-card-art--scorer { flex: 0 0 38%; min-height: 104px; max-height: 116px; overflow: hidden; position: relative; }
+  .fc-card--trophy .fc-card-art { display: flex; }
+  .fc-card--form { min-height: 104px; padding: 14px 16px; }
+  .fc-form { padding: 4px 12px; }
   .fc-mark-name { font-size: 24px; }
+
+
 
   .fc-controls { flex-direction: column; align-items: stretch; }
   .fc-control { justify-content: space-between; }
   .fc-players-top, .fc-stats-top, .fc-night-row { grid-template-columns: minmax(0, 1fr); min-height: 0; }
-  .fc-podium { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
-  .fc-podium .fc-card { flex-direction: column; }
-  .fc-podium .fc-card-art { flex-basis: auto; min-height: 100px; }
+  .fc-podium { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; gap: 8px; }
+  .fc-podium .fc-card { flex-direction: column; min-height: 180px; max-height: none; height: auto; }
+  .fc-podium .fc-card-copy { padding: 14px 14px 6px; gap: 4px; }
+  .fc-podium .fc-card-art { flex-basis: auto; min-height: 84px; padding: 0 14px 14px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+  .fc-podium .fc-big { font-size: clamp(38px, 9vw, 48px); line-height: .9; }
+  .fc-podium .fc-big-label { font-size: 11px; letter-spacing: .08em; }
   .fc-empty { padding: 26px 20px; }
-  .fc-matches-top { grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 0; }
+  .fc-matches-top { grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 0; gap: 6px; }
   .fc-matches-top .fc-hero { grid-column: 1 / -1; }
-  .fc-hero--compact .fc-hero-art { min-height: 150px; }
+  .fc-matches-top .fc-stat { min-height: 94px; padding: 12px 6px 10px; gap: 4px; align-items: center; text-align: center; }
+  .fc-matches-top .fc-stat .fc-title--md { font-size: 11px; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; color: var(--fc-acier); }
+  .fc-matches-top .fc-stat-value { font-size: clamp(26px, 6.5vw, 34px); line-height: .95; width: 100%; }
+  .fc-matches-top .fc-stat .fc-mention { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; color: var(--fc-ardoise); }
+  .fc-hero--compact .fc-hero-art { min-height: 120px; }
   .fc-stat { padding: 14px 12px; }
   /* Doit rester ici : .fc-card impose 164px plus haut dans ce meme bloc, et
      responsive.css est charge en dernier. */
@@ -46,21 +148,27 @@
   .fc-stat-value { font-size: 34px; }
   .fc-stat-value--text { font-size: 26px; }
   .fc-career { grid-template-columns: minmax(0, 1fr); }
-  .fc-split-wrap { padding: 4px 20px 24px; }
-  .fc-avg { padding: 24px 20px; }
+  .fc-split-wrap { padding: 4px 16px 20px; }
+  .fc-career .fc-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+  .fc-career .fc-legend-item { align-items: center; }
+  .fc-career .fc-legend-value { font-size: clamp(26px, 6.8vw, 32px); }
+  .fc-career .fc-legend-label { justify-content: center; font-size: 11px; gap: 4px; }
+  .fc-avg { padding: 22px 18px; }
   .fc-chart-block { padding: 20px 16px; }
   .fc-plot, .fc-xlabels { gap: 4px; }
   .fc-xlabels .full { display: none; }
   .fc-xlabels .short { display: inline; }
-  .fc-stats-bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fc-stats-bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .fc-stats-bottom .fc-stat { min-height: 96px; padding: 12px 14px; }
   .fc-night { flex-direction: column; min-height: 0; }
   .fc-night-panel { width: 100%; padding: 26px 20px 52px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 28px), 0 100%); }
   .fc-night-shards { width: 80px; height: 92px; }
   .fc-night-edge { display: none; }
-  .fc-night-photo { position: relative; width: auto; height: 220px; margin-top: -28px; }
+  .fc-night-photo { position: relative; width: auto; height: 220px; margin-top: -28px; overflow: hidden; }
   .fc-story { padding: 24px 20px; }
   .fc-gallery { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: 260px; }
   .fc-photo:first-child { grid-row: auto; }
+  .fc-photo-cap { padding: 10px 14px; font-size: 13px; }
   .fc-lightbox { padding: 64px 12px 12px; }
   .fc-lb-prev { left: 4px; }
   .fc-lb-next { right: 4px; }
@@ -74,8 +182,10 @@
 @media (max-width: 767px) {
   .fc-skel-row { grid-template-columns: minmax(0, 1fr); }
   .fc-error { padding: 26px 20px; }
-  .fc-detail { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "sheet" "form" "notes"; }
+  .fc-detail { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "sheet" "notes" "form"; }
   .fc-sheet { min-height: 0; }
+  .fc-sheet .fc-hero-num { font-size: clamp(52px, 13vw, 76px); right: 18px; bottom: 8px; }
+  .fc-sheet .fc-kpis { padding-top: 8px; gap: 6px 20px; }
   .fc-note-form { position: static; padding: 22px 20px 24px; }
   .fc-notes { padding: 22px 20px 6px; }
 }

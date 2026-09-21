@@ -26,7 +26,7 @@ export function LastMatchTile({ match }: { match: Match | undefined }) {
   ].filter(Boolean);
 
   return (
-    <Tile className="fc-card fc-card--match" to="/matchs" delay={140}>
+    <Tile className="fc-card fc-card--match" to={`/matchs/${match.id}`} delay={140}>
       <span className="fc-card-copy">
         <span className="fc-title fc-title--md">Dernier match</span>
         <span className="fc-card-sub">

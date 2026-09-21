@@ -29,7 +29,12 @@ export function MatchesSummary({ matches }: { matches: Match[] }) {
             {[...matches].reverse().map((m) => {
               const r = RESULT[m.result];
               return (
-                <span key={m.id} style={{ background: r.bg, color: r.fg }} title={`${m.goalsFor}–${m.goalsAgainst} vs ${m.opponent}`}>
+                <span
+                  key={m.id}
+                  className="fc-streak-pill"
+                  style={{ background: r.bg, color: r.fg }}
+                  title={`${m.goalsFor}–${m.goalsAgainst} vs ${m.opponent}`}
+                >
                   {r.letter}
                 </span>
               );
@@ -49,12 +54,12 @@ export function MatchesSummary({ matches }: { matches: Match[] }) {
         </div>
         <Spill at="side" />
       </div>
-      <StatTile label="Buts pour" value={scored} sub={`${frNum(scored / n, 1)} par match`} delay={70} />
-      <StatTile label="Buts contre" value={conceded} sub={`${frNum(conceded / n, 1)} par match`} delay={130} />
+      <StatTile label="Buts pour" value={scored} sub={`${frNum(scored / n, 1)} / m`} delay={70} />
+      <StatTile label="Buts contre" value={conceded} sub={`${frNum(conceded / n, 1)} / m`} delay={130} />
       <StatTile
         label="Possession"
         value={possession === null ? '—' : `${Math.round(possession)}%`}
-        sub={shots === null ? undefined : `${frNum(shots, 1)} tirs par match`}
+        sub={shots === null ? undefined : `${frNum(shots, 1)} tirs/m`}
         delay={190}
       />
     </div>

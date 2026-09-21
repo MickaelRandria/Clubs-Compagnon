@@ -27,6 +27,7 @@ import './styles/fc27-visuals.css';
 import './styles/fc27-mobile.css';
 import './styles/tour.css';
 import './styles/pwa.css';
+import './styles/coach.css';
 import './styles/responsive.css';
 
 const queryClient = new QueryClient({

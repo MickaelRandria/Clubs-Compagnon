@@ -3,7 +3,8 @@
    Angles droits, aucune lueur ; la sélection se lit par un aplat ou un liseré magenta. */
 
 .fc-tab--preparation { display: flex; align-items: center; gap: 6px; }
-.fc-tab--preparation span { padding: 3px 4px; background: var(--fc-marine); color: var(--fc-craie); font-size: 10px; letter-spacing: .03em; }
+.fc-tab--preparation span { padding: 2px 5px; background: var(--fc-magenta); color: #fff; font: 800 10px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
+
 
 /* ---------- Base ---------- */
 .fc27 { --p-ink: #0B1A3A; --p-night: #0A1128; --p-night-2: #111C3D; --p-chalk: #F1F3F6; --p-steel: #C9D3E4; --p-mist: #E3E8F0;

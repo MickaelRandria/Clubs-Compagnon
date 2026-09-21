@@ -70,6 +70,13 @@ export function PlayersView() {
                 <span className="fc-body">
                   Personne n'est enregistré à ce poste dans l'effectif. Choisis un autre poste pour voir le classement.
                 </span>
+                <button
+                  type="button"
+                  className="fc-cta fc-cta--sm"
+                  onClick={() => setParam('poste', POSITIONS[0].param, POSITIONS[0].param)}
+                >
+                  Voir tout l'effectif
+                </button>
               </div>
             );
           }

@@ -1,6 +1,20 @@
 import type { ReactNode } from 'react';
 
 const GLYPHS = {
+  home: (
+    <>
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </>
+  ),
+  users: (
+    <>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
   clock: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -29,6 +43,7 @@ const GLYPHS = {
   expand: <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />,
   external: <path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />,
   back: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  forward: <path d="M5 12h14M13 6l6 6-6 6" />,
   // Catégories de PlayStyles (carte joueur FC 27)
   shot: (
     <>

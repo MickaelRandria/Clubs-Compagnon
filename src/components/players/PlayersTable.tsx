@@ -1,7 +1,7 @@
 import type { Member } from '../../../shared/types';
 import { frNum, pad2 } from '../../lib/format';
 import { useIsMobile } from '../../lib/hooks';
-import { POS_SHORT } from '../../lib/labels';
+import { POS_SHORT, posColorClass } from '../../lib/labels';
 import { Meter } from '../ui/Meter';
 import { OvrBadge } from '../ui/OvrBadge';
 import { formatStat, statValue, type SortKey } from './playerSort';
@@ -29,7 +29,7 @@ export function PlayersTable({
 }) {
   const isMobile = useIsMobile();
   const sorted = (key: SortKey) => (sortKey === key ? 'is-sorted' : undefined);
-  const posClass = (p: Member) => `fc-pos${p.position === 'FW' ? ' fc-pos--hot' : ''}`;
+  const posClass = (p: Member) => `fc-pos ${posColorClass(p.position)}`;
   const meter = (p: Member) => <Meter pct={(statValue(p, sortKey) / maxValue) * 100} />;
 
   return (
@@ -59,16 +59,16 @@ export function PlayersTable({
                 <span className={posClass(p)}>{POS_SHORT[p.position]}</span>
               </span>
               <span className="fc-prow-stats">
-                <span>
+                <span className={sorted('goals')}>
                   <b>{p.goals}</b> buts
                 </span>
-                <span>
+                <span className={sorted('assists')}>
                   <b>{p.assists}</b> PD
                 </span>
-                <span>
+                <span className={sorted('matchesPlayed')}>
                   <b>{p.matchesPlayed}</b> MJ
                 </span>
-                <span>
+                <span className={sorted('avgRating')}>
                   <b>{p.avgRating === null ? '—' : frNum(p.avgRating, 1)}</b> note
                 </span>
               </span>

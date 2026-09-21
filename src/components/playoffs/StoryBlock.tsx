@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { PLAYOFF_NIGHT } from '../../content/playoffs';
 import { CornerShardLg } from '../ui/CornerShardLg';
 
@@ -13,7 +14,11 @@ export function StoryBlock() {
           {night.wins} victoires, {night.losses} défaite.
         </span>
         <span>
-          L'homme des Playoffs : <em>{night.mvp}</em>.
+          L'homme des Playoffs :{' '}
+          <Link to="/joueurs" className="fc-story-mvp" title="Voir dans l'effectif">
+            <em>{night.mvp}</em>
+          </Link>
+          .
         </span>
       </span>
       <p>{night.story}</p>

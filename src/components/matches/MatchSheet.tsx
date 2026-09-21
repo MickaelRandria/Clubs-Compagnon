@@ -15,15 +15,18 @@ export function MatchSheet({ match }: { match: Match }) {
   return (
     <div className="fc-block fc-hero fc-sheet">
       <div className="fc-hero-copy">
-        <span className="fc-chip" style={{ background: r.bg, color: r.fg }}>
-          {r.word}
-        </span>
+        <div className="fc-sheet-badges">
+          <span className="fc-chip" style={{ background: r.bg, color: r.fg }}>
+            {r.word}
+          </span>
+          <span className={`fc-sheet-type${match.type === 'playoff' ? ' fc-sheet-type--playoff' : ''}`}>
+            {MATCH_TYPE_LABEL[match.type]}
+          </span>
+        </div>
         <span className="fc-title fc-title--xl fc-name">vs {match.opponent}</span>
         <span className="fc-mention">
           <Glyph name="clock" />
-          <span>
-            {MATCH_TYPE_LABEL[match.type]} · {formatMatchDate(match.playedAt)}
-          </span>
+          <span>{formatMatchDate(match.playedAt)}</span>
         </span>
         <span className="fc-kpis">
           {kpis.map(([value, label]) => (
@@ -33,6 +36,24 @@ export function MatchSheet({ match }: { match: Match }) {
             </span>
           ))}
         </span>
+        {match.possessionPct !== null && (
+          <div className="fc-sheet-possession">
+            <div className="fc-sheet-poss-labels">
+              <span>DOMMAGE FC {match.possessionPct}%</span>
+              <span>{100 - match.possessionPct}% {match.opponent.toUpperCase()}</span>
+            </div>
+            <div
+              className="fc-sheet-poss-bar"
+              role="progressbar"
+              aria-label="Possession du match"
+              aria-valuenow={match.possessionPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="fc-sheet-poss-fill" style={{ width: `${match.possessionPct}%` }} />
+            </div>
+          </div>
+        )}
       </div>
       <div className="fc-hero-art">
         <HeroShards />

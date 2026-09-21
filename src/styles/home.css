@@ -19,17 +19,36 @@
 .fc-card-art { position: relative; flex: 0 0 42%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
 .fc-card-art > svg:first-child { position: absolute; inset: 0; width: 100%; height: 100%; }
 .fc-card-art > :not(:first-child) { position: relative; }
-.fc-chip { display: inline-block; padding: 5px 9px; font: 700 12px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; }
+.fc-chip { display: inline-block; padding: 5px 10px; font: 700 12px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase;
+           clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%); }
 .fc-score { font: italic 800 clamp(56px, 6vw, 84px)/.85 var(--fc-display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--fc-marine); }
 .fc-score span { margin: 0 .06em; color: var(--fc-blue); }
 
+/* Top buteur avec découpe joueur compacte */
+.fc-card-art--scorer { position: relative; overflow: hidden; height: 100%; max-height: 120px; }
+.fc-card-art--scorer .fc-scorer-cutout { position: absolute !important; right: -4px; bottom: 0; height: 110%;
+                                         max-height: 120px; width: auto; max-width: none;
+                                         object-fit: contain; object-position: bottom right; pointer-events: none;
+                                         filter: drop-shadow(0 4px 8px rgba(11,26,58,.3)); transition: transform .2s ease; }
+.fc-tile:hover .fc-scorer-cutout,
+.fc-tile:active .fc-scorer-cutout { transform: scale(1.05) translateY(-2px); }
+.fc-scorer-stat { position: absolute !important; left: 8px; bottom: 8px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; line-height: .88; }
+.fc-scorer-num { font: italic 800 clamp(32px, 3.6vw, 48px)/.85 var(--fc-display); color: var(--fc-marine); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.fc-scorer-lbl { font: 800 10px/1 var(--fc-display); letter-spacing: .14em; color: var(--fc-blue); text-transform: uppercase; }
+
+
+/* Forme en chevrons FIFA */
 .fc-card--form { flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .fc-form-shard { position: absolute; top: 0; left: 0; width: 80px; height: 90px; }
 .fc-form { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 12px; }
-.fc-form-grid { display: grid; grid-template-columns: repeat(5, 22px); gap: 4px; margin-bottom: 8px; }
-.fc-form-cell { display: grid; place-items: center; height: 22px; font: 800 12px/1 var(--fc-display); }
+.fc-form-grid { display: grid; grid-template-columns: repeat(5, 26px); gap: 4px; margin-bottom: 8px; }
+.fc-form-cell { display: grid; place-items: center; height: 26px; font: 800 13px/1 var(--fc-display);
+                clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+                transition: transform .12s, filter .12s; }
+.fc-form-cell:hover { transform: scale(1.1); filter: brightness(1.15); }
 .fc-form-label { font: 800 20px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
 .fc-form-sub { font: 600 13px/1.2 var(--fc-text); color: var(--fc-ardoise); }
 .fc-dots { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 5px; }
 .fc-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--fc-acier); }
 .fc-dots i:first-child { background: var(--fc-blue); }
+

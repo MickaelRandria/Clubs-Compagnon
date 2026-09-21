@@ -8,9 +8,13 @@
 
 .fc-tile { appearance: none; border: 0; margin: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: none;
            position: relative; display: block; width: 100%; overflow: hidden;
-           animation: fcIn .5s cubic-bezier(.2,.7,.2,1) both; transition: box-shadow .15s; }
-.fc-tile:hover, .fc-tile:focus-visible { outline: none; z-index: 4;
-           box-shadow: 0 0 0 3px var(--fc-glacier), 0 0 26px rgba(111,200,255,.4); }
+           animation: fcIn .5s cubic-bezier(.2,.7,.2,1) both;
+           transition: box-shadow .18s ease, transform .18s cubic-bezier(.2,.8,.2,1), filter .15s;
+           touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.fc-tile:hover, .fc-tile:focus-visible { outline: none; z-index: 4; transform: translateY(-3px) scale(1.008);
+           box-shadow: 0 0 0 3px var(--fc-glacier), 0 10px 28px rgba(111,200,255,.35); }
+.fc-tile:active { transform: scale(.985); filter: brightness(1.08); }
+
 /* Blocs non cliquables des vues détail — même entrée que les tiles */
 .fc-block { position: relative; overflow: hidden; animation: fcIn .5s cubic-bezier(.2,.7,.2,1) both; }
 

@@ -67,11 +67,28 @@ export function MatchesView() {
               />
             </div>
 
-            <div className="fc-block fc-marine fc-history" style={{ animationDelay: '160ms' }}>
-              {shown.map((m) => (
-                <MatchRow key={m.id} match={m} mobile={isMobile} />
-              ))}
-            </div>
+            {shown.length === 0 ? (
+              <div className="fc-block fc-marine fc-empty" style={{ animationDelay: '160ms' }}>
+                <CornerShardLg />
+                <span className="fc-title fc-title--lg">Aucun match</span>
+                <span className="fc-body">
+                  Aucun match enregistré avec le résultat « {filter.label.toLowerCase()} ».
+                </span>
+                <button
+                  type="button"
+                  className="fc-cta fc-cta--sm"
+                  onClick={() => setFilter(FILTERS[0].param)}
+                >
+                  Voir tous les matchs
+                </button>
+              </div>
+            ) : (
+              <div className="fc-block fc-marine fc-history" style={{ animationDelay: '160ms' }}>
+                {shown.map((m) => (
+                  <MatchRow key={m.id} match={m} mobile={isMobile} />
+                ))}
+              </div>
+            )}
           </div>
         );
       }}

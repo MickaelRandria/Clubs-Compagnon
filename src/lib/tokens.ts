@@ -8,4 +8,9 @@ export const FC = {
   acier: '#8A97B8',
   ardoise: '#5C6781',
   rouge: '#FF4D5E',
+  magenta: '#FF4FA3',
+  posFw: '#FF4FA3',
+  posMf: '#3DDC97',
+  posDf: '#6FC8FF',
+  posGk: '#FFB547',
 } as const;

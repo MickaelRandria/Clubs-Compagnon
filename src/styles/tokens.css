@@ -11,6 +11,10 @@
   --fc-brume: #C3CCDF;    /* Brume — sous-titres et métadonnées sur Marine / Abysse (≥ 10:1) */
   --fc-rouge: #FF4D5E;    /* Rouge fonctionnel — défaites uniquement */
   --fc-magenta: #FF4FA3;  /* Accent FC 27 — signale la préparation, jamais un résultat */
+  --fc-pos-fw: #FF4FA3;   /* Secteur Attaque FIFA — Magenta */
+  --fc-pos-mf: #3DDC97;   /* Secteur Milieu FIFA — Émeraude */
+  --fc-pos-df: #6FC8FF;   /* Secteur Défense FIFA — Glacier */
+  --fc-pos-gk: #FFB547;   /* Secteur Gardien FIFA — Ambre */
   --fc-display: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif;
   --fc-text: 'Barlow', 'Segoe UI', system-ui, sans-serif;
 }

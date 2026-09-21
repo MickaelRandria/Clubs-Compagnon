@@ -1,6 +1,6 @@
 import type { Member } from '../../../shared/types';
 import { frNum } from '../../lib/format';
-import { POS_LABEL, POS_SHORT } from '../../lib/labels';
+import { POS_LABEL, POS_SHORT, posColorClass } from '../../lib/labels';
 import { Glyph } from '../ui/Glyph';
 import { HeroShards } from '../ui/HeroShards';
 import { Spill } from '../ui/Spill';
@@ -24,22 +24,54 @@ export function PlayerLeadTile({
     [player.passPct === null ? '—' : `${player.passPct}%`, 'Passes réussies'],
   ];
 
+  // Statistique complémentaire sans duplication avec le tri principal
+  const renderMention = () => {
+    const ratio = (val: number) => (player.matchesPlayed > 0 ? frNum(val / player.matchesPlayed, 2) : '—');
+    if (sortKey === 'goals') {
+      return (
+        <span>
+          {player.assists} passes D. · {ratio(player.goals)} but/m
+        </span>
+      );
+    }
+    if (sortKey === 'assists') {
+      return (
+        <span>
+          {player.goals} buts · {ratio(player.assists)} PD/m
+        </span>
+      );
+    }
+    if (sortKey === 'matchesPlayed') {
+      return (
+        <span>
+          {player.goals} buts · {player.assists} passes D.
+        </span>
+      );
+    }
+    return (
+      <span>
+        {player.goals} buts · {player.assists} passes D. · {player.matchesPlayed} MJ
+      </span>
+    );
+  };
+
   return (
     <div className="fc-block fc-hero">
       <div className="fc-hero-copy">
-        <span className="fc-rank">01</span>
+        <div className="fc-hero-lead-header">
+          <span className="fc-rank">01</span>
+          <span className="fc-lead-badge">N°1 · {sortLabel.toUpperCase()}</span>
+        </div>
         <span className="fc-title fc-title--xl fc-name">{player.gamertag}</span>
         <span className="fc-meta">
-          <span className="fc-pos fc-pos--solid">{POS_SHORT[player.position]}</span>
+          <span className={`fc-pos ${posColorClass(player.position)}`}>{POS_SHORT[player.position]}</span>
           <span>
             {POS_LABEL[player.position]} · {player.matchesPlayed} matchs
           </span>
         </span>
         <span className="fc-mention">
           <Glyph name="ball" />
-          <span>
-            {player.goals} buts · {player.assists} passes D.
-          </span>
+          {renderMention()}
         </span>
         <span className="fc-kpis">
           {kpis.map(([value, label]) => (

@@ -4,6 +4,7 @@ import {
   bigint,
   boolean,
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -345,4 +346,28 @@ export const fc27NameVotes = pgTable('fc27_name_votes', {
   foreignKey({ columns: [t.proposalId, t.campaignId], foreignColumns: [fc27NameProposals.id, fc27NameProposals.campaignId] }),
   index('fc27_name_vote_proposal_idx').on(t.proposalId, t.campaignId),
   check('fc27_name_vote_pseudo_check', sql`char_length(${t.voterPseudo}) between 1 and 40 and ${t.voterPseudo} ~ '[^[:space:]]'`),
+]);
+
+/** Débriefs de match rédigés par le modèle, un par (match, état des notes). */
+export const matchDebriefs = pgTable('match_debriefs', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  matchId: integer('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
+  /** Empreinte des stats, des notes et de la version du format (voir debriefInputHash). */
+  inputHash: text('input_hash').notNull(),
+  payload: jsonb('payload').notNull(),
+  model: text('model').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex('match_debrief_key').on(t.matchId, t.inputHash),
+  check('match_debriefs_input_hash_check', sql`char_length(${t.inputHash}) between 1 and 80`),
+]);
+
+/** Appels IA facturés, par compte et par jour : c'est le plafond du coach. */
+export const aiUsage = pgTable('ai_usage', {
+  accountId: integer('account_id').notNull().references(() => clubAccounts.id, { onDelete: 'cascade' }),
+  day: date('day').notNull(),
+  calls: integer('calls').notNull().default(0),
+}, (t) => [
+  primaryKey({ columns: [t.accountId, t.day] }),
+  check('ai_usage_calls_check', sql`${t.calls} >= 0`),
 ]);

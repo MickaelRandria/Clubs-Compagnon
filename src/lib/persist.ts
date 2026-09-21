@@ -38,7 +38,10 @@ export const persistOptions = {
      * `me` repart donc toujours du serveur, et lui seul fait foi.
      */
     shouldDehydrateQuery: (query: Query) =>
-      query.state.status === 'success' && query.queryKey[0] !== 'me',
+      query.state.status === 'success' && query.queryKey[0] !== 'me'
+      // Même raison pour un débrief refusé : restauré après la connexion Discord, il
+      // afficherait « connecte-toi » à quelqu'un qui vient de le faire.
+      && !(query.queryKey[0] === 'match-debrief' && !(query.state.data as { available?: boolean })?.available),
   },
 };
 

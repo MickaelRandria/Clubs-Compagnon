@@ -541,3 +541,16 @@
   background: #fff;
   transform: translateY(-1px);
 }
+
+/* ---------- Réponse simple : visiteur non connecté ou plafond du jour ---------- */
+.fc-coach-notice { display: grid; gap: 8px; margin: 0; padding: 10px 12px; background: rgba(111, 200, 255, .08);
+                   box-shadow: inset 3px 0 0 var(--fc-glacier); color: var(--fc-brume); font: 600 13px/1.4 var(--fc-text); }
+.fc-coach-notice p { margin: 0; }
+.fc-coach-notice-signin { justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px;
+                          background: var(--fc-craie); color: var(--fc-marine); text-decoration: none;
+                          font: 800 14px/1 var(--fc-display); letter-spacing: .05em; text-transform: uppercase;
+                          box-shadow: inset 5px 0 0 var(--fc-magenta); }
+.fc-coach-notice-signin:hover { background: var(--fc-glacier); }
+.fc-coach-notice-signin:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+.fc-coach-debrief--locked { display: grid; gap: 12px; }
+.fc-coach-debrief--locked .fc-coach-summary { margin: 0; }

@@ -1,4 +1,5 @@
 import { useMatchDebrief } from '../../api/match-debrief';
+import { SignInButton } from '../fc27/SignIn';
 import { CornerShardLg } from '../ui/CornerShardLg';
 import { Glyph } from '../ui/Glyph';
 
@@ -22,6 +23,22 @@ export function MatchCoachDebrief({ matchId }: { matchId: number }) {
   }
 
   const data = query.data;
+  // Aucun débrief rédigé pour ce match : seul un compte connecté peut en demander un,
+  // puisque c'est un appel facturé. Une fois écrit, il est lisible par tout le monde.
+  if (data && !data.available && data.reason === 'sign-in') {
+    return (
+      <div className="fc-block fc-marine fc-coach-debrief fc-coach-debrief--locked">
+        <div className="fc-coach-debrief-head">
+          <span className="fc-coach-chip">
+            <Glyph name="bolt" size={14} />
+            <span>L'ŒIL DU COACH IA</span>
+          </span>
+        </div>
+        <p className="fc-coach-summary">Pas encore de débrief pour ce match. Connecte-toi pour que le coach IA l’analyse.</p>
+        <SignInButton className="fc-coach-notice-signin" />
+      </div>
+    );
+  }
   if (!data?.available) return null;
 
   const { debrief } = data;

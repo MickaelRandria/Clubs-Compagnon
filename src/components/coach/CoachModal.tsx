@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useAskCoach, type CoachAction } from '../../api/coach';
+import { SignInButton } from '../fc27/SignIn';
 import { Glyph } from '../ui/Glyph';
 
 interface Message {
@@ -9,6 +10,8 @@ interface Message {
   content: string;
   action?: CoachAction | null;
   suggestedQuestions?: string[];
+  /** Réponse simple servie à la place du modèle : visiteur non connecté ou plafond du jour. */
+  notice?: 'sign-in' | 'quota';
 }
 
 const DEFAULT_QUESTIONS = [
@@ -154,6 +157,7 @@ export function CoachModal({
             content: data.response.reply,
             action: data.response.action,
             suggestedQuestions: data.response.suggestedQuestions,
+            notice: data.notice,
           };
           setMessages((prev) => [...prev, assistantMsg]);
         },
@@ -251,6 +255,18 @@ export function CoachModal({
                 <div className={`fc-coach-bubble fc-coach-bubble--${msg.role}`}>
                   {renderCoachFormattedText(msg.content)}
                 </div>
+
+                {msg.notice === 'sign-in' && (
+                  <div className="fc-coach-notice">
+                    <p>Réponse rapide. Connecte-toi pour que le coach IA analyse vraiment ta question.</p>
+                    <SignInButton className="fc-coach-notice-signin" />
+                  </div>
+                )}
+                {msg.notice === 'quota' && (
+                  <p className="fc-coach-notice">
+                    Tu as posé beaucoup de questions aujourd’hui : le coach IA reprend demain. En attendant, voici la réponse rapide.
+                  </p>
+                )}
 
                 {msg.action && (
                   <button

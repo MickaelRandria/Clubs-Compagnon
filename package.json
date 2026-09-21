@@ -9,7 +9,7 @@
   "scripts": {
     "assets:generate": "node scripts/generate-assets.js",
     "test:assets": "node --test tests/generate-assets.test.js",
-    "test:fc27": "tsx --test tests/fc27.test.ts tests/tactical-advisor.test.ts tests/assets.test.ts tests/position-profiles.test.ts tests/tour.test.ts tests/staff-report.test.ts tests/club-policy.test.ts tests/lookalikes.test.ts tests/lookalike-lookup.test.ts tests/session.test.ts",
+    "test:fc27": "tsx --test tests/fc27.test.ts tests/tactical-advisor.test.ts tests/assets.test.ts tests/position-profiles.test.ts tests/tour.test.ts tests/staff-report.test.ts tests/club-policy.test.ts tests/lookalikes.test.ts tests/lookalike-lookup.test.ts tests/session.test.ts tests/coach-assistant.test.ts tests/match-debrief.test.ts",
     "test:lookalikes:browser": "tsx tests/lookalikes.browser.ts",
     "test:player-tour:browser": "tsx tests/player-tour.browser.ts",
     "staff:check": "tsx scripts/staff-check.ts",

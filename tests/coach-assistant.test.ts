@@ -7,7 +7,7 @@ import {
   type CoachResponse,
 } from '../shared/coach-assistant.js';
 import type { Club, Member } from '../shared/types.js';
-import { createCoachHandler } from '../server/coach-http.js';
+import { COACH_DAILY_LIMIT, createCoachHandler, type CoachQuota } from '../server/coach-http.js';
 
 const mockClub: Club = {
   id: 1,
@@ -73,8 +73,24 @@ test('getDeterministicCoachFallback répond pour les buteurs en utilisant mockMe
   assert.equal(fallback.action?.to, '/joueurs');
 });
 
+/** Compteur en mémoire, qui note chaque réservation. */
+function quota(remaining: number): CoachQuota & { calls: number[] } {
+  const calls: number[] = [];
+  return {
+    calls,
+    consume: async (accountId) => {
+      calls.push(accountId);
+      if (remaining <= 0) return false;
+      remaining -= 1;
+      return true;
+    },
+  };
+}
+
+const ask = (body: unknown) => new Request('http://localhost/api/coach', { method: 'POST', body: JSON.stringify(body) });
+
 test('createCoachHandler utilise le fallback gracieux si hasKey retourne false', async () => {
-  const handler = createCoachHandler({
+  const handler = createCoachHandler(quota(10), {
     hasKey: () => false,
   });
 
@@ -91,3 +107,54 @@ test('createCoachHandler utilise le fallback gracieux si hasKey retourne false',
   assert.equal(data.response.action?.to, '/profil');
 });
 
+test('un visiteur non connecté a la réponse simple, sans appel facturé', async () => {
+  let modelCalls = 0;
+  const q = quota(10);
+  const handler = createCoachHandler(q, {
+    hasKey: () => true,
+    session: () => null,
+    call: async () => { modelCalls += 1; throw new Error('ne doit pas être appelé'); },
+  });
+  const data = await (await handler.POST(ask({ question: 'Qui est notre meilleur buteur ?' }))).json();
+  assert.equal(data.source, 'fallback');
+  assert.equal(data.notice, 'sign-in');
+  assert.equal(modelCalls, 0);
+  assert.deepEqual(q.calls, [], 'le plafond ne se consomme pas pour un visiteur');
+});
+
+test('au-delà du plafond du jour, plus aucun appel au modèle', async () => {
+  let modelCalls = 0;
+  const handler = createCoachHandler(quota(0), {
+    hasKey: () => true,
+    session: () => 7,
+    call: async () => { modelCalls += 1; throw new Error('ne doit pas être appelé'); },
+  });
+  const data = await (await handler.POST(ask({ question: 'Comment voter ?' }))).json();
+  assert.equal(data.notice, 'quota');
+  assert.equal(modelCalls, 0);
+  assert.ok(COACH_DAILY_LIMIT > 0);
+});
+
+test('un compte connecté sous le plafond interroge le modèle, historique borné', async () => {
+  const prompts: string[] = [];
+  const q = quota(1);
+  const handler = createCoachHandler(q, {
+    hasKey: () => true,
+    session: () => 7,
+    call: async ({ user }) => {
+      prompts.push(user);
+      return { parsed: getDeterministicCoachFallback('Comment voter ?', null, []), raw: '', model: 'test-model' };
+    },
+  });
+  const geant = 'x'.repeat(5000);
+  const data = await (await handler.POST(ask({
+    question: 'Comment voter ?',
+    history: [{ role: 'user', content: geant }],
+  }))).json();
+  assert.equal(data.source, 'model');
+  assert.equal(data.notice, undefined);
+  assert.deepEqual(q.calls, [7]);
+  assert.equal(prompts.length, 1);
+  assert.ok(prompts[0].includes('x'.repeat(500)), 'l’historique arrive bien dans le prompt');
+  assert.ok(!prompts[0].includes('x'.repeat(501)), 'un message d’historique ne dépasse pas 500 caractères');
+});

@@ -7,7 +7,7 @@ import {
   type MatchDebrief,
 } from '../shared/match-debrief.js';
 import type { Match, MatchNote, Member } from '../shared/types.js';
-import { createMatchDebriefHandler } from '../server/match-debrief-http.js';
+import { createMatchDebriefHandler, debriefInputHash, type DebriefCache } from '../server/match-debrief-http.js';
 
 const mockMatch: Match = {
   id: 42,
@@ -78,9 +78,32 @@ test('sanitizeMatchDebrief filtre les tags inconnus et réconcilie le MOTM', () 
   assert.equal(sanitized.suggestedMotm, 'Kylian93'); // Re-mappé sur la casse exacte du joueur
 });
 
+/** Cache en mémoire, indexé comme la table Neon. */
+function memoryCache(): DebriefCache & { rows: Map<string, { payload: unknown; model: string }> } {
+  const rows = new Map<string, { payload: unknown; model: string }>();
+  return {
+    rows,
+    read: async (id, hash) => rows.get(`${id}:${hash}`),
+    write: async (id, hash, debrief, model) => { rows.set(`${id}:${hash}`, { payload: debrief, model }); },
+  };
+}
+
+const load = async () => ({ match: mockMatch, notes: mockNotes, members: mockMembers });
+const url = 'http://localhost/api/matches/42/debrief';
+
+const redige: MatchDebrief = {
+  headline: 'Victoire éclatante face aux Galactiques',
+  summary: 'Avec 58% de possession et 11 tirs, Dommage FC a dicté son rythme du début à la fin.',
+  advice: 'Garder cette même rigueur dans les transitions défensives.',
+  suggestedNote: 'Match maîtrisé de bout en bout, efficacité maximale devant le but adverse.',
+  suggestedTags: ['But de la semaine'],
+  suggestedMotm: 'Kylian93',
+};
+
 test('createMatchDebriefHandler retourne available: false si MISTRAL_API_KEY est absente', async () => {
-  const handler = createMatchDebriefHandler({
+  const handler = createMatchDebriefHandler(memoryCache(), {
     hasKey: () => false,
+    load,
   });
 
   const request = new Request('http://localhost/api/matches/42/debrief');
@@ -92,3 +115,51 @@ test('createMatchDebriefHandler retourne available: false si MISTRAL_API_KEY est
   assert.equal(json.reason, 'not-configured');
 });
 
+test('sans compte ni débrief existant : invitation à se connecter, aucun appel facturé', async () => {
+  let generations = 0;
+  const handler = createMatchDebriefHandler(memoryCache(), {
+    hasKey: () => true, load, session: () => null,
+    generate: async () => { generations += 1; return { debrief: redige, model: 'm' }; },
+  });
+  const json = await (await handler.GET(new Request(url))).json();
+  assert.deepEqual(json, { available: false, reason: 'sign-in' });
+  assert.equal(generations, 0);
+});
+
+test('un débrief rédigé une fois est resservi à tous, sans nouvel appel', async () => {
+  let generations = 0;
+  const cache = memoryCache();
+  const options = {
+    hasKey: () => true, load,
+    generate: async () => { generations += 1; return { debrief: redige, model: 'test-model' }; },
+  };
+  const connecte = createMatchDebriefHandler(cache, { ...options, session: () => 7 });
+  const visiteur = createMatchDebriefHandler(cache, { ...options, session: () => null });
+
+  const premier = await (await connecte.GET(new Request(url))).json();
+  assert.equal(premier.available, true);
+  assert.equal(generations, 1);
+  assert.equal(cache.rows.size, 1);
+
+  // Rechargement par le même compte, puis visite anonyme : le cache répond aux deux.
+  await connecte.GET(new Request(url));
+  const anonyme = await (await visiteur.GET(new Request(url))).json();
+  assert.equal(anonyme.available, true);
+  assert.equal(anonyme.debrief.headline, redige.headline);
+  assert.equal(generations, 1, 'un seul appel facturé pour tout le monde');
+});
+
+test('une note ajoutée change l’empreinte, un rechargement non', () => {
+  const avant = debriefInputHash(mockMatch, mockNotes);
+  assert.equal(debriefInputHash(mockMatch, [...mockNotes]), avant);
+  const ajout: MatchNote = { ...mockNotes[0], id: 11, body: 'Défense solide en fin de match.' };
+  assert.notEqual(debriefInputHash(mockMatch, [...mockNotes, ajout]), avant);
+});
+
+test('une ligne de cache illisible est ignorée, pas servie', async () => {
+  const cache = memoryCache();
+  cache.rows.set(`42:${debriefInputHash(mockMatch, mockNotes)}`, { payload: { headline: 'x' }, model: 'ancien' });
+  const handler = createMatchDebriefHandler(cache, { hasKey: () => true, load, session: () => null });
+  const json = await (await handler.GET(new Request(url))).json();
+  assert.equal(json.available, false);
+});

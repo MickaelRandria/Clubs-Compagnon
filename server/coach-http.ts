@@ -9,19 +9,38 @@ import {
 import type { Club, Member } from '../shared/types.js';
 import { fetchClub, fetchMembers } from './db/queries.js';
 import { HttpError, handle } from './http.js';
+import { readSession } from './session.js';
 import { StaffUnavailable, mistralJson } from './staff-mistral.js';
 
 export interface CoachHttpResult {
   response: CoachResponse;
   source: 'model' | 'fallback';
   model?: string;
+  /** Pourquoi le modèle n'a pas été appelé, quand ce n'est pas une panne. */
+  notice?: 'sign-in' | 'quota';
 }
 
-export function createCoachHandler(options: {
+/** Questions au modèle par compte et par jour. */
+export const COACH_DAILY_LIMIT = 40;
+
+/**
+ * Compteur d'appels facturés. `consume` réserve un appel et répond false si le plafond du
+ * jour est atteint. Implémenté sur Neon dans db/ai-guards, de façon atomique.
+ */
+export interface CoachQuota {
+  consume(accountId: number, limit: number): Promise<boolean>;
+}
+
+/** Un message d'historique ne peut pas dépasser la taille d'une question. */
+const MAX_MESSAGE = 500;
+
+export function createCoachHandler(quota: CoachQuota, options: {
   call?: typeof mistralJson;
   hasKey?: () => boolean;
+  session?: (request: Request) => number | null;
 } = {}) {
   const call = options.call ?? mistralJson;
+  const session = options.session ?? readSession;
   const hasKey = options.hasKey ?? (() => Boolean(process.env.MISTRAL_API_KEY?.trim()));
 
   return {
@@ -53,6 +72,9 @@ export function createCoachHandler(options: {
                   typeof h.content === 'string',
               )
               .slice(-6)
+              // Borné comme la question : sans cela, six messages géants passaient tels quels
+              // dans le prompt, et c'est l'entrée qu'on paie.
+              .map((h) => ({ role: h.role, content: h.content.slice(0, MAX_MESSAGE) }))
           : undefined;
 
         let club: Club | null = null;
@@ -72,6 +94,19 @@ export function createCoachHandler(options: {
             source: 'fallback',
           });
         }
+
+        // Le modèle est réservé aux comptes connectés, dans la limite du plafond du jour.
+        // Un visiteur garde la réponse déterministe : elle ne coûte rien et suffit pour se
+        // repérer dans l'app. N'importe qui pouvant créer un compte Discord, la session seule
+        // ne protège pas le quota partagé avec le rapport du staff — le plafond, si.
+        const accountId = session(request);
+        const limited = (notice: 'sign-in' | 'quota') => reply({
+          response: getDeterministicCoachFallback(question, club, members),
+          source: 'fallback',
+          notice,
+        });
+        if (accountId === null) return limited('sign-in');
+        if (!(await quota.consume(accountId, COACH_DAILY_LIMIT))) return limited('quota');
 
         try {
           const { parsed, model } = await call({

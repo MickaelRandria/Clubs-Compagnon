@@ -66,10 +66,11 @@ export function useSpotlight(selector: string | undefined, timeout = 4000, botto
       frame = requestAnimationFrame(track);
     };
 
-    const findVisible = () => {
-      const el = document.querySelector(selector);
-      return el?.checkVisibility() && el.getBoundingClientRect().height > 0 ? el : null;
-    };
+    // Toutes les occurrences, pas seulement la première : un même élément existe souvent
+    // en double, une version pour le grand écran et une pour le mobile, dont une seule est
+    // affichée. Ne regarder que la première faisait manquer la cible visible.
+    const findVisible = () => [...document.querySelectorAll(selector)]
+      .find((el) => el.checkVisibility() && el.getBoundingClientRect().height > 0) ?? null;
     const existing = findVisible();
     if (existing) {
       attach(existing);

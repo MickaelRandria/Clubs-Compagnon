@@ -22,7 +22,8 @@ export function SignInButton({ className = 'fc27-pad fc27-pad--primary' }: { cla
   if (me.isError) return <button type="button" className={className} onClick={() => void me.refetch()}>Réessayer la connexion</button>;
   if (!me.data || (me.data.signedIn === false && !me.data.canSignIn)) return <span role="status">Connexion indisponible pour le moment.</span>;
   const returnTo = location.pathname + location.search + location.hash;
-  return <a className={className} href={`/api/auth/discord?returnTo=${encodeURIComponent(returnTo)}`}>
+  // `fc27-signin` est une accroche stable pour le guide : la classe de style, elle, change selon le contexte.
+  return <a className={`fc27-signin ${className}`} href={`/api/auth/discord?returnTo=${encodeURIComponent(returnTo)}`}>
     <DiscordMark /> Se connecter avec Discord
   </a>;
 }

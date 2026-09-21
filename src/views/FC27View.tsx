@@ -70,7 +70,7 @@ function Preparation({ state }: { state: FC27State }) {
         </div>
         <div className="fc27-player-count"><strong>{count.toString().padStart(2, '0')}</strong><span>Fiche{count > 1 ? 's' : ''} dans le vestiaire</span></div>
         <SignedInAs />
-        {!archived && <div className="fc27-player-actions">
+        {!archived && <div className={`fc27-player-actions${me.account ? '' : ' fc27-player-actions--signin'}`}>
           {me.loading ? <span className="fc27-pad fc27-pad--waiting">…</span>
             : !me.account ? <SignInButton />
             : me.profile

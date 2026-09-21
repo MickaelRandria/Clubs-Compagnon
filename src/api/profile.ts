@@ -11,7 +11,9 @@ export function useProfile() {
     queryFn: () => apiRequest<ClubProfile>('/api/profile'),
     enabled: accountId !== null,
     staleTime: 5_000,
-    refetchInterval: 15_000,
+    // Une préparation de saison ne bouge pas toutes les quinze secondes. Le rafraîchissement
+    // au retour sur l'onglet suffit, et évite un aller-retour réseau permanent sur mobile.
+    refetchInterval: 60_000,
     refetchOnWindowFocus: true,
     retry: false,
   });

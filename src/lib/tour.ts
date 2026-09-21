@@ -21,32 +21,23 @@ export interface GuideStep {
   placement?: 'top' | 'bottom' | 'left' | 'right';
   /** Cible qui peut légitimement ne pas exister (préparation archivée, effectif vide…). */
   optional?: boolean;
+  /**
+   * État de connexion exigé. Filtré AVANT de lancer le guide, donc sans délai : trier
+   * sur la présence de la cible dans le DOM laissait apparaître l'étape une seconde ou
+   * deux avant de la sauter, et on lisait « Te voilà connecté » en étant déconnecté.
+   */
+  requires?: 'signed-in' | 'signed-out';
 }
 
 export interface TourStep extends GuideStep { route: string }
+
 
 export const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
     route: '/',
     title: 'Bienvenue chez Dommage BJ FC',
-    body: 'Un tour d’une minute pour savoir où tout se trouve, et ce qui t’attend avant la sortie de FC 27. Tu peux partir quand tu veux.',
-  },
-  {
-    id: 'tabs',
-    route: '/',
-    target: '.fc-tabs',
-    placement: 'bottom',
-    title: 'Les sections du club',
-    body: 'L’historique vit ici : le tableau de bord, les joueurs, les matchs, les stats et les playoffs. Tout est en lecture, rien à remplir.',
-  },
-  {
-    id: 'dashboard',
-    route: '/',
-    target: '.fc-row--top',
-    placement: 'bottom',
-    title: 'Le tableau de bord',
-    body: 'La forme du club en un coup d’œil : le dernier match, le meilleur buteur, la série en cours. C’est la page d’accueil.',
+    body: 'Une minute pour savoir où tout se trouve et ce qui t’attend avant FC 27. Tu peux partir quand tu veux.',
   },
   {
     id: 'fc27-tab',
@@ -55,7 +46,30 @@ export const TOUR_STEPS: TourStep[] = [
     placement: 'bottom',
     optional: true,
     title: 'C’est ici que ça se passe',
-    body: 'L’onglet FC 27 est le seul où tu as des choses à faire. On y va tout de suite.',
+    body: 'Les autres onglets racontent l’histoire du club. L’onglet FC 27 est le seul où tu as des choses à faire. On y va.',
+  },
+  {
+    // Disparaît dès qu'on est connecté : l'étape se saute alors toute seule.
+    id: 'signin',
+    requires: 'signed-out',
+    route: '/fc27',
+    section: 'fiche',
+    target: '.fc27-signin',
+    placement: 'top',
+    optional: true,
+    title: 'D’abord, connecte-toi',
+    body: 'Tout passe par ton compte Discord : ta fiche n’appartient qu’à toi, et ta voix au vote compte une fois. Un clic, aucun mot de passe.',
+  },
+  {
+    // Le pendant du précédent : présent seulement une fois connecté.
+    id: 'account',
+    requires: 'signed-in',
+    route: '/fc27',
+    target: '.fc27-account',
+    placement: 'bottom',
+    optional: true,
+    title: 'Te voilà connecté',
+    body: 'Ton compte s’affiche ici, avec sa déconnexion. Ce que tu crées à partir de maintenant est à toi, et personne d’autre ne peut y toucher.',
   },
   {
     id: 'arena',
@@ -64,7 +78,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: '.fc27-arena-entry',
     placement: 'right',
     title: 'Premier chantier : le nom du club',
-    body: 'Chacun propose un nom, puis le collectif vote. L’arène s’ouvre en plein écran — c’est un moment à vivre ensemble.',
+    body: 'Trois propositions au maximum chacun, puis une voix par personne. L’arène s’ouvre en plein écran — c’est un moment à vivre ensemble.',
   },
   {
     id: 'card',
@@ -74,7 +88,7 @@ export const TOUR_STEPS: TourStep[] = [
     placement: 'left',
     optional: true,
     title: 'Deuxième chantier : ta fiche',
-    body: 'Deux choix suffisent — ton poste, puis ton archétype. Le reste est pré-rempli. Tu y découvres aussi les nouveautés de FC 27 Clubs et les bonus de maîtrise.',
+    body: 'Deux choix suffisent : ton poste, puis ton archétype. Ou pars d’un joueur que tu admires — tape « Zidane » et tout se remplit.',
   },
   {
     id: 'roster',
@@ -92,20 +106,43 @@ export const TOUR_STEPS: TourStep[] = [
     target: '.fc27-report',
     placement: 'top',
     title: 'Le staff analyse le vestiaire',
-    body: 'Formation conseillée, manques de l’effectif, consigne pour chaque joueur. Tout se recalcule à chaque nouvelle fiche — y compris la tienne.',
+    body: 'Formation conseillée, manques de l’effectif, consigne pour chacun. Tout se recalcule à chaque nouvelle fiche — y compris la tienne.',
+  },
+  {
+    id: 'profil',
+    route: '/profil',
+    target: '.profile-panel, .profile-card, main',
+    placement: 'bottom',
+    optional: true,
+    title: 'Relie ton joueur du club',
+    body: 'Ta fiche FC 27 est ton projet ; ici tu rattaches ton pseudo Club Pro pour retrouver tes buts et tes passes. Un administrateur valide la correspondance.',
+  },
+  {
+    id: 'install',
+    route: '/profil',
+    target: '.pwa-install',
+    placement: 'top',
+    optional: true,
+    title: 'Garde-la sous la main',
+    body: 'Installe l’app sur ton téléphone : elle s’ouvre comme n’importe quelle autre, et reste consultable même sans réseau.',
   },
   {
     id: 'done',
-    route: '/fc27',
+    route: '/profil',
     title: 'À toi de jouer',
-    body: 'Vote le nom, crée ta fiche, garde ta feuille sous la main pour le 25 septembre. Tu peux relancer ce guide à tout moment depuis le bas de page.',
+    body: 'Connecte-toi, propose un nom, crée ta fiche, et garde ta feuille sous la main pour le jour J. Tu peux relancer ce guide depuis le bas de page.',
   },
 ];
+
+/** Étapes pertinentes pour l'état courant. */
+export const stepsFor = (signedIn: boolean, steps: TourStep[] = TOUR_STEPS) =>
+  steps.filter((step) => step.requires === undefined
+    || (step.requires === 'signed-in' ? signedIn : !signedIn));
 
 // ---------------------------------------------------------------- Mémoire
 
 /** Changer de clé rejoue le guide pour tout le monde : à faire quand les étapes changent vraiment. */
-const STORAGE_KEY = 'dommage.tour.v1';
+const STORAGE_KEY = 'dommage.tour.v2';
 
 /**
  * L'app n'a pas de compte : le « déjà vu » ne peut vivre que dans le navigateur.

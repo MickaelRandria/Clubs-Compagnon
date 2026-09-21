@@ -84,7 +84,10 @@ test('toute étape FC 27 ancrée déclare la section qui la contient', () => {
       assert.ok(sections.includes(step.section), `${step.id} : section « ${step.section} » inconnue`);
       assert.equal(step.route, '/fc27', `${step.id} : une section n'existe que sur /fc27`);
     }
-    if (step.route === '/fc27' && step.target) {
+    // Le bandeau de phase est rendu au-dessus des sections : il reste visible quelle que
+    // soit la section ouverte, donc ses cibles n'ont pas de section à déclarer.
+    const horsSections = ['.fc27-account', '.fc27-banner', '.fc27-steps'];
+    if (step.route === '/fc27' && step.target && !horsSections.includes(step.target)) {
       assert.ok(step.section, `${step.id} : étape ancrée sur /fc27 sans section déclarée`);
     }
   }

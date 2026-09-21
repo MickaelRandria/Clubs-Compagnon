@@ -95,6 +95,20 @@
   a.fc27-actionbar-go { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; text-decoration: none; }
   .fc27-actionbar :is(button, a):focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: -3px; }
 
-  /* Le bouton « Créer ma fiche » vit maintenant dans la barre du bas. */
-  .fc27--sectioned .fc27-player-actions { display: none; }
+  /* Les actions de fiche vivent dans la barre du bas… sauf la connexion : la barre est
+     masquée pendant le guide, et se connecter doit rester possible à tout moment. */
+  .fc27--sectioned .fc27-player-actions:not(.fc27-player-actions--signin) { display: none; }
+}
+
+/* ---------- Fluidité ----------
+   `fcIn` fait apparaître les blocs en 500 ms (opacité .35 → 1, glissement de 16 px).
+   Agréable au premier chargement sur grand écran ; insupportable sur mobile, où changer
+   de section remonte les blocs et rejoue l'animation à chaque fois. Mesuré : le défilement
+   est fluide (pire image 28 ms), c'est bien cette animation qui donnait la sensation de latence. */
+@media (max-width: 767px) {
+  .fc-tile, .fc-block, .fc27-arena-entry { animation: none; }
+  /* Le flou d'arrière-plan du quai de vote coûte cher à composer sur mobile.
+     Fond opaque à la place : même lisibilité, sans le coût. */
+  .arena-vote-dock { backdrop-filter: none; background: #07132a; }
+  .arena-beam { display: none; }
 }

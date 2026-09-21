@@ -9,7 +9,9 @@ export function useFC27(campaignId?: number) {
     queryKey: ['fc27', campaignId ?? 'latest'],
     queryFn: () => apiRequest<FC27State>(`/api/fc27${campaignId === undefined ? '' : `?campaign=${campaignId}`}`),
     staleTime: 5_000,
-    refetchInterval: 15_000,
+    // Une préparation de saison ne bouge pas toutes les quinze secondes. Le rafraîchissement
+    // au retour sur l'onglet suffit, et évite un aller-retour réseau permanent sur mobile.
+    refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });
 }

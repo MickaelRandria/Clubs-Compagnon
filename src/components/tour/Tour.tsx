@@ -27,10 +27,22 @@ export function Tour({ onClose, steps = TOUR_STEPS, onStepChange }: {
   const step = steps[index];
   const isLast = index === steps.length - 1;
   const onRoute = !step.route || location.pathname === step.route;
-  // Une cible facultative est souvent absente pour de bon (préparation archivée) : on tranche vite,
-  // sinon l'utilisateur fixe une bulle qui ne montre rien. Une cible attendue a droit à plus de temps,
-  // le rendu pouvant dépendre d'une route paresseuse et d'une requête.
-  const wait = step.optional ? 1200 : 4000;
+  /**
+   * Budget d'attente de la cible.
+   *
+   * Une cible facultative peut être absente pour de bon (bouton de connexion quand on est
+   * déjà connecté) : on tranche vite, sinon l'utilisateur fixe une bulle qui ne montre rien.
+   * Mais une étape qui suit un changement de page doit laisser le temps à la route paresseuse,
+   * à la requête et à la section de se rendre — 1,2 s n'y suffisait pas, et des étapes
+   * parfaitement valides se sautaient toutes seules.
+   */
+  const justChangedRoute = useRef(true);
+  useEffect(() => {
+    justChangedRoute.current = true;
+    const timer = setTimeout(() => { justChangedRoute.current = false; }, 2500);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+  const wait = !step.optional ? 4000 : justChangedRoute.current ? 3000 : 1200;
   // Tant qu'on n'est pas sur la bonne route, chercher la cible n'a aucun sens.
   const { rect, status } = useSpotlight(onRoute ? step.target : undefined, wait, viewport.width <= 767 ? size.height + 12 : 0);
 

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { markTourSeen, tourSeen } from '../../lib/tour';
+import { markTourSeen, stepsFor, tourSeen } from '../../lib/tour';
+import { useMe } from '../../api/auth';
 import { Tour } from './Tour';
 
 interface TourApi { start: () => void; running: boolean }
@@ -13,6 +14,8 @@ export const useTour = () => useContext(TourContext);
  * et le moyen de le relancer. L'invitation ne s'impose jamais — elle se ferme et ne revient plus.
  */
 export function TourHost({ children }: { children: ReactNode }) {
+  const me = useMe();
+  const steps = stepsFor(me.data?.signedIn === true);
   const [running, setRunning] = useState(false);
   const [invited, setInvited] = useState(false);
 
@@ -32,7 +35,7 @@ export function TourHost({ children }: { children: ReactNode }) {
       <button type="button" className="tour-invite-close" onClick={dismiss} aria-label="Masquer l’invitation">✕</button>
     </aside>}
     {children}
-    {running && <Tour onClose={(outcome) => { markTourSeen(outcome); setRunning(false); }} />}
+    {running && <Tour steps={steps} onClose={(outcome) => { markTourSeen(outcome); setRunning(false); }} />}
   </TourContext.Provider>;
 }
 

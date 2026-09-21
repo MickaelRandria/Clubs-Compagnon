@@ -142,7 +142,8 @@ export const stepsFor = (signedIn: boolean, steps: TourStep[] = TOUR_STEPS) =>
 // ---------------------------------------------------------------- Mémoire
 
 /** Changer de clé rejoue le guide pour tout le monde : à faire quand les étapes changent vraiment. */
-const STORAGE_KEY = 'dommage.tour.v2';
+export const TOUR_STORAGE_KEY = 'dommage.tour.v2';
+const STORAGE_KEY = TOUR_STORAGE_KEY;
 
 /**
  * L'app n'a pas de compte : le « déjà vu » ne peut vivre que dans le navigateur.

@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import { PLAYER_TOUR_KEY, PLAYER_TOUR_STEPS } from '../src/lib/player-tour.js';
+// Titres et cle lus dans la source : recopies ici, ils avaient derive a la
+// reecriture du guide general et le test attendait une etape disparue.
+import { TOUR_STORAGE_KEY, stepsFor } from '../src/lib/tour.js';
 import { signIn } from './browser-auth.js';
 
 const origin = 'http://127.0.0.1:5174';
@@ -119,13 +122,15 @@ try {
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('button', { name: 'Revoir le guide', exact: false }).click();
-  await tourTitle().getByText('Bienvenue chez Dommage BJ FC', { exact: true }).waitFor();
+  // Le compte est connecte a ce stade : les etapes reservees aux visiteurs sont ecartees.
+  const general = stepsFor(true);
+  await tourTitle().getByText(general[0].title, { exact: true }).waitFor();
   await next();
-  await tour.getByRole('heading', { name: 'Les sections du club' }).waitFor();
+  await tour.getByRole('heading', { name: general[1].title, exact: true }).waitFor();
   await tour.locator('.tour-hole').waitFor();
   await page.keyboard.press('Escape');
   await tour.waitFor({ state: 'detached' });
-  assert.equal(await page.evaluate(() => localStorage.getItem('dommage.tour.v1')), 'dismissed');
+  assert.equal(await page.evaluate((cle) => localStorage.getItem(cle), TOUR_STORAGE_KEY), 'dismissed');
   assert.deepEqual(errors, []);
   assert.deepEqual(writes, []);
   console.log('PASS: guide général toujours fonctionnel, aucune exception navigateur.');

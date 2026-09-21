@@ -4,7 +4,24 @@ Stats Pro Clubs du club : Dashboard, joueurs, matchs (avec notes saisies à la m
 
 Vite + React + TypeScript · react-router · TanStack Query · Neon (Postgres) via Drizzle · fonctions Vercel dans `/api`.
 
-## Lancer en local
+## Installer l’app (PWA)
+
+Le bouton **Installer l’app** se trouve en pied de page. Sur Android et ordinateur,
+le navigateur propose l’installation lorsqu’elle est disponible. Sur iPhone/iPad,
+ouvrir le site dans Safari puis **Partager → Sur l’écran d’accueil**.
+
+Après une première visite connectée, l’interface et ses pages sont disponibles hors
+connexion. Les statistiques, Discord et les modifications nécessitent Internet :
+aucune réponse API ni donnée de compte n’est conservée dans le cache PWA. Les envois
+hors connexion échouent sans être remis en attente pour un envoi ultérieur.
+Une nouvelle version affiche **Mettre à jour** ; enregistrer sa saisie avant de cliquer.
+
+Le service worker est actif uniquement dans le build de production (HTTPS ou localhost).
+`npm run test:pwa` construit l’app et vérifie installation, mode hors connexion,
+exclusion des API du cache et mise à jour explicite dans Chrome. Le test utilise
+des API fictives, sans base ni secrets ; `CHROME_EXECUTABLE` permet de choisir Chrome.
+
+## Développement local
 
 Prérequis : Node.js 20.12 ou plus récent, et une base [Neon](https://neon.tech).
 

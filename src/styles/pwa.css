@@ -1,0 +1,30 @@
+.pwa-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 14px max(20px, env(safe-area-inset-right)) 14px max(20px, env(safe-area-inset-left));
+  background: var(--fc-marine);
+  border-bottom: 1px solid var(--fc-glacier);
+  color: var(--fc-craie);
+  font: 500 14px/1.5 var(--fc-text);
+}
+.pwa-banner span { flex: 1 1 260px; }
+.pwa-banner button, .pwa-install button {
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid var(--fc-glacier);
+  border-radius: 6px;
+  background: var(--fc-marine);
+  color: var(--fc-craie);
+  font: 600 14px/1.4 var(--fc-text);
+  cursor: pointer;
+}
+.pwa-banner button:hover, .pwa-install button:hover { background: var(--fc-blue); }
+.pwa-banner button:focus-visible, .pwa-install button:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 3px; }
+.pwa-banner button:disabled, .pwa-install button:disabled { opacity: .6; cursor: default; }
+.pwa-install { max-width: 100%; }
+.pwa-install-help { max-width: 420px; color: var(--fc-brume); font: 500 14px/1.5 var(--fc-text); }
+@media (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+}

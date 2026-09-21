@@ -1,6 +1,7 @@
 import { TourReplay } from '../tour/TourHost';
 import { Glyph } from '../ui/Glyph';
 import { Wordmark } from './Wordmark';
+import { InstallApp } from '../pwa/PwaProvider';
 
 export function Footer() {
   return (
@@ -9,6 +10,7 @@ export function Footer() {
         <Glyph name="cross" size={20} /> Sélectionner
       </span>
       <TourReplay />
+      <InstallApp />
       <Wordmark />
     </footer>
   );

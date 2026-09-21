@@ -2,6 +2,7 @@ import { readdirSync, statSync } from 'node:fs';
 import type { IncomingMessage } from 'node:http';
 import { join, relative } from 'node:path';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 
 /**
@@ -83,7 +84,34 @@ export default defineConfig(({ mode }) => {
   // Rend DATABASE_URL (.env.local) visible pour les fonctions /api en local.
   Object.assign(process.env, loadEnv(mode, process.cwd(), ''));
   return {
-    plugins: [react(), apiDevServer()],
+    plugins: [react(), apiDevServer(), VitePWA({
+      registerType: 'prompt',
+      includeAssets: ['favicon.svg', 'icons/*.png'],
+      manifest: {
+        id: '/',
+        name: 'Dommage BJ FC — Clubs Compagnon',
+        short_name: 'Dommage FC',
+        description: 'Les stats du club, ton profil joueur et la préparation FC27.',
+        lang: 'fr',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        background_color: '#060C1F',
+        theme_color: '#060C1F',
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,webp}'],
+        navigateFallback: '/index.html',
+        // OAuth redirects and all personal/club data always go to the network.
+        navigateFallbackDenylist: [/^\/api(?:\/|$)/],
+        cleanupOutdatedCaches: true,
+      },
+    })],
     optimizeDeps: { entries: ['index.html'] },
   };
 });

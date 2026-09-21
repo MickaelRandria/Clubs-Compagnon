@@ -65,6 +65,13 @@
   .fc-profile-role { display: none; }
 
   /* Barre de navigation basse (Mobile Companion) */
+  /*
+    Hauteur utile de la barre, partagee avec la barre d'action FC 27 qui se pose dessus.
+    La zone de la barre d'accueil iOS s'ajoute EN DESSOUS : avec une hauteur fixe de 56 px
+    en border-box, elle etait prise dedans et il ne restait que 22 px pour l'icone et le
+    libelle, qui en demandent 48 — les libelles disparaissaient sur iPhone.
+  */
+  :root { --fc-bnav-h: 56px; }
   .fc-bottom-nav {
     display: flex;
     position: fixed;
@@ -72,17 +79,18 @@
     right: 0;
     bottom: 0;
     z-index: 35;
-    height: 56px;
+    min-height: calc(var(--fc-bnav-h) + env(safe-area-inset-bottom, 0px));
     padding-inline: 8px;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     box-sizing: border-box;
-    background: rgba(6, 12, 31, .96);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    /* Opaque et sans flou : un backdrop-filter sur un element fixe se recalcule a chaque
+       image du defilement, c'est precisement ce qu'on a retire ailleurs pour la fluidite. */
+    background: var(--fc-abysse);
     border-top: 1px solid rgba(111, 200, 255, .25);
     box-shadow: 0 -4px 24px rgba(0, 0, 0, .55);
   }
-  body:has(.fc27-actionbar) .fc-bottom-nav { display: none; }
+  /* La barre reste visible sur /fc27 : masquee, il ne restait que le logo pour sortir
+     de la page, et une PWA iOS n'a pas de bouton retour. */
 
   /* Masquer les éclats qui débordent sur les côtés sur mobile */
   .fc-spill { display: none !important; }

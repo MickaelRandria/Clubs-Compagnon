@@ -26,5 +26,7 @@
 .pwa-install { max-width: 100%; }
 .pwa-install-help { max-width: 420px; color: var(--fc-brume); font: 500 14px/1.5 var(--fc-text); }
 @media (display-mode: standalone) {
-  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  /* Le bas est gere par la barre de navigation fixe ; l'ajouter aussi au body doublait
+     la zone iOS en fin de page. */
+  body { padding-top: env(safe-area-inset-top); }
 }

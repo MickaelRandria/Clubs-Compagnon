@@ -46,7 +46,15 @@ function Preparation({ state }: { state: FC27State }) {
     <div className="fc27-banner"><span className="fc27-phase">{archived ? 'Préparation archivée' : 'Phase de préparation'}</span><span className="fc27-banner-text">{archived ? 'Les choix du collectif, conservés en lecture seule.' : 'Un espace temporaire pour construire le prochain club.'}</span>
       <AccountChip />
       <button className="fc27-text-button" onClick={() => setDialog('settings')}>Réglages FC 27 ↗</button></div>
-    <div className="fc27-heading"><div><p className="fc27-eyebrow">Dommage · Prochain chapitre</p><h1 className="fc-title">Cap sur <span className="fc27-heading-accent">FC 27</span></h1></div><span className="fc27-season">Le même collectif.<br />Une nouvelle saison.</span></div>
+    {/*
+      Sur mobile, le grand titre n'est affiché qu'à la première section. Répété sur les
+      quatre, il reprenait 138 px à chaque changement d'étape pour une information déjà
+      lue. Le titre compact garde un h1 — la page ne doit pas se retrouver sans titre —
+      mais tient sur une ligne. Sur grand écran, rien ne change.
+    */}
+    {section.isMobile && section.current !== 'nom'
+      ? <div className="fc27-heading fc27-heading--compact"><h1 className="fc-title">Cap sur <span className="fc27-heading-accent">FC 27</span></h1></div>
+      : <div className="fc27-heading"><div><p className="fc27-eyebrow">Dommage · Prochain chapitre</p><h1 className="fc-title">Cap sur <span className="fc27-heading-accent">FC 27</span></h1></div><span className="fc27-season">Le même collectif.<br />Une nouvelle saison.</span></div>}
     {section.isMobile && <SectionTabs current={section.current} onSelect={section.go} />}
     <SignInNotice reason={params.get('connexion')} />
     {archived && <p className="fc27-archive-link">Lien de l’archive : <Link to={`/fc27?campagne=${state.campaign.id}`}>Campagne {state.campaign.id}</Link> · <Link to="/fc27">Préparation la plus récente</Link></p>}

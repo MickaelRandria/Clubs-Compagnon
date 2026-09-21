@@ -29,10 +29,15 @@ export function StatsView() {
             <GoalsChart matches={matches.data!} />
 
             <div className="fc-stats-bottom">
+              {/*
+                Deux niveaux plutôt que quatre tuiles identiques : les apparitions sont
+                des volumes, la division et la réputation qualifient le club. Les secondes
+                passent en retrait pour que la rangée se lise dans cet ordre.
+              */}
               <StatTile label="Ligue" value={c.leagueApps} sub="apparitions" delay={200} />
               <StatTile label="Playoff" value={c.playoffApps} sub="apparitions" delay={250} />
-              <StatTile label="Meilleure div." value={c.bestDivision === null ? '—' : `Div. ${c.bestDivision}`} text delay={300} />
-              <StatTile label="Réputation" value={c.reputation} text delay={350} />
+              <StatTile label="Meilleure div." value={c.bestDivision === null ? '—' : `Div. ${c.bestDivision}`} text tone="discret" delay={300} />
+              <StatTile label="Réputation" value={c.reputation} text tone="discret" delay={350} />
             </div>
           </div>
         );

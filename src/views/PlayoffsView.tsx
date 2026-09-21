@@ -8,9 +8,10 @@ import { usePageTitle } from '../lib/hooks';
 export function PlayoffsView() {
   usePageTitle('Playoffs');
   const night = PLAYOFF_NIGHT;
-  const stats: Array<[string, string]> = [
-    ['Victoires', String(night.wins)],
-    ['Défaites', String(night.losses)],
+  // L'histoire de la nuit, c'est le bilan. Victoires et défaites étaient deux boîtes
+  // identiques à côté de la division et du MVP : quatre faits au même niveau, dont aucun
+  // ne ressortait. Elles sont réunies en une tuile principale, le reste passe derrière.
+  const secondaires: Array<[string, string]> = [
     ['Série', `Div. ${night.division}`],
     ['MVP', night.mvp],
   ];
@@ -20,8 +21,15 @@ export function PlayoffsView() {
       <NightHero />
       <div className="fc-night-row">
         <div className="fc-night-stats">
-          {stats.map(([label, value], i) => (
-            <StatTile key={label} label={label} value={value} text={value.length > 3} delay={70 + i * 50} />
+          <StatTile
+            label="Bilan de la nuit"
+            value={`${night.wins} – ${night.losses}`}
+            sub={`${night.wins} victoires · ${night.losses === 1 ? '1 défaite' : `${night.losses} défaites`}`}
+            tone="principal"
+            delay={70}
+          />
+          {secondaires.map(([label, value], i) => (
+            <StatTile key={label} label={label} value={value} text tone="discret" delay={120 + i * 50} />
           ))}
         </div>
         <StoryBlock />

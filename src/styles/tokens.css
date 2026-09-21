@@ -10,6 +10,7 @@
   --fc-ardoise: #5C6781;  /* Acier foncé — secondaire sur Blanc Craie (AA) */
   --fc-brume: #C3CCDF;    /* Brume — sous-titres et métadonnées sur Marine / Abysse (≥ 10:1) */
   --fc-rouge: #FF4D5E;    /* Rouge fonctionnel — défaites uniquement */
+  --fc-magenta: #FF4FA3;  /* Accent FC 27 — signale la préparation, jamais un résultat */
   --fc-display: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif;
   --fc-text: 'Barlow', 'Segoe UI', system-ui, sans-serif;
 }

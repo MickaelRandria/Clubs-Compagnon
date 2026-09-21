@@ -11,7 +11,9 @@
 .fc-night-panel > :not(svg) { position: relative; }
 .fc-night-shards { position: absolute; top: 0; right: 0; width: 130px; height: 150px; }
 .fc-night-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 6px; }
-.fc-night-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.fc-night-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-content: start; }
+/* Le bilan occupe toute la largeur : c'est lui qu'on lit d'abord, la division et le MVP suivent. */
+.fc-night-stats .fc-stat--principal { grid-column: 1 / -1; }
 .fc-story { display: flex; flex-direction: column; gap: 14px; padding: 32px 34px 34px; }
 .fc-story > :not(svg) { position: relative; }
 .fc-story-title { max-width: calc(100% - 90px); font: 800 clamp(26px, 2.6vw, 34px)/1.02 var(--fc-display); text-transform: uppercase; text-wrap: balance; }

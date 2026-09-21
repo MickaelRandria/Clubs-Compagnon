@@ -4,8 +4,17 @@
   .fc-frame { padding: 14px 16px 24px; }
   .fc-top { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
   .fc-profile { align-self: flex-end; margin-bottom: 0; }
-  .fc-tabs { overflow-x: auto; }
-  .fc-tab { padding: 12px 16px; font-size: 15px; }
+  /* Six colonnes egales plutot qu'une rangee qui defile : tous les onglets sont
+     visibles d'un coup, y compris FC 27. Les libelles courts viennent de TopNav. */
+  .fc-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); overflow: visible; }
+  .fc-tab { display: grid; place-items: center; min-height: 44px; padding: 10px 2px;
+            font-size: 11px; letter-spacing: .04em; text-align: center; }
+  /* Le trait de separation part du bord gauche, pas du bord du texte. */
+  .fc-tab + .fc-tab { box-shadow: inset 1px 0 0 rgba(11,26,58,.14); }
+  /* Sans la place pour le badge « Prepa », un trait magenta suffit a signaler que
+     FC 27 n'est pas un onglet de stats comme les autres. */
+  .fc-tab--preparation { box-shadow: inset 1px 0 0 rgba(11,26,58,.14), inset 0 -3px 0 var(--fc-magenta); }
+  .fc-tab--preparation[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--fc-magenta); }
   .fc-row--top { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .fc-row--bottom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
   .fc-card--match { grid-column: 1 / -1; }
@@ -30,6 +39,9 @@
   .fc-matches-top .fc-hero { grid-column: 1 / -1; }
   .fc-hero--compact .fc-hero-art { min-height: 150px; }
   .fc-stat { padding: 14px 12px; }
+  /* Doit rester ici : .fc-card impose 164px plus haut dans ce meme bloc, et
+     responsive.css est charge en dernier. */
+  .fc-stat--discret { min-height: 0; gap: 6px; padding: 14px 14px 13px; }
   .fc-stat .fc-title--md { font-size: 17px; }
   .fc-stat-value { font-size: 34px; }
   .fc-stat-value--text { font-size: 26px; }

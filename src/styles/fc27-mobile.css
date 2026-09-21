@@ -33,6 +33,12 @@
   .fc27-heading { margin: 10px 0 12px; gap: 4px; }
   .fc27-heading .fc-title { font-size: clamp(38px, 12vw, 54px); line-height: .88; }
   .fc27-season { display: none; }
+  /* Titre compact : une ligne au lieu d'un bloc, pour les sections 2 a 4. */
+  .fc27-heading--compact { margin: 8px 0 8px; padding: 0; }
+  .fc27-heading--compact .fc-title { font-size: 26px; line-height: 1; }
+  .fc27-heading--compact .fc27-heading-accent { box-shadow: .05em .05em 0 var(--p-magenta); }
+  /* La bande de phase tient sur une ligne : le texte long est deja masque plus haut. */
+  .fc27-phase { padding: 8px 12px; font-size: 12px; line-height: 1.1; }
   .fc27-top-grid { gap: 10px; }
 
   /* L'arène : visuel réduit, le texte passe devant. */

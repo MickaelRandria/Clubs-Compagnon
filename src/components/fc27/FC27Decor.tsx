@@ -50,10 +50,12 @@ export function FC27Backdrop() {
       <polygon points="1440,520 1060,900 1440,900" fill={`url(#${id}-dots)`} opacity=".22" />
       <polygon points="0,0 360,0 0,260" fill={`url(#${id}-dots)`} opacity=".14" />
       <polygon points="1440,90 1270,330 1440,330" fill={`url(#${id}-hatch)`} opacity=".06" />
-      {/* Éclats bruts */}
-      <polygon points="-30,300 190,240 110,318 240,306 30,452 132,440 -30,540" fill="#1846F5" />
-      <polygon points="-30,420 160,378 58,462 150,466 -30,590" fill="#FF4FA3" opacity=".85" />
-      <polygon points="1470,610 1300,690 1380,700 1260,800 1470,770" fill="#6FC8FF" opacity=".75" />
+      {/* Éclats bruts, volontairement en retrait : même raison que le mur global. */}
+      <g opacity=".45">
+        <polygon points="-30,300 190,240 110,318 240,306 30,452 132,440 -30,540" fill="#1846F5" />
+        <polygon points="-30,420 160,378 58,462 150,466 -30,590" fill="#FF4FA3" opacity=".85" />
+        <polygon points="1470,610 1300,690 1380,700 1260,800 1470,770" fill="#6FC8FF" opacity=".75" />
+      </g>
       <rect width="1440" height="900" filter={`url(#${id}-concrete)`} opacity=".07" />
     </svg>
     <Brush place="top" />

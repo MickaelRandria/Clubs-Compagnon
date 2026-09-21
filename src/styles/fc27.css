@@ -343,7 +343,7 @@ svg.fc27-player-thumb { padding: 6px 4px; }
 /* ---------- Compte connecté ----------
    Le bandeau est CLAIR (--p-chalk) : le texte doit être sombre, sinon le pseudo
    disparaît sur le fond. Première version invisible faute d'avoir vérifié le contexte. */
-.fc27-account { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; padding: 5px 6px 5px 8px;
+.fc27-account { display: inline-flex; flex-wrap: wrap; max-width: 100%; align-items: center; gap: 8px; margin-left: auto; padding: 5px 6px 5px 8px;
                 background: var(--p-ink); color: #fff; }
 .fc27-account img, .fc27-account b { width: 26px; height: 26px; flex-shrink: 0; }
 .fc27-account img { object-fit: cover; }
@@ -355,6 +355,7 @@ svg.fc27-player-thumb { padding: 6px 4px; }
                        cursor: pointer; font: 700 11px/1 var(--fc-text); }
 .fc27-account button:hover:not(:disabled) { background: var(--fc-rouge); }
 .fc27-account button:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+.fc27-account-profile { color: var(--fc-glacier); font: 700 12px/1.3 var(--fc-text); text-underline-offset: 3px; }
 /* Le bouton des réglages perd son `margin-left: auto` quand la pastille le précède. */
 .fc27-account + .fc27-text-button { margin-left: 0; }
 .fc27-pad--waiting { opacity: .6; cursor: default; }

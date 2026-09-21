@@ -23,6 +23,11 @@
 .fc-avatar { display: grid; place-items: center; width: 34px; height: 34px; background: var(--fc-blue); color: var(--fc-craie);
              font: 800 15px/1 var(--fc-display); letter-spacing: .04em; }
 .fc-profile-name { display: block; font: 700 15px/1.15 var(--fc-text); }
+.fc-profile { text-decoration: none; flex-shrink: 0; max-width: 100%; }
+.fc-profile-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-profile .fc-avatar { flex-shrink: 0; }
+.fc-profile .fc-avatar img { object-fit: cover; }
+.fc-profile:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: -3px; }
 .fc-profile-role { display: block; font: 600 12px/1.2 var(--fc-text); color: var(--fc-ardoise); }
 .fc-profile-sr { display: flex; align-items: center; gap: 6px; padding-left: 12px; box-shadow: inset 1px 0 0 rgba(11,26,58,.14);
                  font: 700 19px/1 var(--fc-display); font-variant-numeric: tabular-nums; }

@@ -92,11 +92,11 @@ export const stateCookie = (state: string) => `${STATE_COOKIE}=${state}; Path=/;
 export const clearedStateCookie = () => `${STATE_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0`;
 export const readState = (request: Request) => parseCookies(request.headers.get('cookie'))[STATE_COOKIE];
 
-/** Le retour reste sur une page FC 27 du site, jamais sur un domaine externe. */
+/** Le retour reste sur une page autorisée du site, jamais sur un domaine externe. */
 export function safeReturnTo(value: string | null | undefined): string {
-  if (!value || !/^\/fc27(?:[?#]|\/nom(?:[?#]|$)|$)/.test(value) || /[\\\u0000-\u001f]/.test(value)) return '/fc27';
+  if (!value || !value.startsWith('/') || value.startsWith('//') || /[\\\u0000-\u001f]/.test(value)) return '/fc27';
   const url = new URL(value, 'https://local.invalid');
-  if (url.origin !== 'https://local.invalid' || !['/fc27', '/fc27/nom'].includes(url.pathname)) return '/fc27';
+  if (url.origin !== 'https://local.invalid' || !['/fc27', '/fc27/nom', '/profil'].includes(url.pathname)) return '/fc27';
   url.searchParams.delete('connexion');
   return url.pathname + url.search + url.hash;
 }

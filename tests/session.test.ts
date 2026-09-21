@@ -75,6 +75,7 @@ test('les cookies se lisent, y compris avec des espaces et des valeurs encodées
 
 test('le retour de connexion reste dans FC 27', () => {
   assert.equal(safeReturnTo('/fc27/nom?campagne=7#arena-cards'), '/fc27/nom?campagne=7#arena-cards');
+  assert.equal(safeReturnTo('/profil#validation'), '/profil#validation');
   assert.equal(safeReturnTo('/fc27?connexion=refus&onglet=fiche'), '/fc27?onglet=fiche');
   for (const value of ['https://ailleurs.fr', '//ailleurs.fr', '//%', '/\\ailleurs.fr', '/api/auth/logout', '/fc27/../api', '/fc27evil', '/fc27?x=\n']) {
     assert.equal(safeReturnTo(value), '/fc27');

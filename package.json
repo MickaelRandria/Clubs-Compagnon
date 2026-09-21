@@ -16,6 +16,8 @@
     "test:fc27:serve": "tsx tests/browser-server.ts",
     "test:fc27:browser": "tsx tests/fc27.browser.ts",
     "test:auth:browser": "tsx tests/auth.browser.ts",
+    "test:profile": "tsx --test tests/profile.test.ts",
+    "test:profile:browser": "tsx tests/profile.browser.ts",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",

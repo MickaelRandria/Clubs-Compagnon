@@ -15,6 +15,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomeView /> },
       { path: '/joueurs', element: <PlayersView /> },
+      { path: '/profil', lazy: async () => ({ Component: (await import('./views/ProfileView')).ProfileView }) },
       { path: '/matchs', element: <MatchesView /> },
       { path: '/matchs/:id', element: <MatchDetailView /> },
       { path: '/stats', element: <StatsView /> },

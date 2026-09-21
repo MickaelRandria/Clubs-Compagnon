@@ -248,6 +248,26 @@ export const clubAccounts = pgTable('club_accounts', {
   check('club_account_username_check', sql`char_length(${t.username}) between 1 and 60`),
 ]);
 
+export const clubPlayerClaims = pgTable('club_player_claims', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  accountId: integer('account_id').notNull().references(() => clubAccounts.id, { onDelete: 'cascade' }),
+  memberId: integer('member_id').notNull().references(() => members.id),
+  status: text('status').notNull().default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  reviewedBy: integer('reviewed_by').references(() => clubAccounts.id, { onDelete: 'set null' }),
+  reviewNote: text('review_note'),
+}, t => [
+  uniqueIndex('club_player_claim_account_active').on(t.accountId).where(sql`${t.status} in ('pending', 'approved')`),
+  uniqueIndex('club_player_claim_member_approved').on(t.memberId).where(sql`${t.status} = 'approved'`),
+  index('club_player_claim_account_history').on(t.accountId, t.id.desc()),
+  index('club_player_claim_member_idx').on(t.memberId),
+  index('club_player_claim_reviewer_idx').on(t.reviewedBy),
+  check('club_player_claims_status_check', sql`${t.status} in ('pending', 'approved', 'rejected', 'cancelled', 'revoked')`),
+  check('club_player_claims_review_note_check', sql`char_length(${t.reviewNote}) <= 240`),
+  check('club_player_claims_check', sql`(${t.status} = 'pending' and ${t.reviewedAt} is null) or (${t.status} <> 'pending' and ${t.reviewedAt} is not null)`),
+]);
+
 export const fc27PlayerProfiles = pgTable('fc27_player_profiles', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   campaignId: integer('campaign_id').notNull().references(() => fc27Campaigns.id, { onDelete: 'cascade' }),

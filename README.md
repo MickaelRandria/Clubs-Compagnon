@@ -112,6 +112,27 @@ lancer `npm run test:fc27:serve`, puis exécuter successivement `npm run test:fc
 `npm run test:auth:browser`, `npm run test:lookalikes:browser` et `npm run test:player-tour:browser`.
 Ces parcours utilisent une base PGlite isolée et une réponse Discord simulée ; ils n’écrivent pas dans la base du club.
 
+### Mon profil et rattachement au joueur du club
+
+`/profil` est accessible depuis le bandeau personnel et le compte Discord affiché dans FC 27.
+Après connexion, le membre choisit son joueur dans l’effectif actif et envoie une demande.
+La carte Club Pro apparaît après validation : pseudo, avatar Discord, poste, OVR, matchs, buts, passes décisives,
+note moyenne, passes réussies et buts par match. Les statistiques sont relues dans `members` ; cette fonctionnalité
+n’ajoute pas de synchronisation EA. La date affichée correspond à la dernière mise à jour des données du joueur.
+
+Appliquer la migration `0011_player_claims` avec `npm run db:migrate`.
+Configurer **`DISCORD_ADMIN_IDS`** côté serveur dans `.env.local` et dans Vercel : une liste d’identifiants
+utilisateur Discord numériques séparés par des virgules. Ce ne sont pas les identifiants de l’application OAuth.
+Sans cette variable, aucun compte n’a les droits de validation. Aucun premier inscrit ou pseudo particulier ne devient administrateur automatiquement.
+
+Les administrateurs disposent d’une section **Correspondances Discord → joueur** dans `/profil` : validation,
+refus avec motif facultatif et retrait d’une correspondance erronée. Le membre peut annuler une demande en attente.
+Un compte ne peut avoir qu’une demande active ou un joueur validé ; un joueur ne peut avoir qu’un propriétaire validé.
+Les autres demandes pour un joueur attribué sont refusées avec un motif. L’historique des demandes est conservé en base.
+La préparation FC 27 conserve ses propres fiches ; valider un joueur du club n’en modifie pas les builds.
+
+Vérification : `npm run test:profile` et, avec le serveur isolé démarré, `npm run test:profile:browser`.
+
 ### Fiche joueur (tunnel en 2 étapes)
 
 « Créer ma fiche » ouvre un tunnel : **1. Identité** (pseudo unique, nom et numéro de maillot 1–99, alerte immédiate si le numéro est pris),

@@ -1,7 +1,7 @@
-import { NavLink } from 'react-router';
-import { useClub } from '../../api/queries';
+import { Link, NavLink } from 'react-router';
+import { useMe } from '../../api/auth';
+import { useProfile } from '../../api/profile';
 import { useFC27 } from '../../api/fc27';
-import { FC } from '../../lib/tokens';
 
 const TABS = [
   { to: '/', label: 'Dashboard', end: true },
@@ -13,7 +13,14 @@ const TABS = [
 
 /** Bande d'onglets (NavLink pose aria-current="page" sur l'onglet actif) + bandeau profil. */
 export function TopNav() {
-  const club = useClub();
+  const me = useMe();
+  const profile = useProfile();
+  const account = me.data?.signedIn ? me.data.account : null;
+  const player = account ? profile.data?.player : null;
+  const label = player?.gamertag ?? (account ? account.displayName || account.username : 'Mon profil');
+  const pending = profile.data?.request?.status === 'pending';
+  const role = !account ? 'Connexion Discord' : profile.data?.isAdmin ? 'Administrateur · Mon profil'
+    : player ? 'Mes statistiques Club Pro' : pending ? 'Validation en attente' : 'Choisir mon joueur';
   const preparation = useFC27();
   return (
     <header className="fc-top">
@@ -27,19 +34,14 @@ export function TopNav() {
           <NavLink to="/fc27" className="fc-tab fc-tab--preparation">FC 27 <span>Prépa</span></NavLink>
         )}
       </nav>
-      <div className="fc-profile">
-        <span className="fc-avatar">RN</span>
+      <Link to="/profil" className="fc-profile" aria-label={`${label} · ${role}`}>
+        <span className="fc-avatar">{account?.avatarUrl ? <img src={account.avatarUrl} alt="" width={34} height={34} /> : account ? label.slice(0, 2).toUpperCase() : '→'}</span>
         <span>
-          <span className="fc-profile-name">Rina94JJG</span>
-          <span className="fc-profile-role">Manager</span>
+          <span className="fc-profile-name"><bdi>{label}</bdi></span>
+          <span className="fc-profile-role">{role}</span>
         </span>
-        <span className="fc-profile-sr" title="Skill Rating">
-          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 2l9 10-9 10-9-10z" fill={FC.blue} />
-          </svg>
-          {club.data?.skillRating ?? '—'}
-        </span>
-      </div>
+        {player && <span className="fc-profile-sr" title="OVR de ton joueur">{player.ovr}</span>}
+      </Link>
     </header>
   );
 }

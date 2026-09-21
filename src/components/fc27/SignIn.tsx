@@ -1,5 +1,5 @@
 import type { FC27Player } from '../../../shared/fc27';
-import { useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { useLogout, useMe } from '../../api/auth';
 
 /** Fiche du compte connecté, si elle existe déjà dans cette campagne. */
@@ -29,6 +29,7 @@ export function SignInButton({ className = 'fc27-pad fc27-pad--primary' }: { cla
 
 /** Compte connecté, avec sa déconnexion. */
 export function AccountChip() {
+  const location = useLocation();
   const me = useMe();
   const logout = useLogout();
   if (!me.data?.signedIn) return null;
@@ -39,6 +40,7 @@ export function AccountChip() {
       <span className="fc27-account-label">Connecté</span>
       <span className="fc27-account-name"><bdi>{account.displayName || account.username}</bdi></span>
     </span>
+    {location.pathname !== '/profil' && <Link className="fc27-account-profile" to="/profil">Mon profil ↗</Link>}
     <button type="button" onClick={() => logout.mutate()} disabled={logout.isPending}>
       {logout.isPending ? '…' : 'Se déconnecter'}
     </button>

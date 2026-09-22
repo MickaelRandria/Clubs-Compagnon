@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { InstallGuide } from './InstallGuide';
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
@@ -80,27 +81,21 @@ export function PwaProvider({ children }: { children: ReactNode }) {
 export function InstallApp() {
   const { installed, prompt, clearPrompt } = useContext(InstallContext);
   const [showHelp, setShowHelp] = useState(false);
-  const [pending, setPending] = useState(false);
-  if (installed) return null;
+  if (installed && !showHelp) return null;
 
   async function install() {
-    if (!prompt) { setShowHelp((value) => !value); return; }
-    setPending(true);
+    if (!prompt) return 'unavailable' as const;
     try {
       await prompt.prompt();
-      await prompt.userChoice;
-    } catch { setShowHelp(true); }
-    finally { clearPrompt(); setPending(false); }
+      return (await prompt.userChoice).outcome;
+    } catch { return 'unavailable' as const; }
+    finally { clearPrompt(); }
   }
 
   return <div className="pwa-install">
-    <button type="button" disabled={pending} aria-expanded={showHelp} aria-controls="pwa-install-help" onClick={() => void install()}>
+    <button type="button" aria-haspopup="dialog" aria-expanded={showHelp} onClick={() => setShowHelp(true)}>
       Installer l’app
     </button>
-    {showHelp && <div id="pwa-install-help" className="pwa-install-help" role="status">
-      <p><strong>iPhone / iPad :</strong> ouvre ce site dans Safari, puis Partager → Sur l’écran d’accueil.</p>
-      <p><strong>Android / ordinateur :</strong> dans le menu du navigateur, choisis « Installer l’application » ou « Ajouter à l’écran d’accueil » si proposé.</p>
-      <button type="button" onClick={() => setShowHelp(false)}>Fermer</button>
-    </div>}
+    {showHelp && <InstallGuide installed={installed} canInstall={Boolean(prompt)} onInstall={install} onClose={() => setShowHelp(false)} />}
   </div>;
 }

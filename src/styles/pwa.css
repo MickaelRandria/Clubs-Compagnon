@@ -24,7 +24,165 @@
 .pwa-banner button:focus-visible, .pwa-install button:focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 3px; }
 .pwa-banner button:disabled, .pwa-install button:disabled { opacity: .6; cursor: default; }
 .pwa-install { max-width: 100%; }
-.pwa-install-help { max-width: 420px; color: var(--fc-brume); font: 500 14px/1.5 var(--fc-text); }
+.install-guide {
+  position: fixed;
+  inset: 0;
+  width: min(920px, calc(100% - 40px));
+  max-width: none;
+  max-height: min(860px, calc(100dvh - 40px));
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #344568;
+  border-radius: 22px;
+  background: var(--fc-abysse);
+  color: var(--fc-craie);
+  box-shadow: 0 24px 100px #0008;
+  font: 400 16px/1.55 var(--fc-text);
+  text-align: left;
+  color-scheme: dark;
+}
+.install-guide[open] { display: flex; flex-direction: column; }
+.install-guide::backdrop { background: #020716ce; backdrop-filter: blur(8px); }
+.install-guide *, .install-guide *::before, .install-guide *::after { box-sizing: border-box; }
+.install-guide button {
+  min-height: 48px;
+  padding: 11px 16px;
+  border: 1px solid #425373;
+  border-radius: 10px;
+  background: #152440;
+  color: var(--fc-craie);
+  font: 600 15px/1.35 var(--fc-text);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.install-guide button:hover { background: #263a5d; }
+.install-guide button:disabled { opacity: .6; cursor: wait; }
+.install-guide :is(button, input, summary, a):focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 3px; }
+.install-guide h2:focus { outline: none; }
+.install-guide-header, .install-guide-footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 26px; }
+.install-guide-header { border-bottom: 1px solid #ffffff16; }
+.install-guide-header > span { display: flex; align-items: center; gap: 12px; }
+.install-guide-header .install-app-icon { width: 38px; height: 38px; border-radius: 9px; }
+.install-guide-header strong { font: 800 20px/1.15 var(--fc-display); letter-spacing: .05em; }
+.install-guide-header small { display: block; margin-top: 4px; font: 500 10px/1.4 var(--fc-text); letter-spacing: .15em; color: var(--fc-brume); }
+.install-guide .install-close { width: 48px; padding: 8px; background: transparent; font-size: 19px; }
+.install-guide-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 26px 28px; }
+.install-device-picker { display: flex; gap: 6px; width: fit-content; max-width: 100%; margin: 0 auto 24px; padding: 5px; border: 1px solid #ffffff1a; border-radius: 14px; background: #101b31; }
+.install-device-picker button { border-color: transparent; background: transparent; }
+.install-device-picker button[aria-pressed="true"] { background: var(--fc-glacier); color: var(--fc-abysse); }
+.install-guide-layout { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: start; gap: 32px; }
+.install-guide-copy { min-width: 0; padding: 5px 0; }
+.install-guide .install-eyebrow { margin: 0 0 12px; color: var(--fc-glacier); font: 700 11px/1.5 var(--fc-text); letter-spacing: .09em; text-transform: uppercase; }
+.install-guide h2 { margin: 0 0 16px; color: var(--fc-craie); font: 800 clamp(32px, 4vw, 46px)/1.05 var(--fc-display); letter-spacing: -.015em; text-wrap: balance; }
+.install-guide-copy > p { margin: 0 0 18px; color: var(--fc-brume); }
+.install-benefits { display: grid; gap: 18px; margin: 24px 0; padding: 0; list-style: none; }
+.install-benefits li { display: flex; align-items: flex-start; gap: 12px; }
+.install-benefits li > b { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 1px solid #6fc8ff40; border-radius: 10px; color: var(--fc-glacier); background: #6fc8ff0c; font-size: 21px; }
+.install-benefits strong, .install-benefits span { display: block; }
+.install-benefits strong { font-weight: 600; }
+.install-benefits span { margin-top: 3px; color: var(--fc-brume); font-size: 14px; line-height: 1.5; }
+.install-guide .install-reassurance { margin: 16px 0 0; padding-top: 16px; border-top: 1px solid #ffffff1a; font-size: 13px; color: var(--fc-brume); }
+.install-guide-footer { border-top: 1px solid #ffffff1a; background: #101b31; }
+.install-guide .install-primary { background: var(--fc-glacier); color: var(--fc-abysse); border-color: var(--fc-glacier); font-weight: 700; }
+.install-guide .install-primary:hover { background: #a6deff; }
+.install-progress { display: flex; gap: 6px; margin-bottom: 22px; }
+.install-progress span { flex: 1; height: 4px; border-radius: 4px; background: #2d3a54; }
+.install-progress .is-complete { background: var(--fc-glacier); }
+.install-guide .install-instruction { color: var(--fc-craie); font-size: 17px; line-height: 1.65; }
+.install-tip { padding: 15px 17px; border-left: 3px solid var(--fc-glacier); border-radius: 0 10px 10px 0; background: #6fc8ff0d; font-size: 14px; }
+.install-tip strong { color: var(--fc-glacier); }
+.install-tip p { margin: 6px 0 0; color: var(--fc-brume); }
+.install-copy-link { margin-top: 18px; }
+.install-copy-link label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--fc-brume); }
+.install-copy-link input { display: block; width: 100%; min-height: 44px; margin-bottom: 8px; padding: 10px; border: 1px solid #425373; border-radius: 8px; background: #101b31; color: var(--fc-craie); font: 400 16px/1.4 var(--fc-text); }
+.install-copy-link p, .install-notice { margin: 8px 0; font-size: 14px; color: var(--fc-glacier); }
+.install-copy-link p:empty, .install-notice:empty { display: none; }
+.install-native { margin-top: 18px; width: 100%; }
+.install-help { margin-top: 20px; font-size: 14px; }
+.install-help summary { min-height: 44px; padding: 10px 0; color: var(--fc-glacier); cursor: pointer; }
+.install-help p { margin: 8px 0; color: var(--fc-brume); }
+.install-help a { display: inline-block; padding: 10px 0; color: var(--fc-glacier); text-underline-offset: 4px; }
+
+/* Lightweight illustrations stay sharp at every screen size, including offline. */
+.install-visual { min-width: 0; margin: 0; padding: 24px 12px 18px; border: 1px solid #6fc8ff24; border-radius: 16px; background: radial-gradient(ellipse at 50% 35%, #2652b7 0, #112958 48%, #0c1c3c 100%); }
+.install-phone { position: relative; width: 230px; height: 360px; max-width: 100%; margin: auto; overflow: hidden; border: 5px solid #020817; border-radius: 32px; background: #edf2fc; color: #0b1a3a; box-shadow: 0 16px 30px #0005, 0 0 0 1px #b9d5ff66; font: 500 12px/1.4 var(--fc-text); }
+.install-phone-status { display: flex; justify-content: space-between; padding: 12px 17px 10px; font-size: 11px; font-weight: 700; }
+.install-phone-handle { position: absolute; bottom: 7px; left: 35%; width: 30%; height: 4px; border-radius: 8px; background: #60718f; }
+.install-home { height: calc(100% - 37px); padding: 20px 18px; background: linear-gradient(155deg, #224fff, #123777 65%, #081931); color: white; }
+.install-home-date { font-size: 9px; letter-spacing: .1em; text-align: center; }
+.install-home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 21px 15px; margin-top: 22px; }
+.install-home-grid > i, .install-home-dock > i { display: block; aspect-ratio: 1; border: 1px solid #ffffff20; border-radius: 13px; background: #ffffff24; }
+.install-home-grid > i:nth-child(2n) { background: #a8d2ff55; }
+.install-home-app { position: relative; text-align: center; }
+.install-app-icon { display: block; border-radius: 14px; object-fit: cover; }
+.install-home-app .install-app-icon { width: 100%; height: auto; outline: 3px solid #c3edff; outline-offset: 4px; box-shadow: 0 0 20px #6fc8ff99; }
+.install-home-app > span { display: block; margin: 9px -12px 0; font-size: 10px; white-space: nowrap; }
+.install-pointer { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); color: #fff; font: 800 38px/1 var(--fc-text); }
+.install-home-dock { position: absolute; bottom: 25px; left: 16px; right: 16px; display: flex; gap: 15px; justify-content: center; padding: 10px; border-radius: 18px; background: #ffffff16; }
+.install-home-dock i { width: 32px; border-radius: 9px; }
+.install-visual figcaption { display: grid; gap: 5px; margin-top: 20px; text-align: center; }
+.install-visual figcaption strong { color: #fff; font-size: 13px; }
+.install-visual figcaption span { color: #c3ccdf; font-size: 11px; }
+.install-address { display: flex; align-items: center; gap: 6px; margin: 0 9px 10px; padding: 4px 5px 4px 10px; border-radius: 20px; background: #dbe3ef; }
+.install-address > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-size: 10px; }
+.install-address > b { position: relative; display: grid; place-items: center; width: 26px; height: 27px; font-size: 24px; line-height: 1; }
+.install-mini-site { display: flex; align-items: center; flex-direction: column; gap: 10px; height: 240px; padding: 22px 12px; background: #0b1a3a; color: #fff; text-align: center; }
+.install-mini-site > .install-app-icon { width: 44px; height: 44px; border-radius: 10px; }
+.install-mini-site > strong { font: 800 28px/1 var(--fc-display); }
+.install-mini-site > span { color: #c3ccdf; }
+.install-mini-tiles { display: flex; gap: 8px; margin-top: 5px; }
+.install-mini-tiles i { padding: 10px; background: #1846f5; font-style: normal; font-size: 9px; }
+.install-browser-card { position: absolute; inset: 130px 25px auto; display: grid; justify-items: center; gap: 8px; padding: 20px 10px; border-radius: 16px; background: #fff; box-shadow: 0 6px 30px #0005; }
+.install-browser-card strong { font-size: 17px; }
+.install-browser-logo { position: relative; width: 55px; height: 55px; border-radius: 50%; }
+.install-browser-logo--chrome { background: conic-gradient(#e44e43 0deg 120deg, #f3c64b 120deg 240deg, #4ba46a 240deg); }
+.install-browser-logo--chrome::after { content: ''; position: absolute; inset: 16px; border: 3px solid #fff; border-radius: 50%; background: #388ae5; }
+.install-browser-logo--safari { border: 4px solid #dce7f4; background: repeating-conic-gradient(#fff8 0deg 2deg, transparent 2deg 30deg), #228fea; }
+.install-browser-logo--safari::after { content: ''; position: absolute; inset: 6px 19px; background: linear-gradient(#ff526a 50%, #fff 50%); transform: rotate(38deg); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.install-highlight { border: 2px solid #1846f5; border-radius: 7px; background: #deeeff; color: #123ed5; box-shadow: 0 0 0 4px #6fc8ff55; }
+.install-safari-bar { position: absolute; bottom: 25px; left: 0; right: 0; display: flex; justify-content: space-around; align-items: center; height: 44px; background: #edf2fc; color: #1846f5; font-size: 28px; }
+.install-safari-bar .install-highlight { position: relative; display: grid; place-items: center; width: 40px; height: 38px; }
+.install-safari-bar svg { width: 25px; height: 25px; }
+.install-safari-bar .install-pointer { top: auto; bottom: 43px; }
+.install-menu-preview { position: absolute; top: 82px; right: 10px; display: grid; gap: 15px; padding: 16px; border-radius: 10px; background: white; box-shadow: 0 8px 20px #0005; }
+.install-menu-preview strong { color: #1846f5; }
+.install-sheet { position: absolute; bottom: 20px; left: 0; right: 0; padding: 10px 12px 16px; border-radius: 16px 16px 0 0; background: #f2f4f8; box-shadow: 0 -14px 25px #0004; }
+.install-sheet-handle { width: 35px; height: 4px; margin: 0 auto 14px; border-radius: 4px; background: #aab5c6; }
+.install-sheet-brand { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; }
+.install-sheet-brand .install-app-icon { width: 35px; height: 35px; border-radius: 8px; }
+.install-sheet > span { display: block; margin-bottom: 14px; color: #5c6781; }
+.install-menu-choice { display: flex; align-items: center; justify-content: space-between; gap: 5px; padding: 10px 6px; font-size: 11px; font-weight: 700; }
+.install-menu-choice b { font-size: 19px; }
+.install-confirm { margin-top: 17px; color: #123ed5; text-align: center; font-size: 12px; }
+.install-phone--desktop { border-radius: 12px; }
+.install-phone--desktop .install-phone-status { background: #dbe3ef; }
+@media (max-width: 680px) {
+  .install-guide { width: calc(100% - 16px); max-height: calc(100dvh - 16px); border-radius: 18px; }
+  .install-guide-header { padding: 12px 16px; }
+  .install-guide-scroll { padding: 16px; }
+  .install-device-picker { width: 100%; gap: 2px; margin-bottom: 18px; padding: 4px; }
+  .install-device-picker button { flex: 1; min-width: 0; padding: 9px 5px; font-size: 13px; }
+  .install-guide-layout { display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+  .install-guide-copy { display: contents; }
+  .install-guide .install-eyebrow { order: -4; margin: 0; }
+  .install-guide h2 { order: -3; margin: 0; }
+  .install-progress { order: -2; margin: 0; }
+  .install-guide :is(.install-intro, .install-instruction) { order: -1; margin: 0; }
+  .install-guide .install-benefits { margin: 4px 0; }
+  .install-visual { padding: 18px 10px 14px; }
+  .install-phone { width: 220px; height: 315px; }
+  .install-home { padding-top: 12px; }
+  .install-home-grid { gap: 12px 15px; margin-top: 14px; }
+  .install-home-app .install-pointer { font-size: 28px; }
+  .install-home-dock { bottom: 20px; padding: 7px; }
+  .install-home-dock i { width: 25px; }
+  .install-browser-card { top: 106px; }
+  .install-visual figcaption { margin-top: 14px; }
+  .install-guide h2 { font-size: 36px; }
+  .install-guide-footer { padding: 12px 16px max(12px, env(safe-area-inset-bottom)); }
+  .install-guide-footer button { padding: 11px 12px; font-size: 14px; }
+}
 @media (display-mode: standalone) {
   /* Le bas est gere par la barre de navigation fixe ; l'ajouter aussi au body doublait
      la zone iOS en fin de page. */

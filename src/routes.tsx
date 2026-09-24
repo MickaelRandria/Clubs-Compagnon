@@ -16,6 +16,7 @@ export const router = createBrowserRouter([
       { path: '/stats', lazy: async () => ({ Component: (await import('./views/StatsView')).StatsView }) },
       { path: '/playoffs', lazy: async () => ({ Component: (await import('./views/PlayoffsView')).PlayoffsView }) },
       { path: '/fc27', lazy: async () => ({ Component: (await import('./views/FC27View')).FC27View }) },
+      { path: '/paris', lazy: async () => ({ Component: (await import('./views/BetsView')).BetsView }) },
       { path: '*', element: <NotFoundView /> },
     ],
   },

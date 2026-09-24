@@ -1,0 +1,144 @@
+/* Vestiaire Bets — paris et votes des sessions Clubs Pro.
+   Même langage que FC 27 (aplats, biseaux, Barlow Condensed) ; l'ambre est réservé
+   aux cotes et aux pièces, le rouge à la Casserole. */
+
+.bets, .bets-teaser { --b-ambre: #FFB547; --b-rouge: var(--fc-rouge); --p-ink: #0B1A3A;
+  --b-cut: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); }
+
+/* ---------- Tuile sur /fc27 ---------- */
+.bets-teaser { display: grid; gap: 6px; }
+.bets-teaser-card { position: relative; overflow: hidden; display: flex; align-items: center; gap: 22px; min-height: 180px; padding: 26px 28px;
+  background: linear-gradient(115deg, #0B1A3A 0 80%, #1846F5 80% 81.5%, #111C3D 81.5%); color: var(--fc-craie); text-decoration: none;
+  clip-path: var(--b-cut); box-shadow: inset 5px 0 0 var(--b-ambre); }
+a.bets-teaser-card:hover, a.bets-teaser-card:focus-visible { outline: 4px solid var(--fc-glacier); outline-offset: -4px; }
+.bets-teaser-copy { display: grid; gap: 10px; justify-items: start; max-width: 620px; }
+.bets-teaser-copy .fc27-tag { background: var(--b-ambre); color: var(--p-ink); }
+.bets-teaser--locked .bets-teaser-copy .fc27-tag { background: var(--fc-craie); }
+.bets-teaser-copy p { margin: 0; color: var(--fc-brume); font: 600 15px/1.45 var(--fc-text); }
+.bets-teaser-title, .bets-title { margin: 0; font: italic 800 clamp(40px, 5vw, 64px)/.85 var(--fc-display); text-transform: uppercase; letter-spacing: -.01em; }
+.bets-teaser-title span, .bets-title span { color: var(--b-ambre); }
+.bets-teaser-cta { font: 800 16px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; color: var(--b-ambre); }
+.bets-teaser-coins { position: relative; flex: 0 0 96px; height: 96px; }
+.bets-teaser-coins i, .bets-coin { display: block; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFE3A8, var(--b-ambre) 45%, #B87412);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.35), 0 4px 10px rgba(0,0,0,.35); }
+.bets-teaser-coins i { position: absolute; width: 58px; height: 58px; }
+.bets-teaser-coins i:nth-child(1) { left: 0; top: 30px; }
+.bets-teaser-coins i:nth-child(2) { left: 30px; top: 6px; }
+.bets-teaser-coins i:nth-child(3) { left: 38px; top: 40px; }
+
+/* Grisée : lisible, mais clairement pas encore disponible. */
+.bets-teaser--locked .bets-teaser-card { filter: grayscale(1); opacity: .55; cursor: not-allowed; box-shadow: inset 5px 0 0 var(--fc-acier); }
+.bets-teaser--locked .bets-teaser-cta { color: var(--fc-acier); }
+
+.bets-teaser-admin { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 8px 10px; background: rgba(11,26,58,.85); }
+.bets-teaser-admin > span { margin-right: 6px; font: 800 13px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--fc-brume); }
+.bets-teaser-admin button { min-height: 36px; padding: 0 14px; border: 0; background: rgba(242,244,248,.1); color: var(--fc-craie);
+  font: 800 14px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.bets-teaser-admin button[aria-pressed="true"] { background: var(--b-ambre); color: var(--p-ink); }
+.bets-teaser-admin em { flex-basis: 100%; color: var(--b-rouge); font: 600 13px/1.4 var(--fc-text); }
+
+/* ---------- Vue /paris ---------- */
+.bets { display: grid; gap: 10px; padding-bottom: 120px; color: var(--fc-craie); }
+.bets :focus-visible { outline: 3px solid var(--fc-glacier); outline-offset: 2px; }
+.bets--locked { justify-items: start; gap: 14px; padding: 40px 0; }
+.bets-lead { margin: 0; max-width: 520px; color: var(--fc-brume); font: 600 16px/1.5 var(--fc-text); }
+.bets-back { color: var(--fc-glacier); font: 700 15px/1 var(--fc-text); }
+.bets-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-top: 14px; }
+.bets-top .fc27-tag { margin: 0 0 10px; }
+.bets-wallet { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 14px; background: var(--p-ink);
+  font: 800 18px/1 var(--fc-display); letter-spacing: .06em; color: var(--b-ambre); white-space: nowrap; }
+.bets-wallet b { font-size: 28px; font-variant-numeric: tabular-nums; }
+.bets-coin { width: 24px; height: 24px; }
+.bets-demo { margin: 0; padding: 8px 12px; background: rgba(255,181,71,.12); box-shadow: inset 3px 0 0 var(--b-ambre);
+  font: 700 13px/1.3 var(--fc-text); color: var(--b-ambre); }
+
+.bets-stages { display: flex; gap: 4px; }
+.bets-stages button { flex: 1; min-height: 44px; border: 0; background: rgba(242,244,248,.08); color: var(--fc-brume); cursor: pointer;
+  font: 800 15px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.bets-stages button[aria-current="step"] { background: var(--fc-blue); color: #fff; box-shadow: inset 0 -3px 0 var(--fc-glacier); }
+
+.bets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 6px; }
+.bets-card { display: grid; gap: 12px; align-content: start; padding: 18px; background: rgba(11,26,58,.92); clip-path: var(--b-cut);
+  box-shadow: inset 0 3px 0 var(--fc-glacier); }
+.bets-card--flop { box-shadow: inset 0 3px 0 var(--b-rouge); }
+.bets-card header h3 { margin: 0; font: italic 800 24px/1 var(--fc-display); text-transform: uppercase; }
+.bets-card header p { margin: 4px 0 0; color: var(--fc-brume); font: 600 14px/1.4 var(--fc-text); }
+
+.bets-odds { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 6px; }
+.bets-odds--players { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.bets-odd { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 56px; padding: 8px; cursor: pointer;
+  border: 1.5px solid rgba(255,181,71,.45); background: rgba(255,181,71,.06); color: var(--fc-craie); transition: background .15s, border-color .15s; }
+.bets-odd span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 14px/1.2 var(--fc-text); }
+.bets-odd b { font: italic 800 20px/1 var(--fc-display); color: var(--b-ambre); font-variant-numeric: tabular-nums; }
+.bets-odd:hover { border-color: var(--b-ambre); }
+.bets-odd[aria-pressed="true"] { background: var(--b-ambre); border-color: var(--b-ambre); color: var(--p-ink); }
+.bets-odd[aria-pressed="true"] b { color: var(--p-ink); }
+
+.bets-more { background: rgba(11,26,58,.6); }
+.bets-more > summary { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; cursor: pointer; list-style: none;
+  font: 800 16px/1 var(--fc-display); letter-spacing: .1em; text-transform: uppercase; }
+.bets-more > summary::-webkit-details-marker { display: none; }
+.bets-more > summary b { padding: 3px 7px; background: var(--b-ambre); color: var(--p-ink); }
+.bets-more[open] > summary { box-shadow: inset 0 -1px 0 rgba(242,244,248,.1); }
+.bets-more .bets-grid { padding: 6px; }
+
+.bets-slip ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.bets-slip li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; background: rgba(242,244,248,.05); font: 600 14px/1.3 var(--fc-text); }
+.bets-slip li b { font: 800 16px/1.2 var(--fc-display); color: var(--b-ambre); white-space: nowrap; }
+.bets-slip li.is-won b { color: var(--fc-pos-mf); }
+.bets-slip li.is-lost b { color: var(--b-rouge); }
+
+/* Barre de validation collante : au-dessus de la BottomNav sur mobile. */
+.bets-bar { position: sticky; bottom: 12px; z-index: 5; display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: rgba(6,12,31,.96);
+  box-shadow: 0 -8px 24px rgba(0,0,0,.4); }
+.bets-stakes { display: flex; gap: 4px; }
+.bets-stakes button { min-width: 52px; min-height: 48px; border: 0; background: rgba(242,244,248,.1); color: var(--fc-craie); cursor: pointer;
+  font: 800 17px/1 var(--fc-display); font-variant-numeric: tabular-nums; }
+.bets-stakes button[aria-pressed="true"] { background: var(--b-ambre); color: var(--p-ink); }
+.bets-validate { flex: 1 1 240px; min-height: 48px; border: 0; background: var(--fc-blue); color: #fff; cursor: pointer;
+  font: 800 17px/1.1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
+.bets-validate:disabled { background: rgba(242,244,248,.12); color: var(--fc-acier); cursor: not-allowed; }
+
+.bets-score { margin: 0; padding: 14px; background: var(--p-ink); text-align: center; font: 800 20px/1 var(--fc-display); text-transform: uppercase; letter-spacing: .06em; }
+.bets-score b { margin: 0 10px; font-size: 32px; color: var(--fc-glacier); }
+.bets-hint { margin: 0; color: var(--fc-brume); font: 600 14px/1.45 var(--fc-text); }
+
+.bets-vote-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.bets-vote-list button { display: grid; grid-template-columns: minmax(90px, 1fr) 2fr 44px; align-items: center; gap: 10px; width: 100%; min-height: 44px;
+  padding: 6px 10px; border: 0; background: rgba(242,244,248,.05); color: var(--fc-craie); text-align: left; cursor: pointer; }
+.bets-vote-list button[aria-pressed="true"] { background: rgba(111,200,255,.16); box-shadow: inset 3px 0 0 var(--fc-glacier); }
+.bets-card--flop .bets-vote-list button[aria-pressed="true"] { background: rgba(255,77,94,.14); box-shadow: inset 3px 0 0 var(--b-rouge); }
+.bets-vote-list button:disabled { opacity: .45; cursor: not-allowed; }
+.bets-vote-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 14px/1.2 var(--fc-text); }
+.bets-vote-name em { color: var(--fc-acier); font-style: normal; }
+.bets-vote-bar { height: 8px; background: rgba(242,244,248,.08); }
+.bets-vote-bar i { display: block; height: 100%; background: var(--fc-glacier); transition: width .4s ease; }
+.bets-card--flop .bets-vote-bar i { background: var(--b-rouge); }
+.bets-vote-list b { font: 800 16px/1 var(--fc-display); text-align: right; font-variant-numeric: tabular-nums; }
+
+.bets-admin-close { justify-self: start; min-height: 48px; padding: 0 20px; border: 0; background: var(--fc-craie); color: var(--p-ink); cursor: pointer;
+  font: 800 16px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; clip-path: var(--b-cut); }
+.bets-admin-close small { font-size: 12px; color: var(--fc-ardoise); }
+.bets-countdown { margin: 0; padding: 12px 14px; background: var(--p-ink); font: 800 16px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.bets-countdown b { margin-left: 6px; font-size: 24px; color: var(--b-ambre); font-variant-numeric: tabular-nums; }
+.bets-hero-result { margin: 0; padding: 18px; background: var(--b-ambre); color: var(--p-ink); text-align: center;
+  font: italic 800 30px/1 var(--fc-display); text-transform: uppercase; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bets-vote-bar i, .bets-odd { transition: none; }
+}
+
+@media (max-width: 767px) {
+  .bets-teaser-card { min-height: 0; padding: 20px 16px; gap: 14px; }
+  .bets-teaser-coins { display: none; }
+  .bets-top { flex-direction: column; align-items: stretch; }
+  .bets-wallet { align-self: flex-start; }
+  .bets-grid { grid-template-columns: minmax(0, 1fr); }
+  .bets-card { padding: 16px 14px; }
+  .bets-stages button { font-size: 13px; letter-spacing: .04em; }
+  .bets-bar { position: fixed; left: 0; right: 0; bottom: calc(var(--fc-bnav-h, 56px) + env(safe-area-inset-bottom, 0px)); padding: 8px 12px; }
+  .bets-stakes { flex: 1 1 100%; }
+  .bets-stakes button { flex: 1; }
+  .bets-validate { flex-basis: 100%; }
+  .bets-vote-list button { grid-template-columns: minmax(80px, 1fr) 1.4fr 40px; }
+}

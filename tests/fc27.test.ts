@@ -6,21 +6,28 @@ import type { FC27State } from '../shared/fc27.js';
 import { ARCHETYPES, ARCHETYPE_IDS, LINE_OF_POSITION, archetypesForPosition, BASE_OVR } from '../shared/data/archetypes.js';
 import { POSITION_CODES } from '../shared/fc27.js';
 import { fc27ActionSchema } from '../shared/fc27-validation.js';
+import { planAdvance } from '../shared/fc27-bracket.js';
 import { LIMITS } from '../shared/fc27-player.js';
 import { createFC27Service } from '../server/fc27-service.js';
 import { createFC27Handlers } from '../server/fc27-http.js';
 import { createToken } from '../server/session.js';
+import { createAdminCheck } from '../server/admin.js';
 
 process.env.SESSION_SECRET = 'fc27-unit-tests-only-secret-over-32-characters';
+process.env.DISCORD_ADMIN_IDS = '777000000000000001';
 
 const db = new PGlite();
+const isAdmin = createAdminCheck(async accountId => {
+  const result = await db.query<{ discord_id: string }>('select discord_id from club_accounts where id = $1', [accountId]);
+  return result.rows[0]?.discord_id;
+});
 type Result = FC27State & { error?: string; status?: number };
 const journal = JSON.parse(await readFile(new URL('../drizzle/meta/_journal.json', import.meta.url), 'utf8'));
 const migrations: string[] = await Promise.all(journal.entries.map((e: { tag: string }) => readFile(new URL(`../drizzle/${e.tag}.sql`, import.meta.url), 'utf8')));
 async function call(action: string, payload: Record<string, unknown> = {}, campaign?: number, database = db): Promise<Result> {
   // Les scénarios métier utilisent un membre connecté pour les commandes de gestion.
   // Un accountId explicitement null garde la possibilité de tester l'accès anonyme.
-  if (database === db && ['start', 'close', 'archive', 'reset'].includes(action) && !('accountId' in payload)) {
+  if (database === db && ['start', 'advance', 'close', 'archive', 'reset'].includes(action) && !('accountId' in payload)) {
     payload = { ...payload, accountId: await accountFor('gestion') };
   }
   const result = await database.query<{ data: Result }>('select fc27_dispatch($1, $2::jsonb, $3::integer) as data', [action, JSON.stringify(payload), campaign ?? null]);
@@ -57,6 +64,22 @@ async function election(names = ['Alpha', 'Bravo', 'Charlie']) {
 }
 const vote = async (state: FC27State, pseudo: string, proposalId = state.proposals[0].id, database = db) =>
   call('vote', { accountId: await accountFor(pseudo, database), proposalId }, state.campaign.id, database);
+/** Bulletin complet de l'étape ouverte, validé comme par la route HTTP. */
+const ballot = async (state: FC27State, pseudo: string, proposalIds: number[]) => {
+  const parsed = fc27ActionSchema.safeParse({ action: 'vote', campaignId: state.campaign.id, proposalIds });
+  if (!parsed.success) return { status: 400 } as Result;
+  return call('vote', { ...parsed.data, accountId: await accountFor(pseudo) }, state.campaign.id);
+};
+const advance = (state: FC27State, picks: number[] = []) => call('advance', { picks }, state.campaign.id);
+const current = (state: FC27State) => state.stages.find((s) => s.closed_at === null)!;
+/** Donne `counts[i]` voix au nom `ids[i]` dans l'étape ouverte, un votant par voix. */
+async function score(state: FC27State, ids: number[], counts: number[], tag: string) {
+  let next = state;
+  for (const [index, id] of ids.entries()) {
+    for (let n = 0; n < counts[index]; n++) next = await ballot(state, `${tag}-${id}-${n}`, [id]);
+  }
+  return next;
+}
 before(async () => {
   for (const migration of migrations) await db.exec(migration);
   await db.exec("insert into clubs(name, region, reputation, skill_rating) values ('Test FC', 'EU', 'Test', 1000)");
@@ -86,14 +109,30 @@ test('manual start freezes proposals; no votes before start and no restart', asy
   assert.equal((await call('start', {}, state.campaign.id)).status, 409);
   assert.equal((await call('propose', { accountId: await accountFor('A'), name: 'Trop tard' }, state.campaign.id)).status, 409);
 });
-test('one vote per account for the campaign, including concurrent duplicates', async () => {
-  const state = await election();
-  const attempts = await Promise.all([vote(state, 'Alex'), vote(state, 'Alex', state.proposals[1].id)]);
-  assert.equal(attempts.filter((r) => r.status === 409).length, 1);
-  const next = await vote(state, 'alex');
-  assert.equal(next.proposals.reduce((sum, p) => sum + p.votes, 0), 2);
-  const spaced = await vote(state, ' Alex ');
-  assert.equal(spaced.proposals.reduce((sum, p) => sum + p.votes, 0), 3);
+test('a ballot holds up to three names, replaces the previous one and can be withdrawn', async () => {
+  const state = await election(['Alpha', 'Bravo', 'Charlie', 'Delta']);
+  const [a, b, c, d] = state.proposals.map((p) => p.id);
+  assert.equal(state.stages.length, 1); assert.equal(state.stages[0].kind, 'qualif'); assert.equal(state.stages[0].max_choices, 3);
+  const first = await ballot(state, 'Alex', [c, a, b]);
+  assert.deepEqual(first.proposals.map((p) => p.votes), [1, 1, 1, 0]);
+  assert.deepEqual(first.my_ballot, [a, b, c]);
+  assert.equal(first.stages[0].voters, 1);
+  assert.equal((await ballot(state, 'Alex', [a, b, c, d])).status, 400, 'Quatre choix : refusé par la validation');
+  assert.equal((await call('vote', { accountId: await accountFor('Alex'), proposalIds: [a, b, c, d] }, state.campaign.id)).status, 400);
+  // Changer d'avis remplace le bulletin entier.
+  const changed = await ballot(state, 'Alex', [d, d]);
+  assert.deepEqual(changed.proposals.map((p) => p.votes), [0, 0, 0, 1]);
+  assert.deepEqual(changed.my_ballot, [d]);
+  // Deux bulletins simultanés du même compte : un seul survit, entier.
+  await Promise.all([ballot(state, 'Alex', [a, b]), ballot(state, 'Alex', [c])]);
+  const raced = await call('state', { accountId: await accountFor('Alex') });
+  assert.ok([[a, b], [c]].some((expected) => JSON.stringify(expected) === JSON.stringify(raced.my_ballot)));
+  assert.equal(raced.proposals.reduce((sum, p) => sum + p.votes, 0), raced.my_ballot.length);
+  // Le bulletin n'est renvoyé qu'à son auteur.
+  assert.deepEqual((await call('state')).my_ballot, []);
+  assert.deepEqual((await call('state', { accountId: await accountFor('Sam') })).my_ballot, []);
+  const withdrawn = await ballot(state, 'Alex', []);
+  assert.deepEqual(withdrawn.my_ballot, []); assert.equal(withdrawn.stages[0].voters, 0);
 });
 test('neither many votes, elapsed time, nor the old scheduler closes or eliminates', async () => {
   const state = await election();
@@ -104,37 +143,141 @@ test('neither many votes, elapsed time, nor the old scheduler closes or eliminat
   assert.equal(next.election.phase, 'voting'); assert.equal(next.proposals.length, 3);
   assert.equal(next.winner, null); assert.equal(next.proposals[0].votes, 14);
 });
-test('manual close elects the most voted and freezes all scores, including zero', async () => {
-  const state = await election();
-  await vote(state, 'A'); await vote(state, 'B'); await vote(state, 'C', state.proposals[1].id);
-  assert.equal((await call('state')).winner, null);
-  const closed = await call('close', {}, state.campaign.id);
-  assert.equal(closed.election.phase, 'closed'); assert.equal(closed.winner?.club_name, 'Alpha');
-  assert.equal(closed.election.tie_break_applied, false);
-  assert.deepEqual(closed.proposals.map((p) => p.votes), [2, 1, 0]);
-  assert.equal((await vote(closed, 'D')).status, 409);
-  assert.equal((await call('close', {}, state.campaign.id)).status, 409);
-  assert.equal((await call('propose', { accountId: await accountFor('D'), name: 'Later' }, state.campaign.id)).status, 409);
-  assert.deepEqual((await call('state')).proposals, closed.proposals);
+test('full path: first round, second round, semi-finals 1v4 and 2v3, final', async () => {
+  const names = ['N1', 'N2', 'N3', 'N4', 'N5', 'N6', 'N7'];
+  let state = await election(names);
+  const id = (name: string) => state.proposals.find((p) => p.club_name === name)!.id;
+  // Premier tour : six noms reçoivent au moins une voix, N7 aucune.
+  state = await score(state, names.slice(0, 6).map(id), [1, 1, 1, 1, 1, 1], 'full-1');
+  state = await advance(state);
+  const second = current(state);
+  assert.equal(second.kind, 'repechage'); assert.equal(second.number, 2); assert.equal(second.max_choices, 3);
+  assert.deepEqual(second.entries.map((e) => e.proposal_id), names.slice(0, 6).map(id), 'N7 sort, les autres gardent leur rang');
+  assert.equal(state.stages[0].entries.find((e) => e.proposal_id === id('N7'))!.result, 'eliminated');
+  assert.deepEqual(state.my_ballot, [], 'Nouvelle étape, nouveau bulletin');
+  // Second tour : N6 5, N5 4, N4 3, N3 2, N2 1, N1 0 → les quatre premiers en demi-finales.
+  state = await score(state, ['N6', 'N5', 'N4', 'N3', 'N2'].map(id), [5, 4, 3, 2, 1], 'full-2');
+  state = await advance(state);
+  const semis = current(state);
+  assert.equal(semis.kind, 'semis');
+  assert.deepEqual(semis.entries.map((e) => [e.duel, e.seed, e.proposal_id]),
+    [[1, 1, id('N6')], [1, 4, id('N3')], [2, 2, id('N5')], [2, 3, id('N4')]]);
+  // Un nom par duel, au plus.
+  assert.equal((await ballot(state, 'full-x', [id('N6'), id('N3')])).status, 400);
+  assert.equal((await ballot(state, 'full-x', [id('N1')])).status, 400, 'N1 n est plus en course');
+  assert.deepEqual((await ballot(state, 'full-x', [id('N3'), id('N4')])).my_ballot.sort(), [id('N3'), id('N4')].sort());
+  state = await ballot(state, 'full-y', [id('N3'), id('N5')]);
+  state = await ballot(state, 'full-z', [id('N6'), id('N5')]);
+  state = await advance(state);
+  const final = current(state);
+  assert.equal(final.kind, 'final');
+  assert.deepEqual(final.entries.map((e) => e.proposal_id), [id('N3'), id('N5')]);
+  assert.equal((await ballot(state, 'full-x', [id('N3'), id('N5')])).status, 400, 'Une seule voix en finale');
+  state = await ballot(state, 'full-x', [id('N5')]);
+  state = await advance(state);
+  assert.equal(state.election.phase, 'closed'); assert.equal(state.winner?.club_name, 'N5'); assert.equal(state.winner?.votes, 1);
+  assert.equal(state.election.tie_break_applied, false);
+  assert.deepEqual(state.stages.at(-1)!.entries.map((e) => e.result), ['runner_up', 'winner']);
+  assert.ok(state.stages.every((s) => s.closed_at !== null));
+  // `votes` d'une proposition = son score du premier tour, figé.
+  assert.deepEqual(state.proposals.map((p) => p.votes), [1, 1, 1, 1, 1, 1, 0]);
+  assert.equal((await ballot(state, 'full-w', [id('N5')])).status, 409);
+  assert.equal((await advance(state)).status, 409);
 });
-test('ties require manual choice among the leaders only', async () => {
-  const state = await election(); await vote(state, 'A'); await vote(state, 'B', state.proposals[1].id);
-  assert.equal((await call('close', {}, state.campaign.id)).status, 409);
-  assert.equal((await call('close', { winnerProposalId: state.proposals[2].id }, state.campaign.id)).status, 409);
-  const closed = await call('close', { winnerProposalId: state.proposals[1].id }, state.campaign.id);
-  assert.equal(closed.winner?.club_name, 'Bravo'); assert.equal(closed.election.tie_break_applied, true);
-  assert.deepEqual(closed.proposals.map((p) => p.votes), [1, 1, 0]);
+test('first round with 4, 3, 2 or 1 voted names goes to semis, podium, final or a direct winner', async () => {
+  for (const [count, expected] of [[4, 'semis'], [3, 'podium'], [2, 'final']] as const) {
+    let state = await election(['A', 'B', 'C', 'D', 'E']);
+    state = await score(state, state.proposals.slice(0, count).map((p) => p.id), [1, 1, 1, 1].slice(0, count), `short-${count}`);
+    state = await advance(state);
+    assert.equal(current(state).kind, expected); assert.equal(current(state).entries.length, count);
+  }
+  let state = await election(['Seul', 'Autre']);
+  state = await advance(await score(state, [state.proposals[0].id], [2], 'short-1'));
+  assert.equal(state.election.phase, 'closed'); assert.equal(state.winner?.club_name, 'Seul');
+});
+test('podium: one vote each, first place wins, podium order is recorded', async () => {
+  let state = await election(['Or', 'Argent', 'Bronze']);
+  const [gold, silver, bronze] = state.proposals.map((p) => p.id);
+  state = await advance(await score(state, [gold, silver, bronze], [1, 1, 1], 'podium-1'));
+  assert.equal(current(state).kind, 'podium'); assert.equal(current(state).max_choices, 1);
+  state = await score(state, [bronze, silver, gold], [1, 2, 3], 'podium-2');
+  state = await advance(state);
+  assert.equal(state.winner?.club_name, 'Or');
+  assert.deepEqual(state.stages.at(-1)!.entries.map((e) => [e.proposal_id, e.result]),
+    [[gold, 'winner'], [silver, 'runner_up'], [bronze, 'third']]);
+});
+test('ties that decide a qualification or the title need admin picks; nothing is written until then', async () => {
+  // Second tour : 3 / 2 / 1 / 1 / 1 → deux places pour trois ex æquo.
+  let state = await election(['T1', 'T2', 'T3', 'T4', 'T5']);
+  const ids = state.proposals.map((p) => p.id);
+  state = await advance(await score(state, ids, [1, 1, 1, 1, 1], 'tie-1'));
+  state = await score(state, ids, [3, 2, 1, 1, 1], 'tie-2');
+  const refused = await advance(state);
+  assert.equal(refused.status, 409); assert.match(refused.error!, /2 nom\(s\)/);
+  const stillOpen = await call('state');
+  assert.equal(current(stillOpen).kind, 'repechage');
+  assert.ok(current(stillOpen).entries.every((e) => e.result === null));
+  assert.equal((await advance(state, [ids[2]])).status, 409, 'Un seul choix sur deux');
+  assert.equal((await advance(state, [ids[2], ids[3], ids[0]])).status, 409, 'Choix superflu hors égalité');
+  state = await advance(state, [ids[4], ids[2]]);
+  assert.deepEqual(current(state).entries.map((e) => [e.duel, e.proposal_id]),
+    [[1, ids[0]], [1, ids[4]], [2, ids[1]], [2, ids[2]]], 'Les choisis gardent leur ordre de classement');
+  assert.equal(state.stages[1].tie_break_applied, true);
+  // Demi-finales : duel 1 à égalité, duel 2 net.
+  state = await score(state, [ids[0], ids[4], ids[1]], [1, 1, 1], 'tie-3');
+  assert.equal((await advance(state)).status, 409);
+  state = await advance(state, [ids[4]]);
+  assert.deepEqual(current(state).entries.map((e) => e.proposal_id), [ids[4], ids[1]]);
+  // Finale à égalité, départagée par l'ancienne commande de clôture.
+  state = await score(state, [ids[4], ids[1]], [2, 2], 'tie-4');
+  assert.equal((await call('close', { winnerProposalId: ids[0] }, state.campaign.id)).status, 409);
+  state = await call('close', { winnerProposalId: ids[1] }, state.campaign.id);
+  assert.equal(state.winner?.id, ids[1]); assert.equal(state.election.tie_break_applied, true);
+});
+test('the shared preview agrees with the database on random stages', async () => {
+  let seed = 7;
+  const random = (n: number) => { seed = (seed * 1103515245 + 12345) % 2 ** 31; return seed % n; };
+  for (let round = 0; round < 12; round++) {
+    let state = await election(['R1', 'R2', 'R3', 'R4', 'R5', 'R6'].slice(0, 2 + random(5)));
+    for (let step = 0; step < 6 && state.election.phase === 'voting'; step++) {
+      const stage = current(state);
+      const ids = stage.entries.map((e) => e.proposal_id);
+      state = await score(state, ids, ids.map(() => random(3)), `random-${round}-${step}`);
+      const open = current(state);
+      const plan = planAdvance(open);
+      const picks = plan.ties.flatMap((tie) => tie.among.slice(-tie.need));
+      const result = await advance(state, picks);
+      if (plan.empty) { assert.equal(result.status, 400); state = await score(state, [ids[0]], [1], `random-${round}-${step}-b`); continue; }
+      const resolved = planAdvance(open, picks);
+      assert.ok(resolved.ready);
+      assert.ok(!result.error, result.error);
+      state = result;
+      if (plan.next === 'done') {
+        assert.equal(state.winner?.id, resolved.podium[0]);
+      } else {
+        assert.equal(current(state).kind, plan.next);
+        assert.deepEqual(current(state).entries.map((e) => e.proposal_id).sort(), [...resolved.qualified].sort());
+        assert.deepEqual(state.stages.at(-2)!.entries.filter((e) => e.result === 'advanced').length, resolved.qualified.length);
+      }
+    }
+  }
 });
 test('no winner can be declared with zero votes or before voting starts', async () => {
   const empty = await fresh(); assert.equal((await call('close', {}, empty.campaign.id)).status, 409);
   const state = await election(); assert.equal((await call('close', {}, state.campaign.id)).status, 400);
   assert.equal((await call('state')).election.phase, 'voting');
 });
-test('stale manual winner choices are rejected when rankings change', async () => {
-  const state = await election(); await vote(state, 'A'); await vote(state, 'B', state.proposals[1].id);
-  await vote(state, 'C');
+test('stale tie-break choices are rejected when rankings change', async () => {
+  let state = await election(); await vote(state, 'A'); await vote(state, 'B', state.proposals[1].id);
+  // Deux noms à égalité au premier tour : les deux vont en finale, aucun départage n'est attendu.
   assert.equal((await call('close', { winnerProposalId: state.proposals[1].id }, state.campaign.id)).status, 409);
-  assert.equal((await call('close', {}, state.campaign.id)).winner?.id, state.proposals[0].id);
+  state = await advance(state);
+  await ballot(state, 'A', [state.proposals[0].id]); state = await ballot(state, 'B', [state.proposals[1].id]);
+  const [first, second] = current(state).entries.map((e) => e.proposal_id);
+  assert.equal((await advance(state)).status, 409);
+  await ballot(state, 'C', [first]);
+  assert.equal((await advance(state, [second])).status, 409, 'Le départage préparé avant la dernière voix est refusé');
+  assert.equal((await advance(state)).winner?.id, first);
 });
 test('vote and close submissions serialize; result agrees with accepted ballots', async () => {
   const state = await election(); await vote(state, 'A');
@@ -283,7 +426,7 @@ test('DB rejects foreign campaign votes and blank identities; old quorum action 
 test('HTTP validates requests and returns no-store live state', async () => {
   const handlers = createFC27Handlers(createFC27Service(async (name, payload, campaign) => {
     const result = await db.query<{ data: unknown }>('select fc27_dispatch($1,$2::jsonb,$3::integer) as data', [name, payload, campaign]); return result.rows[0].data;
-  }));
+  }), isAdmin);
   const url = 'http://localhost/api/fc27';
   const response = await handlers.GET(new Request(url)); assert.equal(response.status, 200); assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.equal((await handlers.GET(new Request(`${url}?campaign=abc`))).status, 400);
@@ -302,6 +445,51 @@ test('toutes les écritures exigent un compte existant, y compris les réglages'
   assert.equal((await call('state')).campaign.id, state.campaign.id);
 });
 
+test('HTTP réserve les quatre commandes de gestion à l’identifiant Discord administrateur', async () => {
+  let state = await fresh();
+  const admin = await account();
+  const member = await account();
+  await db.query('update club_accounts set discord_id = $1, username = $2 where id = $3', ['777000000000000001', 'saucegod.', admin]);
+  await db.query('update club_accounts set username = $1, display_name = $1 where id = $2', ['saucegod.', member]);
+  let executions = 0;
+  const handlers = createFC27Handlers(createFC27Service(async (name, payload, campaign) => {
+    executions += 1;
+    const result = await db.query<{ data: unknown }>('select fc27_dispatch($1,$2::jsonb,$3::integer) as data', [name, payload, campaign]);
+    return result.rows[0].data;
+  }), isAdmin);
+  const post = (accountId: number, action: string, extra: object = {}) => handlers.POST(new Request('http://localhost/api/fc27', {
+    method: 'POST', headers: { cookie: `dommage_session=${createToken(accountId)}`, origin: 'http://localhost' },
+    body: JSON.stringify({ action, campaignId: state.campaign.id, ...extra }),
+  }));
+  for (const action of ['start', 'close', 'archive', 'reset']) {
+    for (const id of [member, 999999]) {
+      assert.equal((await post(id, action, { accountId: admin, isAdmin: true, discordId: '777000000000000001' })).status, 403);
+    }
+  }
+  assert.equal(executions, 0, 'Aucune commande non autorisée ne doit atteindre le service.');
+  const adminIds = process.env.DISCORD_ADMIN_IDS;
+  try {
+    process.env.DISCORD_ADMIN_IDS = '';
+    assert.equal((await post(admin, 'reset')).status, 403, 'Sans configuration, aucun administrateur implicite.');
+    process.env.DISCORD_ADMIN_IDS = 'saucegod.,not-a-discord-id';
+    assert.equal((await post(admin, 'reset')).status, 403);
+  } finally { process.env.DISCORD_ADMIN_IDS = adminIds; }
+  // Renaming the real administrator must not remove their permission.
+  await db.query('update club_accounts set username = $1 where id = $2', ['nouveau-pseudo', admin]);
+  const reset = await post(admin, 'reset');
+  assert.equal(reset.status, 200);
+  state = await reset.json();
+  const proposal = await post(member, 'propose', { name: 'Le choix du collectif' });
+  assert.equal(proposal.status, 200, 'Les membres peuvent toujours proposer.');
+  state = await proposal.json();
+  assert.equal((await post(admin, 'start')).status, 200);
+  assert.equal((await post(member, 'vote', { proposalId: state.proposals[0].id })).status, 200, 'Les membres peuvent toujours voter.');
+  assert.equal((await post(admin, 'close')).status, 200);
+  const archived = await post(admin, 'archive');
+  assert.equal(archived.status, 200);
+  assert.equal((await archived.json()).campaign.status, 'archived');
+});
+
 test('HTTP refuse les invités et les origines étrangères, et ignore une identité injectée', async () => {
   const state = await fresh();
   const owner = await account();
@@ -309,7 +497,7 @@ test('HTTP refuse les invités et les origines étrangères, et ignore une ident
   const handlers = createFC27Handlers(createFC27Service(async (name, payload, campaign) => {
     const result = await db.query<{ data: unknown }>('select fc27_dispatch($1,$2::jsonb,$3::integer) as data', [name, payload, campaign]);
     return result.rows[0].data;
-  }));
+  }), isAdmin);
   const url = 'http://localhost/api/fc27';
   const body = JSON.stringify({ action: 'propose', campaignId: state.campaign.id, name: 'Identité vérifiée', accountId: stranger });
   for (const cookie of ['', 'dommage_session=faux', `dommage_session=${createToken(owner, 0)}`]) {
@@ -332,7 +520,9 @@ test('propositions simultanées et changement de nom Discord ne contournent pas 
   assert.equal(started.proposals[0].author_pseudo.length, 40);
   assert.ok(!(await call('vote', { proposalId: started.proposals[0].id, accountId: id }, state.campaign.id)).error);
   await db.query('update club_accounts set display_name = $1 where id = $2', ['Nouveau nom', id]);
-  assert.equal((await call('vote', { proposalId: started.proposals[1].id, accountId: id }, state.campaign.id)).status, 409);
+  // Revoter après un changement de nom remplace le bulletin au lieu d'en ajouter un.
+  const again = await call('vote', { proposalIds: [started.proposals[1].id], accountId: id }, state.campaign.id);
+  assert.deepEqual(again.proposals.map((p) => p.votes), [0, 1, 0]);
 });
 test('migration retains proposals and original ballots while disabling the old elimination engine', async () => {
   const legacy = new PGlite();
@@ -390,7 +580,7 @@ test('proposer un nom exige un compte, et trois propositions au maximum', async 
   assert.ok(mine.every((p) => /^joueur\d+$/.test(p.author_pseudo)), 'le pseudo affiché doit venir du compte');
 });
 
-test('une voix par compte, quel que soit le pseudo', async () => {
+test('un bulletin par compte, modifiable, quel que soit le pseudo', async () => {
   const state = await fresh();
   const moi = await account();
   await call('propose', { name: 'Alpha', accountId: moi }, state.campaign.id);
@@ -400,10 +590,9 @@ test('une voix par compte, quel que soit le pseudo', async () => {
 
   assert.equal((await call('vote', { proposalId: alpha.id }, state.campaign.id)).status, 401);
   assert.ok(!(await call('vote', { proposalId: alpha.id, accountId: moi }, state.campaign.id)).error);
-  // Revoter, même sur une autre carte, est refusé : l'identité est le compte.
+  // Revoter déplace la voix au lieu de l'ajouter : l'identité est le compte.
   const encore = await call('vote', { proposalId: bravo.id, accountId: moi }, state.campaign.id);
-  assert.equal(encore.status, 409);
-  assert.match(encore.error!, /déjà voté/i);
+  assert.deepEqual(encore.proposals.map((p) => p.votes), [0, 1]);
 
   const autre = await account();
   assert.ok(!(await call('vote', { proposalId: bravo.id, accountId: autre }, state.campaign.id)).error);

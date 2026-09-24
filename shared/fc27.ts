@@ -41,8 +41,31 @@ export interface FC27Player {
   /** Compte propriétaire de la fiche. `null` pour les fiches créées avant les comptes (migration 0009). */
   account_id?: number | null;
 }
+/** Étapes du vote du nom (migration 0014). Voir shared/fc27-bracket.ts pour l'enchaînement. */
+export type FC27StageKind = 'qualif' | 'repechage' | 'semis' | 'final' | 'podium';
+export type FC27StageResult = 'advanced' | 'eliminated' | 'winner' | 'runner_up' | 'third';
+export interface FC27StageEntry {
+  proposal_id: number;
+  /** Rang d'entrée dans l'étape : 1 = meilleur score de l'étape précédente. */
+  seed: number;
+  /** Demi-finales seulement : 1 (têtes de série 1 et 4) ou 2 (2 et 3). */
+  duel: 1 | 2 | null;
+  /** Voix en direct tant que l'étape est ouverte, figées à sa clôture. */
+  votes: number;
+  result: FC27StageResult | null;
+}
+export interface FC27Stage {
+  id: number; number: number; kind: FC27StageKind; max_choices: number;
+  opened_at: string; closed_at: string | null; tie_break_applied: boolean;
+  /** Comptes ayant voté dans l'étape. */
+  voters: number;
+  entries: FC27StageEntry[];
+}
 export interface FC27State {
   campaign: { id: number; status: 'preparation' | 'archived'; created_at: string; archived_at: string | null };
   proposals: FC27Proposal[]; election: FC27Election; players: FC27Player[]; winner: FC27Proposal | null;
+  stages: FC27Stage[];
+  /** Choix du visiteur connecté dans l'étape ouverte. Vide s'il n'a pas voté ou n'est pas connecté. */
+  my_ballot: number[];
   archives: { id: number; archived_at: string }[]; server_time: string;
 }

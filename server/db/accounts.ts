@@ -2,6 +2,12 @@ import { sql } from 'drizzle-orm';
 import type { Account, AccountStore } from '../auth-http.js';
 import type { DiscordUser } from '../discord.js';
 import { getDb } from './client.js';
+import { createAdminCheck } from '../admin.js';
+
+export const isAdminAccount = createAdminCheck(async (accountId) => {
+  const result = await getDb().execute(sql`select discord_id from club_accounts where id = ${accountId} limit 1`);
+  return result.rows[0]?.discord_id as string | undefined;
+});
 
 const row = (r: Record<string, unknown>): Account => ({
   id: Number(r.id), username: String(r.username),

@@ -22,10 +22,8 @@ try {
   const signInLink = page.getByRole('link', { name: /se connecter avec discord/i });
   assert.match(await signInLink.getAttribute('href') ?? '', /returnTo=%2Ffc27%3Fvue%3Dfiche/);
   assert.equal(await page.getByRole('button', { name: /créer ma fiche/i }).count(), 0);
-  await page.getByRole('button', { name: /réglages fc 27/i }).click();
+  assert.equal(await page.getByRole('button', { name: /réglages fc 27/i }).count(), 0);
   assert.equal(await page.getByRole('button', { name: /recommencer la préparation/i }).count(), 0);
-  await page.getByRole('dialog').getByRole('link', { name: /se connecter avec discord/i }).waitFor();
-  await page.keyboard.press('Escape');
   const state = await (await page.request.get(`${origin}/api/fc27`)).json();
   for (const action of ['propose', 'vote', 'player', 'start', 'close', 'archive', 'reset']) {
     assert.equal((await post(page, { action, campaignId: state.campaign.id, accountId: 1 })).status, 401);
@@ -38,6 +36,12 @@ try {
   await signIn(page, 'CompteAuth', back);
   assert.equal(page.url(), `${origin}${back}`);
   await page.getByRole('button', { name: /^proposer un nom/i }).waitFor();
+  assert.equal(await page.getByRole('button', { name: /réglages fc 27/i }).count(), 0);
+  for (const action of ['start', 'close', 'archive', 'reset']) {
+    const denied = await post(page, { action, campaignId: state.campaign.id, isAdmin: true, username: 'saucegod.', accountId: 1 });
+    assert.equal(denied.status, 403, action);
+  }
+  assert.equal((await (await page.request.get(`${origin}/api/fc27`)).json()).campaign.id, state.campaign.id);
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);

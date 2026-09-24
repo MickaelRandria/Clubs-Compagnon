@@ -18,6 +18,13 @@ export function useProfile() {
     retry: false,
   });
 }
+
+/** Same server-derived permission as the club profile; fail closed while unavailable. */
+export function useIsAdmin() {
+  const me = useMe();
+  const profile = useProfile();
+  return me.data?.signedIn === true && !me.isError && !profile.isError && profile.data?.isAdmin === true;
+}
 export function useProfileAction() {
   const client = useQueryClient();
   return useMutation({

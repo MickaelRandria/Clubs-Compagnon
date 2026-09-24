@@ -10,7 +10,7 @@ export type FC27Request = (action: FC27Action | 'state', campaignId?: number, ac
 export function createFC27Service(execute: (name: string, payload: string, campaign: number | null) => Promise<unknown>): FC27Request {
   return async (action, campaignId, accountId) => {
     const name = typeof action === 'string' ? action : action.action;
-    const payload = typeof action === 'string' ? {} : { ...action, accountId: accountId ?? null };
+    const payload = typeof action === 'string' ? { accountId: accountId ?? null } : { ...action, accountId: accountId ?? null };
     const requestedId = typeof action === 'string' ? campaignId ?? null : action.campaignId;
     const result = await execute(name, JSON.stringify(payload), requestedId) as FC27State | { error: string; status: number };
     if ('error' in result) throw new HttpError(result.status, result.error);

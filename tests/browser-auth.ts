@@ -22,6 +22,11 @@ export async function signIn(page: Page, account: string, returnTo = '/fc27') {
 }
 
 export async function resetCampaign(page: Page) {
+  // Depuis la page : le client `page.request` n'envoie pas le cookie `Secure` sur http://127.0.0.1.
+  const me = await page.evaluate(async () => (await fetch('/api/auth/me')).json());
+  assert.equal(me.signedIn, true);
+  const originalAccount = me.account.username as string;
+  if (originalAccount !== 'AdminProfil') await signIn(page, 'AdminProfil');
   const status = await page.evaluate(async () => {
     const state = await (await fetch('/api/fc27')).json();
     const response = await fetch('/api/fc27', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -29,5 +34,6 @@ export async function resetCampaign(page: Page) {
     return response.status;
   });
   assert.equal(status, 200);
+  if (originalAccount !== 'AdminProfil') await signIn(page, originalAccount);
   await page.goto(`${origin}/fc27`);
 }

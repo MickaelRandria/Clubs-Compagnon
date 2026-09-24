@@ -333,16 +333,58 @@ export const fc27NameElections = pgTable('fc27_name_elections', {
   check('fc27_election_state_check', sql`(${t.phase} = 'proposing' and ${t.startedAt} is null and ${t.closedAt} is null and ${t.winnerProposalId} is null) or (${t.phase} = 'voting' and ${t.startedAt} is not null and ${t.closedAt} is null and ${t.winnerProposalId} is null) or (${t.phase} = 'closed' and ${t.startedAt} is not null and ${t.closedAt} is not null and ${t.winnerProposalId} is not null) or (${t.phase} = 'cancelled' and ${t.closedAt} is not null and ${t.winnerProposalId} is null)`),
 ]);
 
+/** Étapes du vote du nom (migration 0014) : premier tour, second tour, demi-finales, finale ou podium. */
+export const fc27NameStages = pgTable('fc27_name_stages', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  campaignId: integer('campaign_id').notNull().references(() => fc27NameElections.campaignId, { onDelete: 'cascade' }),
+  number: smallint('number').notNull(),
+  kind: text('kind').notNull(),
+  maxChoices: smallint('max_choices').notNull(),
+  openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+  tieBreakApplied: boolean('tie_break_applied').notNull().default(false),
+}, (t) => [
+  unique('fc27_stage_number_key').on(t.campaignId, t.number),
+  unique('fc27_stage_campaign_key').on(t.id, t.campaignId),
+  uniqueIndex('fc27_stage_open_key').on(t.campaignId).where(sql`${t.closedAt} is null`),
+  check('fc27_name_stages_number_check', sql`${t.number} between 1 and 20`),
+  check('fc27_name_stages_kind_check', sql`${t.kind} in ('qualif', 'repechage', 'semis', 'final', 'podium')`),
+  check('fc27_name_stages_max_choices_check', sql`${t.maxChoices} between 1 and 3`),
+]);
+
+/** Noms en jeu dans une étape, avec leur tête de série, leur duel et leur sort à la clôture. */
+export const fc27NameStageEntries = pgTable('fc27_name_stage_entries', {
+  stageId: integer('stage_id').notNull(),
+  campaignId: integer('campaign_id').notNull(),
+  proposalId: integer('proposal_id').notNull(),
+  seed: smallint('seed').notNull(),
+  duel: smallint('duel'),
+  finalVotes: integer('final_votes'),
+  result: text('result'),
+}, (t) => [
+  primaryKey({ columns: [t.stageId, t.proposalId] }),
+  foreignKey({ columns: [t.stageId, t.campaignId], foreignColumns: [fc27NameStages.id, fc27NameStages.campaignId] }).onDelete('cascade'),
+  foreignKey({ columns: [t.proposalId, t.campaignId], foreignColumns: [fc27NameProposals.id, fc27NameProposals.campaignId] }).onDelete('cascade'),
+  check('fc27_name_stage_entries_seed_check', sql`${t.seed} between 1 and 200`),
+  check('fc27_name_stage_entries_duel_check', sql`${t.duel} in (1, 2)`),
+  check('fc27_name_stage_entries_final_votes_check', sql`${t.finalVotes} >= 0`),
+  check('fc27_name_stage_entries_result_check', sql`${t.result} in ('advanced', 'eliminated', 'winner', 'runner_up', 'third')`),
+]);
+
 export const fc27NameVotes = pgTable('fc27_name_votes', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   campaignId: integer('campaign_id').notNull().references(() => fc27NameElections.campaignId, { onDelete: 'cascade' }),
   proposalId: integer('proposal_id').notNull(),
-  /** Compte votant (migration 0010). Une voix par compte et par campagne. */
+  /** Compte votant (migration 0010). Jusqu'à trois choix par compte et par étape (migration 0014). */
   voterAccountId: integer('voter_account_id').references(() => clubAccounts.id, { onDelete: 'set null' }),
   voterPseudo: text('voter_pseudo').notNull(),
+  /** Étape du vote (migration 0014). Null pour les voix d'avant les étapes. */
+  stageId: integer('stage_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  uniqueIndex('fc27_name_vote_account_key').on(t.campaignId, t.voterAccountId).where(sql`${t.voterAccountId} is not null`),
+  uniqueIndex('fc27_name_vote_account_key').on(t.campaignId, t.voterAccountId).where(sql`${t.voterAccountId} is not null and ${t.stageId} is null`),
+  uniqueIndex('fc27_name_vote_stage_key').on(t.stageId, t.voterAccountId, t.proposalId).where(sql`${t.stageId} is not null`),
+  foreignKey({ name: 'fc27_name_votes_stage_entry_fk', columns: [t.stageId, t.proposalId], foreignColumns: [fc27NameStageEntries.stageId, fc27NameStageEntries.proposalId] }).onDelete('cascade'),
   foreignKey({ columns: [t.proposalId, t.campaignId], foreignColumns: [fc27NameProposals.id, fc27NameProposals.campaignId] }),
   index('fc27_name_vote_proposal_idx').on(t.proposalId, t.campaignId),
   check('fc27_name_vote_pseudo_check', sql`char_length(${t.voterPseudo}) between 1 and 40 and ${t.voterPseudo} ~ '[^[:space:]]'`),
@@ -370,4 +412,14 @@ export const aiUsage = pgTable('ai_usage', {
 }, (t) => [
   primaryKey({ columns: [t.accountId, t.day] }),
   check('ai_usage_calls_check', sql`${t.calls} >= 0`),
+]);
+
+/** Réglages modifiables sans redéploiement. `bets_mode` : interrupteur de Vestiaire Bets. */
+export const appSettings = pgTable('app_settings', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: integer('updated_by').references(() => clubAccounts.id, { onDelete: 'set null' }),
+}, (t) => [
+  check('app_settings_key_check', sql`char_length(${t.key}) between 1 and 60`),
 ]);

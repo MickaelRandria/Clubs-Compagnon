@@ -11,8 +11,14 @@ export const fc27ActionSchema = z.discriminatedUnion('action', [
   // `pseudo` a disparu de ces deux actions : l'auteur et le votant viennent du compte
   // connecté, lu côté serveur. Un pseudo envoyé par le client serait invérifiable.
   z.object({ action: z.literal('propose'), ...campaign, name: z.string().trim().min(1).max(60) }),
-  z.object({ action: z.literal('vote'), ...campaign, proposalId: id }),
+  // Le bulletin complet de l'étape ouverte, qui remplace le précédent. Vide = retirer sa voix.
+  // Le plafond par étape (3 au premier et au second tour, 1 par duel ensuite) est vérifié en base.
+  // `proposalId` seul reste accepté pour les clients d'avant les étapes (PWA en cache).
+  z.object({ action: z.literal('vote'), ...campaign, proposalIds: z.array(id).max(3).optional(), proposalId: id.optional() })
+    .refine((value) => value.proposalIds !== undefined || value.proposalId !== undefined, 'Choisis au moins un nom.'),
   z.object({ action: z.literal('start'), ...campaign }),
+  // Clôt l'étape ouverte. `picks` tranche les égalités qui décident d'une qualification ou du titre.
+  z.object({ action: z.literal('advance'), ...campaign, picks: z.array(id).max(10).default([]) }),
   z.object({ action: z.literal('close'), ...campaign, winnerProposalId: id.optional() }),
   z.object({ action: z.literal('archive'), ...campaign }),
   z.object({ action: z.literal('reset'), ...campaign }),

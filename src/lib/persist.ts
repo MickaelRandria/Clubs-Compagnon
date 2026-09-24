@@ -17,7 +17,7 @@ const CLE = 'dommage.query.v1';
  * À incrémenter quand la forme des réponses de l'API change : un cache restauré dans
  * l'ancien format ferait planter le rendu avant même le premier rafraîchissement.
  */
-const VERSION = '1';
+const VERSION = '2'; // 2 : étapes du vote du nom (stages, my_ballot).
 
 /** Au-delà, on préfère un squelette à des données franchement périmées. */
 const DUREE = 24 * 60 * 60 * 1000;

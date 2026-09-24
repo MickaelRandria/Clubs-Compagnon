@@ -42,7 +42,9 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+    {/* L'état FC 27 porte le bulletin du visiteur : restauré du disque (par exemple juste après la
+        connexion Discord), il est toujours revalidé, même s'il a moins de cinq secondes. */}
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['fc27'] })}>
       <PwaProvider><RouterProvider router={router} /></PwaProvider>
     </PersistQueryClientProvider>
   </StrictMode>,

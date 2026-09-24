@@ -4,14 +4,19 @@ import type { StaffResponse } from '../../server/staff-http';
 import type { LookupResponse } from '../../server/lookalike-http';
 import { apiRequest, ApiError } from './client';
 
-export function useFC27(campaignId?: number) {
+/** Une réponse mise en cache avant les étapes (migration 0014) n'a ni `stages` ni `my_ballot`. Fonction stable : TanStack mémoïse le résultat. */
+const withStages = (state: FC27State): FC27State => state.stages && state.my_ballot ? state : { ...state, stages: state.stages ?? [], my_ballot: state.my_ballot ?? [] };
+
+/** `live` : rafraîchissement rapproché, pour l'arène pendant un vote (scores et changement d'étape). */
+export function useFC27(campaignId?: number, { live = false }: { live?: boolean } = {}) {
   return useQuery({
     queryKey: ['fc27', campaignId ?? 'latest'],
     queryFn: () => apiRequest<FC27State>(`/api/fc27${campaignId === undefined ? '' : `?campaign=${campaignId}`}`),
+    select: withStages,
     staleTime: 5_000,
     // Une préparation de saison ne bouge pas toutes les quinze secondes. Le rafraîchissement
     // au retour sur l'onglet suffit, et évite un aller-retour réseau permanent sur mobile.
-    refetchInterval: 60_000,
+    refetchInterval: live ? 15_000 : 60_000,
     refetchOnWindowFocus: true,
   });
 }

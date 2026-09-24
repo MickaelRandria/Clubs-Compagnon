@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { UI_IMAGES } from '../../shared/data/archetypes';
 import type { FC27State } from '../../shared/fc27';
+import { openStage, STAGE_LABELS } from '../../shared/fc27-bracket';
 import { useFC27 } from '../api/fc27';
+import { useIsAdmin } from '../api/profile';
+import { BetsTeaser } from '../components/bets/BetsTeaser';
 import { FC27Backdrop, StadiumCrowd } from '../components/fc27/FC27Decor';
 import { FC27Settings } from '../components/fc27/FC27Settings';
 import { PlayerWizard } from '../components/fc27/PlayerWizard';
@@ -21,6 +24,7 @@ function Preparation({ state }: { state: FC27State }) {
   const tour = useTour();
   const [params] = useSearchParams();
   const me = useMyProfile(state.players);
+  const isAdmin = useIsAdmin();
   const archived = state.campaign.status === 'archived';
   const phase = state.election.phase;
   const count = state.players.length;
@@ -45,7 +49,7 @@ function Preparation({ state }: { state: FC27State }) {
   return <div className={`fc27${section.isMobile ? ' fc27--sectioned' : ''}`}>
     <div className="fc27-banner"><span className="fc27-phase">{archived ? 'Préparation archivée' : 'Phase de préparation'}</span><span className="fc27-banner-text">{archived ? 'Les choix du collectif, conservés en lecture seule.' : 'Un espace temporaire pour construire le prochain club.'}</span>
       <AccountChip />
-      <button className="fc27-text-button" onClick={() => setDialog('settings')}>Réglages FC 27 ↗</button></div>
+      {isAdmin && <button className="fc27-text-button" onClick={() => setDialog('settings')}>Réglages FC 27 ↗</button>}</div>
     {/*
       Sur mobile, le grand titre n'est affiché qu'à la première section. Répété sur les
       quatre, il reprenait 138 px à chaque changement d'étape pour une information déjà
@@ -65,7 +69,7 @@ function Preparation({ state }: { state: FC27State }) {
           <span className="fc27-tag">L’arène des noms · Plein écran</span>
           <h2 className="fc27-arena-title">Un club.<br />Un nom.<br /><span>Notre choix.</span></h2>
           <p>{state.winner ? <>Le collectif a choisi : <strong>{state.winner.club_name}</strong></> : phase === 'proposing' ? 'Propose le nom qui brillera sous les projecteurs.' : phase === 'voting' ? 'Les cartes sont sur la table. Fais entendre ta voix.' : 'Retrouve les propositions de cette préparation.'}</p>
-          <span className="fc27-entry-status"><b>{state.proposals.length}</b><span>{state.proposals.length > 1 ? 'noms' : 'nom'}</span><i>{phase === 'proposing' ? 'Propositions ouvertes' : phase === 'voting' ? 'Vote ouvert' : 'Résultats conservés'}</i></span>
+          <span className="fc27-entry-status"><b>{state.proposals.length}</b><span>{state.proposals.length > 1 ? 'noms' : 'nom'}</span><i>{phase === 'proposing' ? 'Propositions ouvertes' : phase === 'voting' ? `${STAGE_LABELS[openStage(state.stages)?.kind ?? 'qualif']} en cours` : 'Résultats conservés'}</i></span>
           <span className="fc27-cta">{state.winner ? 'Découvrir le résultat' : 'Entrer dans l’arène'} <span aria-hidden="true">→</span></span>
         </div>
       </Link>}
@@ -87,6 +91,7 @@ function Preparation({ state }: { state: FC27State }) {
         </div>}
         <p className="fc27-small">{me.account ? 'Ta fiche n’appartient qu’à toi' : 'Une connexion Discord, une fiche'}</p>
       </section>}</div>
+    {section.shows('nom') && <BetsTeaser />}
     {section.shows('effectif') && <PositionOverview players={state.players} />}
     {section.shows('rapport') && <TacticalReport players={state.players} campaignId={state.campaign.id} />}
 
@@ -98,7 +103,7 @@ function Preparation({ state }: { state: FC27State }) {
         ? <SignInButton className="fc27-actionbar-go" />
         : <button type="button" className="fc27-actionbar-go" onClick={primary.run}>{primary.label}</button>}
     </div>}
-    {dialog === 'settings' && <FC27Settings state={state} onClose={() => setDialog(null)} />}
+    {isAdmin && dialog === 'settings' && <FC27Settings state={state} onClose={() => setDialog(null)} />}
     {!archived && me.account && (dialog === 'create' || dialog === 'edit') && <PlayerWizard key={me.account.id} state={state} mode={dialog} myProfile={me.profile} onClose={() => setDialog(null)} />}
   </div>;
 }

@@ -5,13 +5,14 @@ import { readSession } from './session.js';
 import { requestOrigin } from './discord.js';
 
 const headers = { 'Cache-Control': 'no-store' };
-export function createFC27Handlers(service: FC27Request) {
+export function createFC27Handlers(service: FC27Request, isAdmin: (accountId: number) => Promise<boolean>) {
   return {
     GET: (request: Request) => handle(async () => {
       const raw = new URL(request.url).searchParams.get('campaign');
       const id = raw === null ? undefined : Number(raw);
       if (id !== undefined && (!Number.isSafeInteger(id) || id < 1 || id > 2_147_483_647)) throw new HttpError(400, 'Campagne invalide.');
-      return Response.json(await service('state', id), { headers });
+      // Le compte (facultatif) sert seulement à renvoyer le bulletin du visiteur.
+      return Response.json(await service('state', id, readSession(request)), { headers });
     }),
     POST: (request: Request) => handle(async () => {
       const accountId = readSession(request);
@@ -21,6 +22,9 @@ export function createFC27Handlers(service: FC27Request) {
       const payload: unknown = await request.json().catch(() => { throw new HttpError(400, 'JSON invalide.'); });
       const result = fc27ActionSchema.safeParse(payload);
       if (!result.success) throw new HttpError(400, 'Vérifie les champs du formulaire.', result.error.flatten().fieldErrors);
+      if (['start', 'advance', 'close', 'archive', 'reset'].includes(result.data.action) && !await isAdmin(accountId)) {
+        throw new HttpError(403, 'Les réglages FC 27 sont réservés à l’administrateur du club.');
+      }
       // L'identité vient du cookie signé, pas du corps de la requête.
       return Response.json(await service(result.data, undefined, accountId), { headers });
     }),

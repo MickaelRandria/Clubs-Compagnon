@@ -2,9 +2,9 @@ import { profileActionSchema, type ClubProfile, type ProfileAction } from '../sh
 import { handle, HttpError } from './http.js';
 import { readSession } from './session.js';
 import { requestOrigin } from './discord.js';
+import { adminDiscordIds } from './admin.js';
 
 type Execute = (action: string, accountId: number, input: string, admins: string[]) => Promise<unknown>;
-export const adminDiscordIds = () => (process.env.DISCORD_ADMIN_IDS ?? '').split(',').map(id => id.trim()).filter(id => /^\d{17,20}$/.test(id));
 export function createProfileService(execute: Execute) {
   return async (accountId: number, action: ProfileAction | 'state'): Promise<ClubProfile> => {
     const result = await execute(action === 'state' ? 'state' : action.action, accountId,

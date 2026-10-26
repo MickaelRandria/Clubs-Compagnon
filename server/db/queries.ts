@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, lte, sql } from 'drizzle-orm';
 import type { NewMatchNote } from '../../shared/notes.js';
 import type { Club, Match, MatchDetail, MatchNote, Member } from '../../shared/types.js';
+import { syncFromEa } from '../ea-sync.js';
 import { HttpError } from '../http.js';
 import { getDb } from './client.js';
 import { clubRatingSnapshots, clubs, matches, matchNotes, members } from './schema.js';
@@ -39,6 +40,7 @@ async function requireClub() {
 }
 
 export async function fetchClub(): Promise<Club> {
+  await syncFromEa();
   const club = await requireClub();
   const [reference] = await getDb()
     .select({ skillRating: clubRatingSnapshots.skillRating })
@@ -68,6 +70,7 @@ export async function fetchClub(): Promise<Club> {
 }
 
 export async function fetchMembers(): Promise<Member[]> {
+  await syncFromEa();
   const club = await requireClub();
   const rows = await getDb()
     .select()
@@ -89,6 +92,7 @@ export async function fetchMembers(): Promise<Member[]> {
 }
 
 export async function fetchMatches(limit: number): Promise<Match[]> {
+  await syncFromEa();
   const club = await requireClub();
   const rows = await getDb()
     .select()

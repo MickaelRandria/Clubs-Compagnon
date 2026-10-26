@@ -3,7 +3,8 @@ import { loadLocalEnv } from '../env.js';
 import { getDb } from './client.js';
 import { clubRatingSnapshots, clubs, matches, members } from './schema.js';
 
-// Données statiques de l'ancien Dashboard.html, en attendant la synchro EA.
+// Données statiques de l'ancien Dashboard.html. Avec `eaClubId`, la première lecture
+// de l'app les remplace par les vraies stats EA (server/ea-sync.ts).
 // ⚠️ Vide toutes les tables avant de les remplir (notes comprises).
 
 loadLocalEnv();
@@ -11,8 +12,10 @@ loadLocalEnv();
 const HOUR = 3_600_000;
 
 const CLUB = {
-  name: 'Dommage BJ FC',
-  handle: '@dommagebj',
+  name: 'FoodBall Club',
+  handle: null,
+  eaClubId: '716066',
+  platform: 'common-gen5',
   skillRating: 1859,
   skillRatingMonthAgo: 1817, // → « ▲ +42 ce mois »
   region: 'Southern Europe',

@@ -19,7 +19,7 @@ try {
   await page.getByRole('button', { name: 'Se déconnecter', exact: true }).click();
   await page.locator('.fc27-account').waitFor({ state: 'detached' });
   await page.goto(`${origin}/fc27?vue=fiche`);
-  const signInLink = page.getByRole('link', { name: /se connecter avec discord/i });
+  const signInLink = page.getByRole('link', { name: /se connecter avec discord/i }).first();
   assert.match(await signInLink.getAttribute('href') ?? '', /returnTo=%2Ffc27%3Fvue%3Dfiche/);
   assert.equal(await page.getByRole('button', { name: /créer ma fiche/i }).count(), 0);
   assert.equal(await page.getByRole('button', { name: /réglages fc 27/i }).count(), 0);
@@ -30,12 +30,12 @@ try {
   }
   console.log('PASS: lecture libre, connexion pour agir, réglages protégés, identité injectée refusée.');
 
-  const back = `/fc27/nom?campagne=${state.campaign.id}`;
+  const back = `/fc27?vue=fiche&campagne=${state.campaign.id}`;
   await page.goto(`${origin}${back}`);
   await page.getByRole('link', { name: /se connecter avec discord/i }).first().waitFor();
   await signIn(page, 'CompteAuth', back);
   assert.equal(page.url(), `${origin}${back}`);
-  await page.getByRole('button', { name: /^proposer un nom/i }).waitFor();
+  await page.getByRole('button', { name: /créer (ma|la première) fiche/i }).filter({ visible: true }).first().waitFor();
   assert.equal(await page.getByRole('button', { name: /réglages fc 27/i }).count(), 0);
   for (const action of ['start', 'close', 'archive', 'reset']) {
     const denied = await post(page, { action, campaignId: state.campaign.id, isAdmin: true, username: 'saucegod.', accountId: 1 });
@@ -46,8 +46,8 @@ try {
     await page.setViewportSize({ width, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   }
-  await page.screenshot({ path: 'artifacts/auth-arena-mobile.png', fullPage: true });
-  console.log('PASS: retour OAuth dans l’arène et sa campagne, compte visible sur mobile.');
+  await page.screenshot({ path: 'artifacts/auth-fc27-mobile.png', fullPage: true });
+  console.log('PASS: retour OAuth sur la fiche et sa campagne, compte visible sur mobile.');
 
   const card = { action: 'player', campaignId: state.campaign.id, pseudo: 'Proprietaire', kitName: 'ORIGINAL', kitNumber: 77,
     primaryPosition: 'BU', preferredFoot: 'Droit', heightCm: 180, weightKg: 75, archetype: 'finisher', weakFootStars: 3, skillMovesStars: 3 };

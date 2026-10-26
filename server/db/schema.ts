@@ -43,6 +43,8 @@ export const clubs = pgTable('clubs', {
   goalsAgainst: integer('goals_against').notNull().default(0),
   leagueApps: integer('league_apps').notNull().default(0),
   playoffApps: integer('playoff_apps').notNull().default(0),
+  /** Dernière synchro EA tentée — sert aussi de verrou (voir server/ea-sync.ts). */
+  eaSyncedAt: timestamp('ea_synced_at', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

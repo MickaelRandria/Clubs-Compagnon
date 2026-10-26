@@ -33,7 +33,7 @@ function buildMarkets(present: Member[]): Market[] {
     { id: 'cleansheet', title: 'Le Mur', question: 'Clean sheet ce match ?', options: [{ id: 'oui', label: 'Oui', odds: 2.2 }, { id: 'non', label: 'Non', odds: 1.35 }] },
     { id: 'verdict', title: 'Le Verdict', question: 'Résultat du match ?', extra: true,
       options: [{ id: 'v', label: 'Victoire', odds: 1.7 }, { id: 'n', label: 'Nul', odds: 3.6 }, { id: 'd', label: 'Défaite', odds: 2.6 }] },
-    { id: 'score', title: 'Le Scénario offensif', question: 'Combien de buts pour Dommage ?', extra: true,
+    { id: 'score', title: 'Le Scénario offensif', question: 'Combien de buts pour FoodBall ?', extra: true,
       options: [{ id: '0-1', label: '0-1', odds: 2.1 }, { id: '2-3', label: '2-3', odds: 1.9 }, { id: '4+', label: '4+ festival', odds: 3.4 }] },
     { id: 'ragequit', title: 'Rage-quit adverse', question: 'L’adversaire quitte avant la fin ?', extra: true,
       options: [{ id: 'oui', label: 'Oui', odds: 2.8 }, { id: 'non', label: 'Non', odds: 1.25 }] },
@@ -205,7 +205,7 @@ function Prototype({ members }: { members: Member[] }) {
     </>}
 
     {stage === 'vote' && <>
-      <p className="bets-score">Dommage <b>{MOCK.goalsFor} – {MOCK.goalsAgainst}</b> {MOCK.opponent}</p>
+      <p className="bets-score">FoodBall <b>{MOCK.goalsFor} – {MOCK.goalsAgainst}</b> {MOCK.opponent}</p>
       {myMemberId === null && <p className="bets-hint">Ton compte n’est pas lié à un joueur : en vrai, tu ne pourrais pas voter. Lie-le depuis ton profil.</p>}
       <div className="bets-grid">
         <VoteCard title="Le Crack du match" question="Le plus décisif ce match ?" present={present} votes={crackVotes} mine={votes.crack}

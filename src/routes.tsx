@@ -1,10 +1,11 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { AppLayout } from './components/layout/AppLayout';
 import { HomeView } from './views/HomeView';
 import { NotFoundView } from './views/NotFoundView';
 
 export const router = createBrowserRouter([
-  { path: '/fc27/nom', lazy: async () => ({ Component: (await import('./views/FC27NamingView')).FC27NamingView }) },
+  // L'ancienne arène du vote du nom renvoie vers la saison.
+  { path: '/fc27/nom', element: <Navigate to="/fc27" replace /> },
   {
     element: <AppLayout />,
     children: [

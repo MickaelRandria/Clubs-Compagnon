@@ -118,6 +118,13 @@
             box-shadow: inset 8px 0 0 var(--p-magenta); font: 800 26px/1 var(--fc-display); letter-spacing: .03em; text-transform: uppercase; }
 .fc27-arena-entry:hover .fc27-cta, .fc27-arena-entry:focus-visible .fc27-cta { background: var(--p-ink); }
 .fc27-arena-entry:hover, .fc27-arena-entry:focus-visible { outline: 4px solid var(--fc-glacier); outline-offset: -4px; }
+/* Variante saison FC 27 : trois chiffres EA à la place du texte d'accroche */
+.fc27-season-tile .fc27-arena-title { font-size: clamp(50px, 5.4vw, 80px); }
+.fc27-season-stats { display: flex; gap: 22px; margin: auto 0 0; }
+.fc27-season-stats div { display: grid; gap: 4px; }
+.fc27-season-stats dt { font: 800 12px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--p-body); }
+.fc27-season-stats dd { margin: 0; font: 800 40px/.9 var(--fc-display); font-variant-numeric: tabular-nums; color: var(--p-ink); }
+.fc27-season-tile .fc27-entry-status i { letter-spacing: .2em; }
 
 /* Tuile 2 — Le vestiaire : aplat bleu roi, joueur détouré qui déborde du cadre */
 .fc27-player-tile { position: relative; overflow: visible; display: flex; flex-direction: column; gap: 12px; min-height: 510px; padding: 30px 26px 22px;

@@ -17,67 +17,22 @@ const button = (name: RegExp) => page.getByRole('button', { name });
 const click = async (name: RegExp) => { await button(name).click(); };
 const waitClosed = () => page.getByRole('dialog').waitFor({ state: 'hidden' });
 const noHorizontalScroll = () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
-// Cases à cocher (tours) ou boutons radio (duels, finale) visuellement masqués : on clique la carte entière.
-const card = (name: string) => page.getByRole('checkbox', { name, exact: true }).or(page.getByRole('radio', { name, exact: true }));
-const toggleCard = (name: string) => page.locator('label.arena-card-slot').filter({ has: card(name) }).click();
-// The entry tile repeats the arena headline: wait for the arena route itself.
-const enterArena = async () => {
-  await page.getByRole('link', { name: /entrer dans l’arène/i }).click();
-  await page.waitForURL(/\/fc27\/nom/);
-  await page.locator('#arena-title').waitFor();
-};
-const here = () => new URL(page.url()).pathname + new URL(page.url()).search;
-/** Coche exactement `names` (en décochant le reste), puis enregistre le bulletin. */
-const castVote = async (pseudo: string, names: string[]) => {
-  await signIn(page, pseudo, here());
-  await page.locator('.arena-vote-dock').waitFor();
-  const boxes = page.getByRole('checkbox');
-  for (let i = 0; i < await boxes.count(); i++) {
-    const label = (await boxes.nth(i).getAttribute('aria-label'))!;
-    if (await boxes.nth(i).isChecked() && !names.includes(label)) await toggleCard(label);
-  }
-  for (const name of names) if (!await card(name).isChecked()) await toggleCard(name);
-  for (const name of names) assert.equal(await card(name).isChecked(), true, `La carte « ${name} » doit être sélectionnée.`);
-  await click(/(valider|modifier) mon vote/i);
-  await page.getByText('Ton vote est enregistré. Tu peux le modifier jusqu’à la clôture de l’étape.', { exact: true }).waitFor();
-};
-/** L'admin clôt l'étape ouverte, en tranchant les égalités proposées. */
-const advanceStage = async (picks: string[] = []) => {
-  await signIn(page, 'AdminProfil', here());
-  await click(/réglages fc 27/i);
-  const dialog = page.getByRole('dialog');
-  await dialog.getByRole('button', { name: /clôturer l’étape et passer à la suite/i }).click();
-  for (const name of picks) await dialog.getByLabel(new RegExp(`^${name} · `)).check();
-  await dialog.getByRole('button', { name: /^confirmer$/i }).click(); await waitClosed();
-};
-const stageKinds = async () => (await readState()).stages.map((s) => s.kind);
 
 try {
   await signIn(page, 'Alex');
   await resetCampaign(page);
-  // ---- Entrée : l'onglet FC 27 mène à l'arène plein écran ----
-  await page.goto(`${origin}/fc27`);
+  // ---- Entrée : la saison remplace l'arène du vote, close depuis le nom FoodBall Club ----
+  await page.goto(`${origin}/fc27/nom`);
+  await page.waitForURL(`${origin}/fc27`);
   await page.getByRole('heading', { name: /cap sur fc 27/i }).waitFor();
-  await enterArena();
-  assert.match(await page.locator('#arena-title').innerText(), /Un club\.\s*Un nom\.\s*Notre choix\./i);
-  assert.equal(await page.locator('.fc-top').count(), 0, "L'arène s'affiche hors de la mise en page habituelle.");
-  await page.screenshot({ path: 'artifacts/fc27-arena-empty.png', fullPage: true });
-
-  // ---- Phase 1 : trois propositions signées par le compte ----
-  for (const name of ['Dommage United', 'Les Diagonales', 'Collectif 27']) {
-    await click(/^proposer un nom/i);
-    await page.getByRole('textbox', { name: 'Nom du club proposé' }).fill(name);
-    await click(/ajouter ma proposition/i); await waitClosed();
-    await page.getByRole('heading', { name, exact: true }).waitFor();
-  }
-  assert.ok((await readState()).proposals.every((p) => p.author_pseudo === 'Alex'));
-  assert.equal(await button(/tes 3 noms sont proposés/i).isDisabled(), true);
-  await page.screenshot({ path: 'artifacts/fc27-arena-proposals.png', fullPage: true });
-  console.log('PASS: arena entry, three proposals per Discord account, fourth disabled.');
+  const season = page.locator('.fc27-season-tile');
+  await season.getByText('Skill rating', { exact: true }).waitFor();
+  assert.match(await season.innerText(), /1859/);
+  assert.equal(await season.getAttribute('href'), '/stats');
+  await page.screenshot({ path: 'artifacts/fc27-season.png', fullPage: true });
+  console.log('PASS: old arena URL redirects, season tile shows EA stats.');
 
   // ---- Fiches joueurs : tunnel en 2 étapes + rapport tactique ----
-  await page.getByRole('link', { name: /retour à fc 27/i }).click();
-  await page.getByRole('heading', { name: /cap sur fc 27/i }).waitFor();
   const dialog = page.getByRole('dialog');
   const next = () => dialog.getByRole('button', { name: /^suivant/i }).click();
   const validate = () => dialog.getByRole('button', { name: /valider ma fiche/i }).click();
@@ -191,98 +146,20 @@ try {
   await page.getByText(/Maestro .* OVR 65/).waitFor();
   console.log('PASS: 2-step player wizard (validation, kit numbers, position filters), edit, tactical report with AI defence.');
 
-  // ---- Phase 2 : premier tour, trois choix par compte, vote modifiable ----
-  assert.equal(await button(/réglages fc 27/i).count(), 0, 'Les membres ne voient pas les réglages.');
-  await signIn(page, 'Sam');
-  await enterArena();
-  for (const name of ['Les Insulaires', 'Ravtoute FC']) {
-    await click(/^proposer un nom/i);
-    await page.getByRole('textbox', { name: 'Nom du club proposé' }).fill(name);
-    await click(/ajouter ma proposition/i); await waitClosed();
-  }
-  await signIn(page, 'AdminProfil', here());
-  await click(/réglages fc 27/i);
-  await click(/lancer le vote/i); await click(/^confirmer$/i); await waitClosed();
-  await page.getByText('Premier tour · 3 choix', { exact: false }).first().waitFor();
-  assert.equal(await button(/^proposer un nom/i).count(), 0, 'Plus de proposition pendant le vote.');
-  await castVote('Alex', ['Dommage United', 'Les Diagonales', 'Collectif 27']);
-  assert.equal(await button(/vote enregistré/i).isDisabled(), true);
-  assert.equal(await card('Ravtoute FC').isDisabled(), true, 'Trois choix au maximum : la quatrième carte est bloquée.');
-  // Changer d'avis : une carte retirée, une autre ajoutée.
-  await castVote('Alex', ['Dommage United', 'Les Diagonales', 'Les Insulaires']);
-  await castVote('Sam', ['Ravtoute FC', 'Collectif 27']);
-  const firstRound = await readState();
-  assert.deepEqual(firstRound.stages[0].entries.map((e) => e.votes), [1, 1, 1, 1, 1]);
-  assert.equal(firstRound.stages[0].voters, 2);
-  await page.reload(); await card('Collectif 27').waitFor({ state: 'attached' });
-  assert.equal(await card('Collectif 27').isChecked(), true, 'Le bulletin enregistré est pré-coché au retour.');
-  await page.screenshot({ path: 'artifacts/fc27-arena-voting.png', fullPage: true });
-  console.log('PASS: first round, up to three choices, ballot changed and restored after reload.');
-
   // ---- Mobile ----
-  assert.equal(await button(/réglages fc 27/i).count(), 0, 'Les réglages de l’arène sont masqués aux membres.');
-  await signIn(page, 'AdminProfil', here());
+  assert.equal(await button(/réglages fc 27/i).count(), 0, 'Les membres ne voient pas les réglages.');
+  await signIn(page, 'AdminProfil', '/fc27');
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.fc27-season-tile').waitFor();
   assert.equal(await noHorizontalScroll(), true);
-  await page.screenshot({ path: 'artifacts/fc27-arena-mobile.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/fc27-season-mobile.png', fullPage: true });
   await click(/réglages fc 27/i);
+  assert.equal(await page.getByRole('dialog').getByRole('button', { name: /lancer le vote/i }).count(), 0, 'Plus de commande de vote.');
   await page.keyboard.press('Escape'); await waitClosed();
   await page.setViewportSize({ width: 320, height: 740 });
   assert.equal(await noHorizontalScroll(), true);
   await page.setViewportSize({ width: 1440, height: 1000 });
-  console.log('PASS: arena layouts at 390px and 320px, dialog Escape.');
-
-  // ---- Second tour (cinq noms), égalité pour les dernières places tranchée par l'admin ----
-  await advanceStage();
-  await page.getByRole('heading', { name: /5 noms\.\s*4 places\./i }).waitFor();
-  assert.deepEqual(await stageKinds(), ['qualif', 'repechage']);
-  assert.match(await page.locator('.arena-vote-dock button').innerText(), /valider mon vote/i, 'Nouvelle étape, nouveau bulletin.');
-  await castVote('Alex', ['Dommage United', 'Les Diagonales', 'Collectif 27']);
-  await castVote('Sam', ['Dommage United', 'Les Insulaires', 'Ravtoute FC']);
-  await signIn(page, 'AdminProfil', here());
-  await click(/réglages fc 27/i);
-  await page.getByRole('dialog').getByRole('button', { name: /clôturer l’étape et passer à la suite/i }).click();
-  await page.getByText('Égalité pour la dernière place : choisis 3 noms', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('dialog').getByRole('button', { name: /^confirmer$/i }).isDisabled(), true, 'Égalité : trois noms à choisir.');
-  await page.keyboard.press('Escape'); await waitClosed();
-  await advanceStage(['Les Diagonales', 'Collectif 27', 'Les Insulaires']);
-
-  // ---- Demi-finales : un nom par duel ----
-  await page.getByText('Demi-finale 1', { exact: true }).waitFor();
-  assert.deepEqual(await stageKinds(), ['qualif', 'repechage', 'semis']);
-  await page.waitForTimeout(1_500);
-  await page.screenshot({ path: 'artifacts/fc27-arena-semis.png', fullPage: true });
-  await castVote('Alex', ['Dommage United', 'Les Diagonales']);
-  await castVote('Sam', ['Les Insulaires', 'Collectif 27']);
-  await castVote('AdminProfil', ['Dommage United', 'Collectif 27']);
-  await page.setViewportSize({ width: 390, height: 844 });
-  assert.equal(await noHorizontalScroll(), true);
-  await page.screenshot({ path: 'artifacts/fc27-arena-semis-mobile.png', fullPage: true });
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await advanceStage();
-
-  // ---- Finale, puis verdict ----
-  await page.getByText('La finale', { exact: true }).first().waitFor();
-  await page.waitForTimeout(1_500);
-  await page.screenshot({ path: 'artifacts/fc27-arena-final.png', fullPage: true });
-  await castVote('Alex', ['Dommage United']);
-  await castVote('Sam', ['Collectif 27']);
-  await castVote('AdminProfil', ['Dommage United']);
-  await advanceStage();
-  await page.locator('#arena-title').getByText('Notre nom pour FC 27', { exact: true }).waitFor();
-  await page.getByRole('heading', { name: 'Le podium', exact: true }).waitFor();
-  await page.getByRole('heading', { name: 'Le parcours', exact: true }).waitFor();
-  await page.getByText(/Égalité départagée manuellement/).waitFor();
-  const closed = await readState();
-  assert.equal(closed.election.phase, 'closed');
-  assert.equal(closed.winner?.club_name, 'Dommage United');
-  assert.deepEqual(closed.stages.map((s) => s.kind), ['qualif', 'repechage', 'semis', 'final']);
-  assert.deepEqual(closed.proposals.map((p) => [p.club_name, p.votes]),
-    [['Dommage United', 1], ['Les Diagonales', 1], ['Collectif 27', 1], ['Les Insulaires', 1], ['Ravtoute FC', 1]]);
-  assert.equal(await page.getByRole('radio').count() + await page.getByRole('checkbox').count(), 0, 'Plus de vote après la clôture.');
-  await page.waitForTimeout(2_600);
-  await page.screenshot({ path: 'artifacts/fc27-arena-winner.png', fullPage: true });
-  console.log('PASS: second round with admin tie-break, semi-finals, final, podium and path kept.');
+  console.log('PASS: season layouts at 390px and 320px, settings without vote, dialog Escape.');
 
   // ---- Archive, onglet masqué, remise à zéro, lien historique ----
   await click(/réglages fc 27/i); await click(/terminer la préparation/i);
@@ -298,11 +175,10 @@ try {
   assert.equal(fresh.campaign.status, 'preparation');
   assert.equal(fresh.election.phase, 'proposing');
   assert.equal(fresh.proposals.length + fresh.players.length, 0);
-  await page.goto(`${origin}/fc27/nom?campagne=${archived.campaign.id}`);
-  await page.locator('#arena-title').getByText('Notre nom pour FC 27', { exact: true }).waitFor();
-  await page.getByRole('heading', { name: 'Dommage United', exact: true }).first().waitFor();
+  await page.goto(`${origin}/fc27?campagne=${archived.campaign.id}`);
+  await page.getByText('Préparation archivée', { exact: true }).waitFor();
   assert.deepEqual(errors, []);
-  console.log('PASS: archive, tab visibility, reset, historical arena URL, no browser exceptions.');
+  console.log('PASS: archive, tab visibility, reset, historical campaign URL, no browser exceptions.');
 } catch (error) {
   await page.screenshot({ path: 'artifacts/fc27-test-failure.png', fullPage: true });
   throw error;

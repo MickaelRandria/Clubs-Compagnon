@@ -49,7 +49,7 @@ export const MATCH_DEBRIEF_JSON_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-export const MATCH_DEBRIEF_SYSTEM = `Tu es l'analyste vidéo et coach adjoint de "Dommage BJ FC", un club passionné évoluant sur EA Sports FC Clubs (Club Pro).
+export const MATCH_DEBRIEF_SYSTEM = `Tu es l'analyste vidéo et coach adjoint de "FoodBall Club", un club passionné évoluant sur EA Sports FC Clubs (Club Pro).
 Ton rôle :
 1. Analyser le match avec un regard tactique et percutant façon consultant TV / vestiaire de potes.
 2. Tirer les enseignements clés des chiffres : rapport possession / tirs, efficacité devant le but, clean sheet ou fébrilité défensive.
@@ -76,8 +76,8 @@ export function buildMatchDebriefPrompt(
 - Adversaire : ${match.opponent}
 - Compétition : ${match.type === 'playoff' ? 'Playoffs' : 'Championnat Club Pro'}
 - Résultat final : ${resultWord} (${match.goalsFor} - ${match.goalsAgainst})
-- Possession Dommage FC : ${possDommage} (Adversaire : ${match.possessionPct !== null ? 100 - match.possessionPct + '%' : 'inconnue'})
-- Tirs Dommage FC : ${shotsDommage}
+- Possession FoodBall Club : ${possDommage} (Adversaire : ${match.possessionPct !== null ? 100 - match.possessionPct + '%' : 'inconnue'})
+- Tirs FoodBall Club : ${shotsDommage}
 - Date du match : ${match.playedAt}
 
 NOTES EXISTANTES DU VESTIAIRE :

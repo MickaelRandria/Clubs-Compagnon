@@ -31,7 +31,7 @@ export function TopNav() {
   return (
     <header className="fc-top">
       {/* Sur mobile : marque du club à gauche */}
-      <Link to="/" className="fc-top-brand" aria-label="Accueil Dommage BJ FC">
+      <Link to="/" className="fc-top-brand" aria-label="Accueil FoodBall Club">
         <svg viewBox="0 0 96 106" width="28" height="31" aria-hidden="true">
           <path d={SHIELD_PATH} fill={FC.blue} stroke={FC.craie} strokeWidth="5" />
           <text
@@ -44,11 +44,11 @@ export function TopNav() {
             fontStyle="italic"
             fontSize="58"
           >
-            D
+            F
           </text>
         </svg>
         <span className="fc-top-brand-text">
-          DOMMAGE<span>BJ FC</span>
+          FOODBALL<span>CLUB</span>
         </span>
       </Link>
 
@@ -70,7 +70,7 @@ export function TopNav() {
         onClick={() => openCoach()}
         className="fc-coach-nav-trigger"
         aria-label="Ouvrir le Coach IA"
-        title="Poser une question au Coach IA de Dommage FC"
+        title="Poser une question au Coach IA de FoodBall Club"
       >
         <Glyph name="bolt" size={14} />
         <span>Coach IA</span>

@@ -39,7 +39,7 @@ export function MatchSheet({ match }: { match: Match }) {
         {match.possessionPct !== null && (
           <div className="fc-sheet-possession">
             <div className="fc-sheet-poss-labels">
-              <span>DOMMAGE FC {match.possessionPct}%</span>
+              <span>FOODBALL {match.possessionPct}%</span>
               <span>{100 - match.possessionPct}% {match.opponent.toUpperCase()}</span>
             </div>
             <div

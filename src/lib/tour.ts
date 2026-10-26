@@ -12,7 +12,7 @@ export interface GuideStep {
    * Sur mobile une seule section est montée à la fois : sans ça, la cible serait
    * introuvable et l'étape s'afficherait sans spot.
    */
-  section?: 'nom' | 'fiche' | 'effectif' | 'rapport';
+  section?: 'saison' | 'fiche' | 'effectif' | 'rapport';
   /** Sélecteur de l'élément à éclairer. Absent = bulle centrée, sans spot. */
   target?: string;
   title: string;
@@ -36,8 +36,8 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
     route: '/',
-    title: 'Bienvenue chez Dommage BJ FC',
-    body: 'Une minute pour savoir où tout se trouve et ce qui t’attend avant FC 27. Tu peux partir quand tu veux.',
+    title: 'Bienvenue chez FoodBall Club',
+    body: 'Une minute pour savoir où tout se trouve et ce qui t’attend sur FC 27. Tu peux partir quand tu veux.',
   },
   {
     id: 'fc27-tab',
@@ -58,7 +58,7 @@ export const TOUR_STEPS: TourStep[] = [
     placement: 'top',
     optional: true,
     title: 'D’abord, connecte-toi',
-    body: 'Tout passe par ton compte Discord : ta fiche n’appartient qu’à toi, et ta voix au vote compte une fois. Un clic, aucun mot de passe.',
+    body: 'Tout passe par ton compte Discord : ta fiche n’appartient qu’à toi. Un clic, aucun mot de passe.',
   },
   {
     // Le pendant du précédent : présent seulement une fois connecté.
@@ -72,13 +72,13 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'Ton compte s’affiche ici, avec sa déconnexion. Ce que tu crées à partir de maintenant est à toi, et personne d’autre ne peut y toucher.',
   },
   {
-    id: 'arena',
+    id: 'season',
     route: '/fc27',
-    section: 'nom',
-    target: '.fc27-arena-entry',
+    section: 'saison',
+    target: '.fc27-season-tile',
     placement: 'right',
-    title: 'Premier chantier : le nom du club',
-    body: 'Trois propositions au maximum chacun, puis une voix par personne. L’arène s’ouvre en plein écran — c’est un moment à vivre ensemble.',
+    title: 'La saison FC 27 est lancée',
+    body: 'Le club s’appelle désormais FoodBall Club. Bilan, buts et skill rating arrivent tout seuls depuis EA après chaque session.',
   },
   {
     id: 'card',
@@ -87,7 +87,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: '.fc27-player-tile',
     placement: 'left',
     optional: true,
-    title: 'Deuxième chantier : ta fiche',
+    title: 'Ta fiche joueur',
     body: 'Deux choix suffisent : ton poste, puis ton archétype. Ou pars d’un joueur que tu admires — tape « Zidane » et tout se remplit.',
   },
   {
@@ -130,7 +130,7 @@ export const TOUR_STEPS: TourStep[] = [
     id: 'done',
     route: '/profil',
     title: 'À toi de jouer',
-    body: 'Connecte-toi, propose un nom, crée ta fiche, et garde ta feuille sous la main pour le jour J. Tu peux relancer ce guide depuis le bas de page.',
+    body: 'Connecte-toi, crée ta fiche et suis les stats du club au fil des matchs. Tu peux relancer ce guide depuis le bas de page.',
   },
 ];
 

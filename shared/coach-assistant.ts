@@ -26,8 +26,8 @@ export const COACH_JSON_SCHEMA = {
     action: {
       type: ['object', 'null'],
       properties: {
-        label: { type: 'string', description: 'Libellé court du bouton d’action (ex: "Ouvrir Mon Profil", "Voter pour le nom FC 27", "Voir les Buteurs").' },
-        to: { type: 'string', description: 'Chemin interne dans l’app : /profil, /fc27/nom, /fc27, /joueurs, /matchs, /stats, ou /playoffs.' },
+        label: { type: 'string', description: 'Libellé court du bouton d’action (ex: "Ouvrir Mon Profil", "Voir les Stats", "Voir les Buteurs").' },
+        to: { type: 'string', description: 'Chemin interne dans l’app : /profil, /fc27, /joueurs, /matchs, /stats, ou /playoffs.' },
       },
       required: ['label', 'to'],
       additionalProperties: false,
@@ -43,16 +43,15 @@ export const COACH_JSON_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-export const COACH_SYSTEM = `Tu es le "Coach IA" officiel du club "Dommage BJ FC" sur EA Sports FC Clubs.
+export const COACH_SYSTEM = `Tu es le "Coach IA" officiel du club "FoodBall Club" (anciennement Dommage BJ FC) sur EA Sports FC 27 Clubs.
 Ton but principal est d'aider les joueurs et visiteurs à utiliser l'application et à trouver ce qu'ils cherchent immédiatement.
 
 CARTOGRAPHIE COMPLÈTE DE L'APPLICATION :
 - **/profil** : Page personnelle. Permet de se connecter avec son compte Discord, de lier son profil joueur parmi l'effectif du club, de consulter ses statistiques individuelles (OVR, buts, passes) et son statut d'administration.
-- **/fc27** : Hub de préparation de la saison prochaine sur FC 27. Permet de consulter l'effectif préparatoire et l'analyse tactique du staff.
-- **/fc27/nom** : Espace de vote et de propositions pour le futur nom officiel du club sur FC 27.
+- **/fc27** : Hub de la saison FC 27 : résumé des stats EA du club, fiches joueurs, effectif et analyse tactique du staff. Le vote du nom est terminé : le club s'appelle FoodBall Club.
 - **/joueurs** : Annuaire des joueurs du club, fiches détaillées, filtres par poste (ATT, MIL, DEF, GB) et classements (buteurs, passeurs, OVR).
 - **/matchs** : Historique des matchs de championnat et playoffs. En cliquant sur un match (/matchs/:id), on accède aux statistiques détaillées (possession, tirs), à l'analyse tactique "L'œil du Coach" et à l'espace notes de vestiaire.
-- **/stats** : Statistiques globales du club (Skill Rating, courbe des 30 derniers jours, bilans victoires/nuls/défaites, moyennes de buts).
+- **/stats** : Statistiques FC 27 du club, synchronisées depuis EA (Skill Rating, courbe des 30 derniers jours, bilans victoires/nuls/défaites, moyennes de buts).
 - **/playoffs** : Rétrospective de la soirée LAN Playoffs, récit épique du tournoi et galerie de photos souvenir.
 
 DIRECTIVES :
@@ -109,14 +108,14 @@ export function getDeterministicCoachFallback(question: string, club: Club | nul
     return {
       reply: "Pour rattacher ton compte Discord et réclamer ton joueur Club Pro, rends-toi sur la page **Mon Profil**. Connecte-toi via Discord, puis choisis ton gamertag dans la liste de l'effectif. Les capitaines valideront ensuite ta demande !",
       action: { label: 'Ouvrir Mon Profil', to: '/profil' },
-      suggestedQuestions: ['Comment voter pour FC 27 ?', 'Qui est notre meilleur buteur ?'],
+      suggestedQuestions: ['Quel est le bilan du club ?', 'Qui est notre meilleur buteur ?'],
     };
   }
 
   if (q.includes('vote') || q.includes('nom') || q.includes('fc27') || q.includes('fc 27') || q.includes('saison')) {
     return {
-      reply: "La préparation du prochain opus FC 27 est en cours ! Tu peux voter pour le nouveau nom du club et soumettre ta propre idée de nom dans l'espace dédié.",
-      action: { label: 'Voter pour le nom FC 27', to: '/fc27/nom' },
+      reply: "FC 27 est lancé et le club s'appelle désormais **FoodBall Club** ! Le résumé de la saison, ta fiche joueur et l'analyse du staff t'attendent dans l'onglet FC 27.",
+      action: { label: 'Ouvrir la saison FC 27', to: '/fc27' },
       suggestedQuestions: ['Comment préparer ma fiche joueur ?', 'Quel est le bilan du club ?'],
     };
   }
@@ -133,7 +132,7 @@ export function getDeterministicCoachFallback(question: string, club: Club | nul
 
   if (q.includes('stats') || q.includes('bilan') || q.includes('classement') || q.includes('skill') || q.includes('division')) {
     const statsText = club
-      ? `Dommage BJ FC affiche un bilan de **${club.wins}V / ${club.draws}N / ${club.losses}D** pour **${club.gamesPlayed} matchs** disputés, avec un Skill Rating de **${club.skillRating} pts** (Meilleure division : ${club.bestDivision}).`
+      ? `FoodBall Club affiche un bilan de **${club.wins}V / ${club.draws}N / ${club.losses}D** pour **${club.gamesPlayed} matchs** disputés, avec un Skill Rating de **${club.skillRating} pts** (Meilleure division : ${club.bestDivision}).`
       : 'Le club continue d’écrire son histoire sur le terrain !';
     return {
       reply: `${statsText} Retrouve toutes les métriques détaillées et la progression sur 30 jours dans l'onglet **Stats**.`,
@@ -151,9 +150,9 @@ export function getDeterministicCoachFallback(question: string, club: Club | nul
   }
 
   return {
-    reply: "Je suis là pour t'accompagner sur l'app de Dommage BJ FC ! Tu peux naviguer entre le **Dashboard**, les fiches **Joueurs**, l'historique des **Matchs**, les **Stats** du club, la **LAN Playoffs** et la préparation **FC 27**.",
+    reply: "Je suis là pour t'accompagner sur l'app de FoodBall Club ! Tu peux naviguer entre le **Dashboard**, les fiches **Joueurs**, l'historique des **Matchs**, les **Stats** du club, la **LAN Playoffs** et la saison **FC 27**.",
     action: { label: 'Voir le Dashboard', to: '/' },
-    suggestedQuestions: ['Comment lier mon profil Discord ?', 'Qui est notre meilleur buteur ?', 'Comment voter pour FC 27 ?'],
+    suggestedQuestions: ['Comment lier mon profil Discord ?', 'Qui est notre meilleur buteur ?', 'Quel est le bilan FC 27 ?'],
   };
 }
 

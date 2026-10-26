@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { UI_IMAGES } from '../../shared/data/archetypes';
 import type { FC27State } from '../../shared/fc27';
-import { openStage, STAGE_LABELS } from '../../shared/fc27-bracket';
 import { useFC27 } from '../api/fc27';
 import { useIsAdmin } from '../api/profile';
 import { BetsTeaser } from '../components/bets/BetsTeaser';
-import { FC27Backdrop, StadiumCrowd } from '../components/fc27/FC27Decor';
+import { FC27Backdrop } from '../components/fc27/FC27Decor';
 import { FC27Settings } from '../components/fc27/FC27Settings';
 import { PlayerWizard } from '../components/fc27/PlayerWizard';
 import { PositionOverview } from '../components/fc27/PlayersPreparation';
+import { SeasonTile } from '../components/fc27/SeasonTile';
 import { TacticalReport } from '../components/fc27/TacticalReport';
 import { AccountChip, SignInButton, SignInNotice, SignedInAs, useMyProfile } from '../components/fc27/SignIn';
 import { SectionTabs, useSection } from '../components/fc27/sections';
@@ -26,7 +26,6 @@ function Preparation({ state }: { state: FC27State }) {
   const me = useMyProfile(state.players);
   const isAdmin = useIsAdmin();
   const archived = state.campaign.status === 'archived';
-  const phase = state.election.phase;
   const count = state.players.length;
 
   /**
@@ -47,7 +46,7 @@ function Preparation({ state }: { state: FC27State }) {
   })();
 
   return <div className={`fc27${section.isMobile ? ' fc27--sectioned' : ''}`}>
-    <div className="fc27-banner"><span className="fc27-phase">{archived ? 'Préparation archivée' : 'Phase de préparation'}</span><span className="fc27-banner-text">{archived ? 'Les choix du collectif, conservés en lecture seule.' : 'Un espace temporaire pour construire le prochain club.'}</span>
+    <div className="fc27-banner"><span className="fc27-phase">{archived ? 'Préparation archivée' : 'Saison en cours'}</span><span className="fc27-banner-text">{archived ? 'Les choix du collectif, conservés en lecture seule.' : 'Les stats arrivent d’EA ; fiches et rapport du staff restent ouverts.'}</span>
       <AccountChip />
       {isAdmin && <button className="fc27-text-button" onClick={() => setDialog('settings')}>Réglages FC 27 ↗</button>}</div>
     {/*
@@ -56,23 +55,14 @@ function Preparation({ state }: { state: FC27State }) {
       lue. Le titre compact garde un h1 — la page ne doit pas se retrouver sans titre —
       mais tient sur une ligne. Sur grand écran, rien ne change.
     */}
-    {section.isMobile && section.current !== 'nom'
+    {section.isMobile && section.current !== 'saison'
       ? <div className="fc27-heading fc27-heading--compact"><h1 className="fc-title">Cap sur <span className="fc27-heading-accent">FC 27</span></h1></div>
-      : <div className="fc27-heading"><div><p className="fc27-eyebrow">Dommage · Prochain chapitre</p><h1 className="fc-title">Cap sur <span className="fc27-heading-accent">FC 27</span></h1></div><span className="fc27-season">Le même collectif.<br />Une nouvelle saison.</span></div>}
+      : <div className="fc27-heading"><div><p className="fc27-eyebrow">FoodBall Club · Saison FC 27</p><h1 className="fc-title">Cap sur <span className="fc27-heading-accent">FC 27</span></h1></div><span className="fc27-season">Le même collectif.<br />Une nouvelle saison.</span></div>}
     {section.isMobile && <SectionTabs current={section.current} onSelect={section.go} />}
     <SignInNotice reason={params.get('connexion')} />
     {archived && <p className="fc27-archive-link">Lien de l’archive : <Link to={`/fc27?campagne=${state.campaign.id}`}>Campagne {state.campaign.id}</Link> · <Link to="/fc27">Préparation la plus récente</Link></p>}
     <div className="fc27-top-grid">
-      {section.shows('nom') && <Link className="fc27-arena-entry" to={`/fc27/nom?campagne=${state.campaign.id}`}>
-        <div className="fc27-arena-visual" aria-hidden="true"><StadiumCrowd /><b className="fc27-arena-stamp">FC<br />27</b></div>
-        <div className="fc27-arena-copy">
-          <span className="fc27-tag">L’arène des noms · Plein écran</span>
-          <h2 className="fc27-arena-title">Un club.<br />Un nom.<br /><span>Notre choix.</span></h2>
-          <p>{state.winner ? <>Le collectif a choisi : <strong>{state.winner.club_name}</strong></> : phase === 'proposing' ? 'Propose le nom qui brillera sous les projecteurs.' : phase === 'voting' ? 'Les cartes sont sur la table. Fais entendre ta voix.' : 'Retrouve les propositions de cette préparation.'}</p>
-          <span className="fc27-entry-status"><b>{state.proposals.length}</b><span>{state.proposals.length > 1 ? 'noms' : 'nom'}</span><i>{phase === 'proposing' ? 'Propositions ouvertes' : phase === 'voting' ? `${STAGE_LABELS[openStage(state.stages)?.kind ?? 'qualif']} en cours` : 'Résultats conservés'}</i></span>
-          <span className="fc27-cta">{state.winner ? 'Découvrir le résultat' : 'Entrer dans l’arène'} <span aria-hidden="true">→</span></span>
-        </div>
-      </Link>}
+      {section.shows('saison') && <SeasonTile />}
       {section.shows('fiche') && <section className="fc-block fc27-player-tile" aria-labelledby="fc27-player-title">
         <img className="fc27-player-cutout" src={UI_IMAGES.playerCutout} alt="" width={600} height={708} decoding="async" />
         <div className="fc27-player-copy">
@@ -91,7 +81,7 @@ function Preparation({ state }: { state: FC27State }) {
         </div>}
         <p className="fc27-small">{me.account ? 'Ta fiche n’appartient qu’à toi' : 'Une connexion Discord, une fiche'}</p>
       </section>}</div>
-    {section.shows('nom') && <BetsTeaser />}
+    {section.shows('saison') && <BetsTeaser />}
     {section.shows('effectif') && <PositionOverview players={state.players} />}
     {section.shows('rapport') && <TacticalReport players={state.players} campaignId={state.campaign.id} />}
 

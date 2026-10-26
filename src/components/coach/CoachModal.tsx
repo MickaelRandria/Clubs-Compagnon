@@ -220,7 +220,7 @@ export function CoachModal({
                   <strong>Salut l'artiste ! 👋</strong>
                 </p>
                 <p>
-                  Je suis le <strong>Coach IA</strong> de Dommage BJ FC. Je peux t'aider à utiliser l'application,
+                  Je suis le <strong>Coach IA</strong> de FoodBall Club. Je peux t'aider à utiliser l'application,
                   rattacher ton compte Discord, voter pour le futur nom FC 27 ou te renseigner sur les stats du club.
                 </p>
                 <p>Pose-moi n'importe quelle question ou clique sur une suggestion ci-dessous :</p>

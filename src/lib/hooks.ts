@@ -12,6 +12,6 @@ export function useIsMobile() {
 
 export function usePageTitle(title?: string) {
   useEffect(() => {
-    document.title = title ? `${title} · Dommage BJ FC` : 'Dommage BJ FC';
+    document.title = title ? `${title} · FoodBall Club` : 'FoodBall Club';
   }, [title]);
 }

@@ -11,11 +11,11 @@ import { useIsMobile } from '../../lib/hooks';
 //
 // Sur grand écran rien ne change : la page reste d'un seul tenant.
 
-export const SECTION_IDS = ['nom', 'fiche', 'effectif', 'rapport'] as const;
+export const SECTION_IDS = ['saison', 'fiche', 'effectif', 'rapport'] as const;
 export type SectionId = typeof SECTION_IDS[number];
 
 export const SECTIONS: { id: SectionId; step: number; label: string; short: string }[] = [
-  { id: 'nom', step: 1, label: 'Le nom du club', short: 'Nom' },
+  { id: 'saison', step: 1, label: 'La saison', short: 'Saison' },
   { id: 'fiche', step: 2, label: 'Ta fiche joueur', short: 'Fiche' },
   { id: 'effectif', step: 3, label: 'L’effectif', short: 'Effectif' },
   { id: 'rapport', step: 4, label: 'Le rapport', short: 'Rapport' },
@@ -33,7 +33,7 @@ export function useSection() {
   const [params, setParams] = useSearchParams();
   const isMobile = useIsMobile();
   const raw = params.get('vue');
-  const current: SectionId = isSection(raw) ? raw : 'nom';
+  const current: SectionId = isSection(raw) ? raw : 'saison';
   const index = SECTIONS.findIndex((s) => s.id === current);
 
   const go = (id: SectionId) => {

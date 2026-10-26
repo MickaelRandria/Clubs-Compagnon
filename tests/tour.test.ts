@@ -78,7 +78,7 @@ test('les étapes du guide sont cohérentes', () => {
 test('toute étape FC 27 ancrée déclare la section qui la contient', () => {
   // Sur mobile une seule section est montée : une étape ancrée sans `section` chercherait
   // une cible absente et s'afficherait sans spot. Le cas est passé inaperçu une fois.
-  const sections = ['nom', 'fiche', 'effectif', 'rapport'];
+  const sections = ['saison', 'fiche', 'effectif', 'rapport'];
   for (const step of TOUR_STEPS) {
     if (step.section !== undefined) {
       assert.ok(sections.includes(step.section), `${step.id} : section « ${step.section} » inconnue`);

@@ -46,6 +46,8 @@
   .fc27-arena-visual { aspect-ratio: 16 / 7; }
   .fc27-arena-copy { padding: 14px 16px 16px; gap: 8px; }
   .fc27-arena-title { font-size: clamp(26px, 8vw, 36px); line-height: .94; }
+  .fc27-season-stats { gap: 16px; }
+  .fc27-season-stats dd { font-size: 30px; }
 
   /* Tuile « Ton joueur » : le découpé mangeait la moitié de la hauteur. */
   .fc27-player-tile { padding: 16px; }
@@ -117,6 +119,4 @@
   .fc-tile, .fc-block, .fc27-arena-entry { animation: none; }
   /* Le flou d'arrière-plan du quai de vote coûte cher à composer sur mobile.
      Fond opaque à la place : même lisibilité, sans le coût. */
-  .arena-vote-dock { backdrop-filter: none; background: #07132a; }
-  .arena-beam { display: none; }
 }

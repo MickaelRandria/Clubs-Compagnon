@@ -16,11 +16,11 @@ export function Wordmark() {
           fontStyle="italic"
           fontSize="58"
         >
-          D
+          F
         </text>
       </svg>
       <span className="fc-mark-name">
-        Dommage<span>BJ FC</span>
+        FoodBall<span>Club</span>
       </span>
     </span>
   );

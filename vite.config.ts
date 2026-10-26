@@ -89,8 +89,8 @@ export default defineConfig(({ mode }) => {
       includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: {
         id: '/',
-        name: 'Dommage BJ FC — Clubs Compagnon',
-        short_name: 'Dommage FC',
+        name: 'FoodBall Club — Clubs Compagnon',
+        short_name: 'FoodBall',
         description: 'Les stats du club, ton profil joueur et la préparation FC27.',
         lang: 'fr',
         start_url: '/',

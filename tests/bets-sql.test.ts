@@ -155,3 +155,22 @@ test('le classement liste les soldes, le mien signalé', async () => {
   assert.ok(board.every((row, i) => i === 0 || board[i - 1].balance >= row.balance));
   assert.equal(board.filter((row) => row.me).length, 1);
 });
+
+test('pari unique tiré au sort : seul ce pari est jouable, réglé sans vote par le score', async () => {
+  const markets = [{ id: 'goals', options: [{ id: '0-1', label: '0 ou 1', odds: 3.3, trend: 0.2 }, { id: '2-3', label: '2 ou 3', odds: 2.2, trend: 0 }, { id: '4+', label: '4 et plus', odds: 2.6, trend: -0.15 }] }];
+  const opened = await call('open', admin, { markets, context: { reason: 'Après la victoire 5-0 contre Adversaire' } }, true);
+  const fixture = opened.fixture!;
+  assert.deepEqual(fixture.markets.map((m) => m.id), ['goals']);
+  assert.equal(fixture.context?.reason, 'Après la victoire 5-0 contre Adversaire');
+  assert.equal((await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'verdict', option: 'win', stake: 50 }] })).status, 400,
+    'un pari qui n’a pas été tiré est refusé');
+  const before = (await call('state', fan)).wallet.balance;
+  await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'goals', option: '2-3', stake: 100 }] });
+  await call('lock', admin, {}, true);
+  await backdate(30);
+  await playedMatch(3, 3, 1);
+  const state = await call('state', fan);
+  assert.equal(state.votes.length, 0, 'pas de vote pour un pari réglé par le score');
+  assert.equal(state.history[0].mySlips[0].status, 'won');
+  assert.equal(state.wallet.balance, before - 100 + 220);
+});

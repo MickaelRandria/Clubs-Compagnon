@@ -118,7 +118,8 @@ export const MARKET_COPY: Record<MarketId, { title: string; question: string; em
 /** Ordre d'affichage : les paris d'équipe d'abord, les plus simples à comprendre. */
 export const MARKET_ORDER: MarketId[] = ['verdict', 'goals', 'crack', 'flop', 'cleansheet', 'red'];
 
-export interface MarketOption { id: string; label: string; odds: number }
+/** `trend` : effet du dernier match sur la cote (positif = elle monte). Absent sur les anciennes rencontres. */
+export interface MarketOption { id: string; label: string; odds: number; trend?: number }
 export interface Market { id: MarketId; options: MarketOption[] }
 export interface Slip { id: number; fixtureId: number; market: MarketId; option: string; stake: number; odds: number; status: SlipStatus; payout: number | null }
 export interface BetMatch { id: number; opponent: string; goalsFor: number; goalsAgainst: number; result: 'win' | 'draw' | 'loss'; playedAt?: string }
@@ -128,7 +129,8 @@ export interface BetsState {
   myMemberId: number | null;
   wallet: { balance: number; canBailout: boolean; bankrupt: boolean };
   /** Rencontre à parier (ouverte) ou en cours de jeu (verrouillée). */
-  fixture: { id: number; status: 'open' | 'locked'; openedAt: string; lockedAt: string | null; markets: Market[]; bettors: number; mySlips: Slip[] } | null;
+  fixture: { id: number; status: 'open' | 'locked'; openedAt: string; lockedAt: string | null; context: { reason: string | null } | null;
+    markets: Market[]; bettors: number; mySlips: Slip[] } | null;
   /** Matchs joués dont le vote Crack / Casserole est ouvert. */
   votes: {
     id: number; openedAt: string; match: BetMatch; markets: Market[]; mySlips: Slip[];

@@ -7,10 +7,12 @@ import { HeroShards } from '../ui/HeroShards';
 /** Fiche d'un match — tile Bleu Dommage. */
 export function MatchSheet({ match }: { match: Match }) {
   const r = RESULT[match.result];
+  const diff = match.goalsFor - match.goalsAgainst;
   const kpis = [
-    [match.possessionPct === null ? '—' : `${match.possessionPct}%`, 'Possession'],
+    match.possessionPct !== null && [`${match.possessionPct}%`, 'Possession'],
     [match.shots === null ? '—' : String(match.shots), 'Tirs'],
-  ];
+    [`${diff > 0 ? '+' : ''}${diff}`, 'Écart'],
+  ].filter((kpi): kpi is string[] => Array.isArray(kpi));
 
   return (
     <div className="fc-block fc-hero fc-sheet">
@@ -23,7 +25,7 @@ export function MatchSheet({ match }: { match: Match }) {
             {MATCH_TYPE_LABEL[match.type]}
           </span>
         </div>
-        <span className="fc-title fc-title--xl fc-name">vs {match.opponent}</span>
+        <span className={`fc-title fc-title--xl fc-name${match.opponent.length > 12 ? ' fc-name--long' : ''}`}>vs {match.opponent}</span>
         <span className="fc-mention">
           <Glyph name="clock" />
           <span>{formatMatchDate(match.playedAt)}</span>

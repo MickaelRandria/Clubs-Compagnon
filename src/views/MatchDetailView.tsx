@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router';
 import { ApiError } from '../api/client';
 import { useMatchDetail, useMembers } from '../api/queries';
 import { MatchCoachDebrief } from '../components/matches/MatchCoachDebrief';
+import { MatchLineup } from '../components/matches/MatchLineup';
 import { MatchSheet } from '../components/matches/MatchSheet';
 import { NoteForm } from '../components/matches/NoteForm';
 import { NoteList } from '../components/matches/NoteList';
@@ -48,6 +49,7 @@ export function MatchDetailView() {
         {() => (
           <div className="fc-detail">
             <MatchSheet match={detail.data!.match} />
+            <MatchLineup players={detail.data!.players ?? []} />
             <MatchCoachDebrief matchId={matchId} />
             <NoteForm matchId={matchId} members={members.data!} />
             <NoteList notes={detail.data!.notes} />

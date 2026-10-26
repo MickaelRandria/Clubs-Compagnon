@@ -56,12 +56,17 @@ export function MatchesSummary({ matches }: { matches: Match[] }) {
       </div>
       <StatTile label="Buts pour" value={scored} sub={`${frNum(scored / n, 1)} / m`} delay={70} />
       <StatTile label="Buts contre" value={conceded} sub={`${frNum(conceded / n, 1)} / m`} delay={130} />
-      <StatTile
-        label="Possession"
-        value={possession === null ? '—' : `${Math.round(possession)}%`}
-        sub={shots === null ? undefined : `${frNum(shots, 1)} tirs/m`}
-        delay={190}
-      />
+      {/* EA ne publie pas la possession : sans elle, la tuile montre les tirs plutôt qu'un tiret. */}
+      {possession === null ? (
+        <StatTile label="Tirs" value={shots === null ? '—' : frNum(shots, 1)} sub="par match" delay={190} />
+      ) : (
+        <StatTile
+          label="Possession"
+          value={`${Math.round(possession)}%`}
+          sub={shots === null ? undefined : `${frNum(shots, 1)} tirs/m`}
+          delay={190}
+        />
+      )}
     </div>
   );
 }

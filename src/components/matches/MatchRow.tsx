@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import type { Match } from '../../../shared/types';
-import { timeAgo } from '../../lib/format';
+import { formatShortDate, timeAgo } from '../../lib/format';
 import { MATCH_TYPE_LABEL, RESULT } from '../../lib/labels';
 import { Glyph } from '../ui/Glyph';
 import { Meter } from '../ui/Meter';
@@ -57,23 +57,26 @@ export function MatchRow({ match, mobile }: { match: Match; mobile: boolean }) {
   }
 
   return (
-    <div className="fc-mrow">
+    // Sans possession (EA ne la publie pas), la colonne disparaît et la date prend sa place.
+    <div className={`fc-mrow${match.possessionPct === null ? ' fc-mrow--noposs' : ''}`}>
       {res}
       {opponent}
       <span>
         <span className={`fc-pos${match.type === 'playoff' ? ' fc-pos--hot' : ''}`}>{type}</span>
       </span>
       {score}
-      <span className="fc-poss">
-        <Meter pct={match.possessionPct ?? 0} />
-        <b>{match.possessionPct === null ? '—' : `${match.possessionPct}%`}</b>
-      </span>
+      {match.possessionPct !== null && (
+        <span className="fc-poss">
+          <Meter pct={match.possessionPct} />
+          <b>{match.possessionPct}%</b>
+        </span>
+      )}
       <span className="fc-shots">
         <b>{match.shots ?? '—'}</b> <span className="fc-muted">tirs</span>
       </span>
       <span className="fc-when fc-muted">
         <Glyph name="clock" size={14} />
-        {timeAgo(match.playedAt)}
+        {match.possessionPct === null ? formatShortDate(match.playedAt) : timeAgo(match.playedAt)}
       </span>
       <Link to={`/matchs/${match.id}`} className="fc-ghost">
         Détails

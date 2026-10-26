@@ -20,6 +20,7 @@ import {
   foreignKey,
 } from 'drizzle-orm/pg-core';
 import { POSITION_CODES } from '../../shared/fc27.js';
+import type { MatchPlayer } from '../../shared/types.js';
 
 export const playerPosition = pgEnum('player_position', ['FW', 'MF', 'DF', 'GK']);
 export const matchType = pgEnum('match_type', ['league', 'playoff', 'friendly']);
@@ -105,6 +106,8 @@ export const matches = pgTable(
     result: matchResult('result').notNull(),
     possessionPct: smallint('possession_pct'),
     shots: smallint('shots'),
+    /** Feuille de match EA des joueurs du club (voir server/ea-sync.ts). */
+    playerStats: jsonb('player_stats').$type<MatchPlayer[]>(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

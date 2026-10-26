@@ -48,6 +48,23 @@ export interface Match {
   shots: number | null;
 }
 
+/** Ligne de la feuille de match EA, pour un joueur du club. */
+export interface MatchPlayer {
+  gamertag: string;
+  position: Position;
+  rating: number;
+  goals: number;
+  assists: number;
+  shots: number;
+  passesMade: number;
+  passAttempts: number;
+  tacklesMade: number;
+  tackleAttempts: number;
+  saves: number;
+  redCards: number;
+  motm: boolean;
+}
+
 export interface MatchNote {
   id: number;
   matchId: number;
@@ -61,5 +78,7 @@ export interface MatchNote {
 
 export interface MatchDetail {
   match: Match;
+  /** Vide pour les matchs enregistrés avant la synchro des feuilles de match. */
+  players: MatchPlayer[];
   notes: MatchNote[];
 }

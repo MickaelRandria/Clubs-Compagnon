@@ -106,10 +106,10 @@
   .fc-hero-art { min-height: 120px; overflow: hidden; position: relative; }
   /* Recentrage des éclairs pour éviter qu'ils ne soient décalés à droite */
   .fc-hero-art svg { width: 132%; left: -16%; height: 100%; }
-  .fc-hero-num { font-size: clamp(72px, 17vw, 98px); right: 18px; bottom: 8px; }
+  .fc-hero-num { font-size: clamp(64px, 16vw, 92px); right: 22px; bottom: 10px; }
   .fc-hero-trend { top: 12px; right: 18px; font-size: 11px; padding: 4px 8px; }
   .fc-hero--compact .fc-hero-art { min-height: 120px; }
-  .fc-hero--compact .fc-hero-num { right: 18px; bottom: 8px; font-size: clamp(42px, 11vw, 54px); }
+  .fc-hero--compact .fc-hero-num { right: 22px; bottom: 10px; font-size: clamp(42px, 11vw, 54px); }
   .fc-hero--compact .fc-hero-trend { top: 12px; right: 18px; }
   .fc-career .fc-hero-art { min-height: 120px; }
   .fc-kpis { padding-top: 12px; gap: 8px 22px; }
@@ -190,9 +190,10 @@
 @media (max-width: 767px) {
   .fc-skel-row { grid-template-columns: minmax(0, 1fr); }
   .fc-error { padding: 26px 20px; }
-  .fc-detail { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "sheet" "notes" "form"; }
+  .fc-detail { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "sheet" "lineup" "notes" "form"; }
   .fc-sheet { min-height: 0; }
-  .fc-sheet .fc-hero-num { font-size: clamp(52px, 13vw, 76px); right: 18px; bottom: 8px; }
+  .fc-sheet .fc-hero-num { font-size: clamp(52px, 13vw, 76px); right: 22px; bottom: 10px; }
+  .fc-name--long { font-size: clamp(26px, 7.4vw, 34px); }
   .fc-sheet .fc-kpis { padding-top: 8px; gap: 6px 20px; }
   .fc-note-form { position: static; padding: 22px 20px 24px; }
   .fc-notes { padding: 22px 20px 6px; }

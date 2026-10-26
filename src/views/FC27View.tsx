@@ -99,7 +99,7 @@ function Preparation({ state }: { state: FC27State }) {
 }
 
 export function FC27View() {
-  usePageTitle('FC 27 · Préparation');
+  usePageTitle('FC 27 · Saison');
   const [params] = useSearchParams();
   const campaignId = params.has('campagne') ? Number(params.get('campagne')) : undefined;
   const query = useFC27(campaignId);

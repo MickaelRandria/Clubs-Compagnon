@@ -16,7 +16,7 @@ interface Message {
 
 const DEFAULT_QUESTIONS = [
   'Comment lier mon compte Discord ?',
-  'Comment voter pour le nom FC 27 ?',
+  'Quel est notre bilan sur FC 27 ?',
   'Qui est notre meilleur buteur ?',
   'Quel est le bilan global du club ?',
   'Où voir les photos de la LAN Playoffs ?',
@@ -221,7 +221,7 @@ export function CoachModal({
                 </p>
                 <p>
                   Je suis le <strong>Coach IA</strong> de FoodBall Club. Je peux t'aider à utiliser l'application,
-                  rattacher ton compte Discord, voter pour le futur nom FC 27 ou te renseigner sur les stats du club.
+                  rattacher ton compte Discord, suivre la saison FC 27 ou te renseigner sur les stats du club.
                 </p>
                 <p>Pose-moi n'importe quelle question ou clique sur une suggestion ci-dessous :</p>
               </div>

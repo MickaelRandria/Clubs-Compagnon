@@ -166,7 +166,7 @@ try {
   await click(/^confirmer$/i); await waitClosed();
   await page.getByText('Préparation archivée', { exact: true }).waitFor();
   // The navigation refreshes its own copy of the campaign right after the archive.
-  await page.getByRole('link', { name: /FC 27 PRÉPA/i }).waitFor({ state: 'detached', timeout: 5_000 });
+  await page.getByRole('link', { name: 'FC 27', exact: true }).waitFor({ state: 'detached', timeout: 5_000 });
   assert.equal(await button(/créer ma fiche/i).count(), 0);
   const archived = await readState(); assert.equal(archived.campaign.status, 'archived');
   await click(/réglages fc 27/i); await click(/recommencer la préparation/i);

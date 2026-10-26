@@ -60,7 +60,7 @@ export function TopNav() {
           </NavLink>
         ))}
         {preparation.data?.campaign.status !== 'archived' && (
-          <NavLink to="/fc27" className="fc-tab fc-tab--preparation">FC 27 <span>Prépa</span></NavLink>
+          <NavLink to="/fc27" className="fc-tab fc-tab--preparation">FC 27</NavLink>
         )}
       </nav>
 

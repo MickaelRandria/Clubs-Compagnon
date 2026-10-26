@@ -1,6 +1,6 @@
 import { ProClubsClient, resolveReputationLabel, type ClubMatch, type Platform } from 'proclubs-sdk';
 import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
-import type { Position } from '../shared/types.js';
+import type { MatchPlayer, Position } from '../shared/types.js';
 import { getDb } from './db/client.js';
 import { clubRatingSnapshots, clubs, matches, members } from './db/schema.js';
 
@@ -45,6 +45,27 @@ async function claimSync() {
   return claimed?.eaClubId ? { id: claimed.id, eaClubId: claimed.eaClubId, platform: (claimed.platform ?? 'common-gen5') as Platform } : null;
 }
 
+function toPlayers(eaClubId: string, m: ClubMatch): MatchPlayer[] {
+  return Object.values(m.players?.[eaClubId] ?? {})
+    .map((p) => ({
+      gamertag: String(p.playername ?? ''),
+      position: POSITIONS[String(p.pos)] ?? 'MF',
+      rating: Number(p.rating) || 0,
+      goals: int(p.goals),
+      assists: int(p.assists),
+      shots: int(p.shots),
+      passesMade: int(p.passesmade),
+      passAttempts: int(p.passattempts),
+      tacklesMade: int(p.tacklesmade),
+      tackleAttempts: int(p.tackleattempts),
+      saves: int(p.saves),
+      redCards: int(p.redcards),
+      motm: int(p.mom) > 0,
+    }))
+    .filter((p) => p.gamertag)
+    .sort((a, b) => b.rating - a.rating);
+}
+
 function toMatchRow(clubId: number, eaClubId: string, type: 'league' | 'playoff' | 'friendly', m: ClubMatch) {
   const teams = m.clubs ?? {};
   const ours = teams[eaClubId];
@@ -66,6 +87,7 @@ function toMatchRow(clubId: number, eaClubId: string, type: 'league' | 'playoff'
     // EA ne publie pas la possession dans l'historique des matchs.
     possessionPct: null,
     shots: shots === undefined ? null : int(shots),
+    playerStats: toPlayers(eaClubId, m),
   };
 }
 
@@ -130,7 +152,11 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
 
   const rows = MATCH_TYPES.flatMap(([, type], i) => lists[i].map((m) => toMatchRow(target.id, target.eaClubId, type, m)))
     .filter((row) => row !== null);
-  if (rows.length > 0) await db.insert(matches).values(rows).onConflictDoNothing({ target: matches.eaMatchId });
+  // Mise à jour de la feuille de match : les matchs déjà en base la reçoivent aussi.
+  if (rows.length > 0) {
+    await db.insert(matches).values(rows)
+      .onConflictDoUpdate({ target: matches.eaMatchId, set: { playerStats: sql`excluded.player_stats` } });
+  }
 }
 
 /**

@@ -19,6 +19,8 @@
 }
 .fc-card .fc-rank { color: var(--fc-marine); }
 .fc-name { overflow-wrap: anywhere; }
+/* Pseudos d'adversaires longs : on réduit plutôt que de couper le mot en plein milieu. */
+.fc-name--long { font-size: clamp(26px, 2.5vw, 36px); }
 .fc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font: 600 15px/1.2 var(--fc-text); }
 .fc-big { font: italic 800 clamp(44px, 4.6vw, 60px)/.85 var(--fc-display); font-variant-numeric: tabular-nums; color: var(--fc-marine); }
 .fc-big-label { font: 700 12px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; color: var(--fc-ardoise); }

@@ -13,7 +13,7 @@ export function CoachHomeBanner() {
         <div className="fc-coach-hb-text">
           <span className="fc-coach-hb-title">LE COACH IA EST À TON SERVICE</span>
           <span className="fc-coach-hb-sub">
-            Besoin d'aide pour lier ton compte Discord, voter pour FC 27 ou explorer les statistiques ?
+            Besoin d'aide pour lier ton compte Discord, suivre la saison FC 27 ou explorer les statistiques ?
           </span>
         </div>
       </div>
@@ -28,10 +28,10 @@ export function CoachHomeBanner() {
         </button>
         <button
           type="button"
-          onClick={() => openCoach('Comment voter pour le nom FC 27 ?')}
+          onClick={() => openCoach('Quel est notre bilan sur FC 27 ?')}
           className="fc-coach-hb-chip"
         >
-          🗳️ Voter FC 27
+          📊 Bilan FC 27
         </button>
         <button
           type="button"

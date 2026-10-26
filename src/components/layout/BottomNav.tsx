@@ -56,7 +56,6 @@ export function BottomNav() {
         >
           <span className="fc-bnav-icon">
             <Glyph name="bolt" size={20} />
-            <span className="fc-bnav-pip" aria-hidden="true" />
           </span>
           <span className="fc-bnav-label">FC 27</span>
         </NavLink>

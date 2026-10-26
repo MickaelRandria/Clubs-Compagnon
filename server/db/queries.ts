@@ -123,7 +123,7 @@ export async function fetchMatchDetail(matchId: number): Promise<MatchDetail> {
     .where(eq(matchNotes.matchId, matchId))
     .orderBy(desc(matchNotes.createdAt));
 
-  return { match: toMatch(match), notes: rows.map((r) => toNote(r.note, r.motmGamertag)) };
+  return { match: toMatch(match), players: match.playerStats ?? [], notes: rows.map((r) => toNote(r.note, r.motmGamertag)) };
 }
 
 export async function addMatchNote(matchId: number, input: NewMatchNote): Promise<MatchNote> {

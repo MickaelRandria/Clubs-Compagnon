@@ -67,16 +67,6 @@
   position: relative;
   color: var(--fc-magenta);
 }
-.fc-bnav-pip {
-  position: absolute;
-  top: -1px;
-  right: -3px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--fc-magenta);
-  box-shadow: 0 0 6px var(--fc-magenta);
-}
 .fc-bnav-tag {
   display: inline-block;
   padding: 1px 3px;

@@ -46,7 +46,7 @@ export function InhouseTile() {
             fontStyle="italic"
             fontSize="46"
           >
-            D
+            F
           </text>
         </svg>
         <span className="fc-mention fc-mention--end">

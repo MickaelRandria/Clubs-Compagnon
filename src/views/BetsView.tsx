@@ -1,53 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import {
-  DEFAULT_STAKE, HERO_VOTE_MINUTES, STAKES, STARTING_BALANCE,
-  canVoteFor, payout, playerOdds, resolveStake, tally,
+  CURRENCY, DEFAULT_STAKE, MARKET_COPY, MARKET_ORDER, STAKES, optionLabel, payout,
+  type BetsState, type Market, type MarketId, type Slip,
 } from '../../shared/bets';
-import type { Member } from '../../shared/types';
-import { useBetsStatus } from '../api/bets';
-import { useProfile } from '../api/profile';
-import { useMembers } from '../api/queries';
+import { useMe } from '../api/auth';
+import { useBetsAdmin, useBetsPlay, useBetsState, useBetsStatus } from '../api/bets';
+import { SignInButton } from '../components/fc27/SignIn';
 import { DataGate } from '../components/ui/DataGate';
 import { Skeleton } from '../components/ui/Skeleton';
 import { usePageTitle } from '../lib/hooks';
 import '../styles/bets.css';
 
-// Phase 1 : prototype interactif. L'effectif est réel, le reste est fictif et rien n'est
-// enregistré. La phase 2 remplacera `MOCK` et l'état local par /api/bets/state.
+// Vestiaire Bets : paris d'avant-match en crédits.
+// Un écran, une chose à faire à la fois : parier quand c'est ouvert, attendre pendant le
+// match, voter Crack / Casserole après. Les règles et l'argent sont côté serveur
+// (drizzle/0017_bets.sql) ; ici on n'affiche que ce que renvoie /api/bets/state.
 
-const MOCK = { opponent: 'Eristof', goalsFor: 3, goalsAgainst: 1, rageQuit: false, redCard: false };
-
-interface Option { id: string; label: string; odds: number; memberId?: number }
-interface Market { id: string; title: string; question: string; options: Option[]; tone?: 'flop'; extra?: boolean }
-type Stage = 'paris' | 'vote' | 'heros';
-
-function buildMarkets(present: Member[]): Market[] {
-  const odds = (kind: 'crack' | 'flop') => playerOdds(present.map((m) => ({ memberId: m.id, avgRating: m.avgRating })), kind);
-  const crack = odds('crack');
-  const flop = odds('flop');
-  const players = (table: Map<number, number>) => present.map((m) => ({ id: `m${m.id}`, label: m.gamertag, odds: table.get(m.id)!, memberId: m.id }));
-  return [
-    { id: 'crack', title: 'Le Crack du match', question: 'Qui va rouler sur le match ?', options: players(crack) },
-    { id: 'flop', title: 'La Casserole', question: 'Qui va tenter la roulette de trop ?', options: players(flop), tone: 'flop' },
-    { id: 'cleansheet', title: 'Le Mur', question: 'Clean sheet ce match ?', options: [{ id: 'oui', label: 'Oui', odds: 2.2 }, { id: 'non', label: 'Non', odds: 1.35 }] },
-    { id: 'verdict', title: 'Le Verdict', question: 'Résultat du match ?', extra: true,
-      options: [{ id: 'v', label: 'Victoire', odds: 1.7 }, { id: 'n', label: 'Nul', odds: 3.6 }, { id: 'd', label: 'Défaite', odds: 2.6 }] },
-    { id: 'score', title: 'Le Scénario offensif', question: 'Combien de buts pour FoodBall ?', extra: true,
-      options: [{ id: '0-1', label: '0-1', odds: 2.1 }, { id: '2-3', label: '2-3', odds: 1.9 }, { id: '4+', label: '4+ festival', odds: 3.4 }] },
-    { id: 'ragequit', title: 'Rage-quit adverse', question: 'L’adversaire quitte avant la fin ?', extra: true,
-      options: [{ id: 'oui', label: 'Oui', odds: 2.8 }, { id: 'non', label: 'Non', odds: 1.25 }] },
-    { id: 'red', title: 'Carton rouge', question: 'Un joueur du club prend un rouge ?', extra: true,
-      options: [{ id: 'oui', label: 'Oui', odds: 4 }, { id: 'non', label: 'Non', odds: 1.15 }] },
-  ];
-}
-
-/** Votes fictifs des coéquipiers, pour que les barres de répartition aient de quoi s'animer. */
-function mockVotes(present: Member[], kind: 'crack' | 'flop' | 'hero'): number[] {
-  const ranked = [...present].sort((a, b) => (b.avgRating ?? 0) - (a.avgRating ?? 0));
-  const order = kind === 'flop' ? [...ranked].reverse() : ranked;
-  return [3, 2, 1].flatMap((n, i) => (order[i] ? Array<number>(n).fill(order[i].id) : []));
-}
+const CR = CURRENCY.short;
 
 function Coin() { return <i className="bets-coin" aria-hidden="true" />; }
 
@@ -55,193 +25,254 @@ function Locked() {
   return <div className="bets bets--locked">
     <p className="fc27-tag">Bientôt</p>
     <h1 className="bets-title">Vestiaire <span>Bets</span></h1>
-    <p className="bets-lead">Les paris et votes du vestiaire ouvriront avec les sessions Clubs Pro sur FC 27.</p>
-    <Link className="bets-back" to="/fc27">← Retour à FC 27</Link>
+    <p className="bets-lead">Les paris d’avant-match ouvriront bientôt. Reviens avant la prochaine session.</p>
+    <Link className="bets-back" to="/">← Retour au dashboard</Link>
   </div>;
 }
 
-function MarketCard({ market, selected, onPick }: { market: Market; selected?: string; onPick: (optionId: string) => void }) {
-  return <article className={`bets-card${market.tone === 'flop' ? ' bets-card--flop' : ''}`}>
-    <header><h3>{market.title}</h3><p>{market.question}</p></header>
-    <div className={`bets-odds${market.options.length > 3 ? ' bets-odds--players' : ''}`}>
-      {market.options.map((o) => <button key={o.id} type="button" className="bets-odd" aria-pressed={selected === o.id} onClick={() => onPick(o.id)}>
-        <span>{o.label}</span><b>×{o.odds.toFixed(2)}</b>
-      </button>)}
+function SignInCard() {
+  return <div className="bets bets--locked">
+    <p className="fc27-tag">Vestiaire Bets</p>
+    <h1 className="bets-title">Parie avant <span>le match</span></h1>
+    <p className="bets-lead">Connecte-toi avec Discord : tu reçois <b>500 {CURRENCY.name}</b> pour parier sur le prochain match du club. Aucun argent réel.</p>
+    <SignInButton className="bets-signin" />
+  </div>;
+}
+
+/** « Victoire · 50 → 100 CR » et son issue une fois réglé. */
+function SlipLine({ slip, markets }: { slip: Slip; markets: Market[] }) {
+  const result = slip.status === 'won' ? <b className="is-won">+{slip.payout} {CR}</b>
+    : slip.status === 'lost' ? <b className="is-lost">−{slip.stake} {CR}</b>
+    : slip.status === 'refunded' ? <b>remboursé</b>
+    : <b>{slip.stake} → {payout(slip.stake, slip.odds)} {CR}</b>;
+  return <li className={`is-${slip.status}`}>
+    <span>{MARKET_COPY[slip.market].emoji} {MARKET_COPY[slip.market].title} · <strong>{optionLabel(markets, slip)}</strong> <em>×{Number(slip.odds).toFixed(2)}</em></span>
+    {result}
+  </li>;
+}
+
+function AdminPanel({ state }: { state: BetsState }) {
+  const admin = useBetsAdmin();
+  const fixture = state.fixture;
+  const cancel = () => fixture && window.confirm('Annuler cette rencontre ? Toutes les mises seront remboursées.')
+    && admin.mutate({ action: 'cancel', fixtureId: fixture.id });
+  return <section className="bets-admin" aria-label="Commandes de l’admin">
+    <p className="bets-admin-tag">Admin</p>
+    {!fixture && <>
+      <button type="button" className="bets-admin-go" disabled={admin.isPending} onClick={() => admin.mutate({ action: 'open' })}>
+        Ouvrir les paris du prochain match
+      </button>
+      <p className="bets-hint">À faire dans le lobby, avant de lancer le match.{state.votes.length > 0 && ' Ça clôt aussi le vote en cours.'}</p>
+    </>}
+    {fixture?.status === 'open' && <>
+      <button type="button" className="bets-admin-go bets-admin-go--kickoff" disabled={admin.isPending} onClick={() => admin.mutate({ action: 'lock' })}>
+        Coup d’envoi · fermer les paris
+      </button>
+      <p className="bets-hint">{fixture.bettors} parieur{fixture.bettors > 1 ? 's' : ''} pour l’instant. Tape au lancement du match.</p>
+    </>}
+    {fixture?.status === 'locked' && <p className="bets-hint">Paris fermés. Le match sera relié tout seul dès qu’EA le publie.</p>}
+    {fixture && <button type="button" className="bets-admin-cancel" disabled={admin.isPending} onClick={cancel}>Annuler la rencontre</button>}
+    {admin.isError && <p className="bets-error" role="alert">{admin.error.message}</p>}
+  </section>;
+}
+
+function MarketCard({ market, pick, slip, onPick, onRemove }: {
+  market: Market; pick?: string; slip?: Slip; onPick: (optionId: string) => void; onRemove: () => void;
+}) {
+  const copy = MARKET_COPY[market.id];
+  const players = market.id === 'crack' || market.id === 'flop';
+  return <article className={`bets-card${market.id === 'flop' ? ' bets-card--flop' : ''}${slip ? ' bets-card--placed' : ''}`}>
+    <header><h3>{copy.emoji} {copy.title}</h3><p>{copy.question}</p></header>
+    <div className={`bets-odds${players ? ' bets-odds--players' : ''}`}>
+      {market.options.map((o) => {
+        const chosen = pick === o.id || (pick === undefined && slip?.option === o.id);
+        return <button key={o.id} type="button" className="bets-odd" aria-pressed={chosen} onClick={() => onPick(o.id)}>
+          <span>{o.label}</span><b>×{o.odds.toFixed(2)}</b>
+        </button>;
+      })}
     </div>
+    {slip && <footer className="bets-placed">
+      {pick !== undefined && pick !== slip.option
+        ? <span>Nouveau choix : il remplacera ton pari en validant.</span>
+        : <span>✓ Misé <b>{slip.stake} {CR}</b> · gain possible <b>{payout(slip.stake, slip.odds)} {CR}</b></span>}
+      <button type="button" onClick={onRemove}>Retirer</button>
+    </footer>}
   </article>;
 }
 
-function VoteCard({ title, question, tone, present, votes, mine, myMemberId, onVote }: {
-  title: string; question: string; tone?: 'flop'; present: Member[]; votes: number[]; mine: number | null;
-  myMemberId: number | null; onVote: (memberId: number) => void;
-}) {
-  const result = tally(mine === null ? votes : [...votes, mine]);
-  return <article className={`bets-card bets-vote${tone === 'flop' ? ' bets-card--flop' : ''}`}>
-    <header><h3>{title}</h3><p>{question}</p></header>
-    <ul className="bets-vote-list">
-      {present.map((m) => {
-        const count = result.counts.get(m.id) ?? 0;
-        const share = result.total ? Math.round((count / result.total) * 100) : 0;
-        // Compte non lié : l'aperçu laisse voter pour montrer l'écran, la phase 2 refusera.
-        const self = !canVoteFor(myMemberId ?? -1, m.id);
-        return <li key={m.id}>
-          <button type="button" aria-pressed={mine === m.id} disabled={self} onClick={() => onVote(m.id)}
-            title={self ? 'Interdit de voter pour soi' : undefined}>
-            <span className="bets-vote-name">{m.gamertag}{self && <em> · toi</em>}</span>
+function Betting({ state }: { state: BetsState }) {
+  const fixture = state.fixture!;
+  const play = useBetsPlay();
+  const [picks, setPicks] = useState<Partial<Record<MarketId, string>>>({});
+  const [stakeChoice, setStakeChoice] = useState<number | 'max'>(DEFAULT_STAKE);
+  const [done, setDone] = useState(false);
+  const slipOf = (id: MarketId) => fixture.mySlips.find((s) => s.market === id);
+  const markets = MARKET_ORDER.map((id) => fixture.markets.find((m) => m.id === id)).filter((m): m is Market => m !== undefined);
+
+  // Seuls les vrais changements comptent : retoucher l'option déjà misée ne fait rien.
+  const changes = markets.flatMap((m) => {
+    const optionId = picks[m.id];
+    const option = m.options.find((o) => o.id === optionId);
+    return option && optionId !== slipOf(m.id)?.option ? [{ market: m, option }] : [];
+  });
+  // Une mise remplacée est rendue avant la nouvelle : elle compte dans le disponible.
+  const available = state.wallet.balance + changes.reduce((sum, c) => sum + (slipOf(c.market.id)?.stake ?? 0), 0);
+  const stake = changes.length === 0 ? 0 : stakeChoice === 'max' ? Math.floor(available / changes.length) : stakeChoice;
+  const affordable = stake > 0 && stake * changes.length <= available;
+  const potential = changes.reduce((sum, c) => sum + payout(stake, c.option.odds), 0);
+
+  const pickOption = (id: MarketId, optionId: string) => {
+    setDone(false);
+    setPicks((p) => {
+      const next = { ...p };
+      if (p[id] === optionId || (p[id] === undefined && slipOf(id)?.option === optionId)) delete next[id];
+      else next[id] = optionId;
+      return next;
+    });
+  };
+  const validate = () => {
+    if (!affordable) return;
+    play.mutate({ action: 'place', fixtureId: fixture.id, bets: changes.map((c) => ({ market: c.market.id, option: c.option.id, stake })) },
+      { onSuccess: () => { setPicks({}); setDone(true); } });
+  };
+
+  return <>
+    <ol className="bets-steps" aria-label="Comment parier">
+      <li><b>1</b> Touche une cote</li><li><b>2</b> Choisis ta mise</li><li><b>3</b> Valide</li>
+    </ol>
+    <div className="bets-grid">
+      {markets.map((m) => <MarketCard key={m.id} market={m} pick={picks[m.id]} slip={slipOf(m.id)}
+        onPick={(o) => pickOption(m.id, o)} onRemove={() => play.mutate({ action: 'unplace', market: m.id })} />)}
+    </div>
+    {play.isError && <p className="bets-error" role="alert">{play.error.message}</p>}
+    <div className={`bets-bar${done && changes.length === 0 ? ' bets-bar--done' : ''}`} role="region" aria-label="Mise et validation" aria-live="polite">
+      <div className="bets-stakes" role="group" aria-label="Mise par pari">
+        {[...STAKES, 'max' as const].map((s) => <button key={s} type="button" aria-pressed={stakeChoice === s} onClick={() => setStakeChoice(s)}>
+          {s === 'max' ? 'Max' : s}
+        </button>)}
+      </div>
+      <button type="button" className="bets-validate" disabled={!affordable || play.isPending} onClick={validate}>
+        {play.isPending ? 'Enregistrement…'
+          : changes.length === 0 && done ? '✓ Paris enregistrés · modifiables jusqu’au coup d’envoi'
+          : changes.length === 0 ? 'Touche une cote pour parier'
+          : !affordable ? 'Solde insuffisant'
+          : <>Valider {changes.length} pari{changes.length > 1 ? 's' : ''} · {stake * changes.length} {CR} → jusqu’à {potential} {CR}</>}
+      </button>
+    </div>
+  </>;
+}
+
+function LiveMatch({ state }: { state: BetsState }) {
+  const fixture = state.fixture!;
+  return <section className="bets-card bets-live">
+    <header><h3>🔒 Match en cours</h3><p>Les paris sont fermés. Les résultats tombent tout seuls quelques minutes après le coup de sifflet, quand EA publie le match.</p></header>
+    {fixture.mySlips.length === 0
+      ? <p className="bets-hint">Tu n’as pas parié sur ce match. Rendez-vous au prochain !</p>
+      : <ul className="bets-slip">{fixture.mySlips.map((s) => <SlipLine key={s.id} slip={s} markets={fixture.markets} />)}</ul>}
+  </section>;
+}
+
+function VoteCard({ vote, state }: { vote: BetsState['votes'][number]; state: BetsState }) {
+  const play = useBetsPlay();
+  const admin = useBetsAdmin();
+  const { match } = vote;
+  const list = (category: 'crack' | 'flop') => {
+    const counts = vote.tally[category];
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    return <ul className="bets-vote-list">
+      {vote.candidates.map((c) => {
+        const share = total ? Math.round(((counts[c.memberId] ?? 0) / total) * 100) : 0;
+        const self = c.memberId === state.myMemberId;
+        return <li key={c.memberId}>
+          <button type="button" aria-pressed={vote.myVotes[category] === c.memberId} disabled={self || play.isPending}
+            title={self ? 'Interdit de voter pour soi' : undefined}
+            onClick={() => play.mutate({ action: 'vote', fixtureId: vote.id, category, memberId: c.memberId })}>
+            <span className="bets-vote-name">{c.gamertag}{self && <em> · toi</em>}</span>
             <span className="bets-vote-bar"><i style={{ width: `${share}%` }} /></span>
             <b>{share}%</b>
           </button>
         </li>;
       })}
-    </ul>
-  </article>;
+    </ul>;
+  };
+  return <section className="bets-vote-block" aria-label={`Vote du match contre ${match.opponent}`}>
+    <p className="bets-score">FoodBall <b>{match.goalsFor} – {match.goalsAgainst}</b> {match.opponent}</p>
+    {vote.mySlips.length > 0 && <div className="bets-card">
+      <header><h3>Tes paris</h3><p>Réglés avec le score EA. Le Crack et la Casserole attendent le vote.</p></header>
+      <ul className="bets-slip">{vote.mySlips.map((s) => <SlipLine key={s.id} slip={s} markets={vote.markets} />)}</ul>
+    </div>}
+    <div className="bets-grid">
+      <article className="bets-card bets-vote"><header><h3>🔥 Le Crack du match</h3><p>Le plus décisif ? Tu peux changer ton vote.</p></header>{list('crack')}</article>
+      <article className="bets-card bets-vote bets-card--flop"><header><h3>🍳 La Casserole</h3><p>La bévue du match ?</p></header>{list('flop')}</article>
+    </div>
+    {play.isError && <p className="bets-error" role="alert">{play.error.message}</p>}
+    {state.isAdmin && <button type="button" className="bets-admin-close" disabled={admin.isPending}
+      onClick={() => admin.mutate({ action: 'close-vote', fixtureId: vote.id })}>Clore le vote et payer les gagnants <small>(admin)</small></button>}
+  </section>;
 }
 
-function useCountdown(active: boolean, minutes: number) {
-  const [left, setLeft] = useState(minutes * 60);
-  useEffect(() => {
-    if (!active) return;
-    const timer = window.setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
-    return () => window.clearInterval(timer);
-  }, [active]);
-  return left;
+function History({ state }: { state: BetsState }) {
+  if (state.history.length === 0) return null;
+  return <section className="bets-card bets-history" aria-labelledby="bets-history-title">
+    <header><h3 id="bets-history-title">Mes derniers paris</h3></header>
+    {state.history.map((h) => <div key={h.id} className="bets-history-item">
+      <p>{h.match ? <>vs {h.match.opponent} <b>{h.match.goalsFor}–{h.match.goalsAgainst}</b></> : 'Rencontre annulée'}
+        {h.crack && <span> · 🔥 {h.crack.join(' & ')}</span>}{h.flop && <span> · 🍳 {h.flop.join(' & ')}</span>}</p>
+      <ul className="bets-slip">{h.mySlips.map((s) => <SlipLine key={s.id} slip={s} markets={h.markets} />)}</ul>
+    </div>)}
+  </section>;
 }
 
-function Prototype({ members }: { members: Member[] }) {
-  const profile = useProfile();
-  const myMemberId = profile.data?.player?.id ?? null;
-  // Les « présents » de la soirée fictive : les six joueurs les plus capés.
-  const present = useMemo(() => [...members].sort((a, b) => b.matchesPlayed - a.matchesPlayed).slice(0, 6), [members]);
-  const markets = useMemo(() => buildMarkets(present), [present]);
+function Leaderboard({ state }: { state: BetsState }) {
+  return <section className="bets-card bets-board" aria-labelledby="bets-board-title">
+    <header><h3 id="bets-board-title">👑 Le classement</h3></header>
+    <ol>{state.leaderboard.map((row, i) => <li key={row.accountId} className={row.me ? 'is-me' : undefined}>
+      <span>{i + 1}</span><strong>{row.name}{row.me && ' (toi)'}</strong><b>{row.balance} {CR}</b>
+    </li>)}</ol>
+  </section>;
+}
 
-  const [stage, setStage] = useState<Stage>('paris');
-  const [balance, setBalance] = useState(STARTING_BALANCE);
-  const [picks, setPicks] = useState<Record<string, string>>({});
-  const [stakeChoice, setStakeChoice] = useState<number | 'max'>(DEFAULT_STAKE);
-  const [placed, setPlaced] = useState<{ market: Market; option: Option; stake: number }[]>([]);
-  const [votes, setVotes] = useState<{ crack: number | null; flop: number | null; hero: number | null }>({ crack: null, flop: null, hero: null });
-  const [closed, setClosed] = useState(false);
-  const [winning, setWinning] = useState<Record<string, string> | null>(null);
-  const heroLeft = useCountdown(stage === 'heros', HERO_VOTE_MINUTES);
-
-  const selection = markets.flatMap((m) => {
-    const option = m.options.find((o) => o.id === picks[m.id]);
-    return option ? [{ market: m, option }] : [];
-  });
-  // Une même mise par pari choisi ; MAX partage le solde entre eux.
-  const stake = selection.length === 0 ? null
-    : resolveStake(stakeChoice === 'max' ? Math.floor(balance / selection.length) : stakeChoice, Math.floor(balance / selection.length));
-  const potential = stake === null ? 0 : selection.reduce((sum, s) => sum + payout(stake, s.option.odds), 0);
-
-  const toggle = (marketId: string, optionId: string) =>
-    setPicks((p) => (p[marketId] === optionId ? Object.fromEntries(Object.entries(p).filter(([k]) => k !== marketId)) : { ...p, [marketId]: optionId }));
-
-  const validate = () => {
-    if (stake === null) return;
-    setPlaced((prev) => [...prev, ...selection.map((s) => ({ ...s, stake }))]);
-    setBalance((b) => b - stake * selection.length);
-    setPicks({});
-  };
-
-  const crackVotes = useMemo(() => mockVotes(present, 'crack'), [present]);
-  const flopVotes = useMemo(() => mockVotes(present, 'flop'), [present]);
-  const heroVotes = useMemo(() => mockVotes(present, 'hero'), [present]);
-
-  /** Fermeture du vote par l'admin : règlement des paris du match fictif. */
-  const settle = () => {
-    const leader = (base: number[], mine: number | null) => tally(mine === null ? base : [...base, mine]).leaders[0];
-    const crack = leader(crackVotes, votes.crack);
-    const flop = leader(flopVotes, votes.flop);
-    const goals = MOCK.goalsFor;
-    const winning: Record<string, string> = {
-      crack: `m${crack}`, flop: `m${flop}`,
-      cleansheet: MOCK.goalsAgainst === 0 ? 'oui' : 'non',
-      verdict: MOCK.goalsFor > MOCK.goalsAgainst ? 'v' : MOCK.goalsFor === MOCK.goalsAgainst ? 'n' : 'd',
-      score: goals <= 1 ? '0-1' : goals <= 3 ? '2-3' : '4+',
-      ragequit: MOCK.rageQuit ? 'oui' : 'non', red: MOCK.redCard ? 'oui' : 'non',
-    };
-    const won = placed.filter((p) => winning[p.market.id] === p.option.id).reduce((sum, p) => sum + payout(p.stake, p.option.odds), 0);
-    setBalance((b) => b + won);
-    setClosed(true);
-    return winning;
-  };
-  const mmss = `${Math.floor(heroLeft / 60)}:${String(heroLeft % 60).padStart(2, '0')}`;
-  const heroes = tally(votes.hero === null ? heroVotes : [...heroVotes, votes.hero]).leaders;
-
+function Evening({ state, preview }: { state: BetsState; preview: boolean }) {
+  const play = useBetsPlay();
+  const fixture = state.fixture;
   return <div className="bets">
     <div className="bets-top">
-      <div><p className="fc27-tag">Session du soir · vs {MOCK.opponent}</p><h1 className="bets-title">Vestiaire <span>Bets</span></h1></div>
-      <p className="bets-wallet" aria-label={`Solde : ${balance} Dommage Coins`}><Coin /><b>{balance}</b> DC</p>
+      <div>
+        <p className="fc27-tag">{fixture?.status === 'open' ? 'Paris ouverts' : fixture?.status === 'locked' ? 'Match en cours' : state.votes.length ? 'Place au vote' : 'Vestiaire Bets'}</p>
+        <h1 className="bets-title">Vestiaire <span>Bets</span></h1>
+      </div>
+      <p className="bets-wallet" aria-label={`Solde : ${state.wallet.balance} ${CURRENCY.name}`}>
+        <Coin /><b>{state.wallet.balance}</b> {CR}{state.wallet.bankrupt && <em title="Prêt de la honte en cours"> 📉</em>}
+      </p>
     </div>
-    <p className="bets-demo" role="note">Aperçu · données fictives · rien n’est enregistré</p>
+    {preview && <p className="bets-demo" role="note">Aperçu capitaines : seuls les admins voient les paris pour l’instant.</p>}
+    {state.wallet.canBailout && <button type="button" className="bets-bailout" disabled={play.isPending}
+      onClick={() => play.mutate({ action: 'bailout' })}>À sec ? Prends le prêt de la honte : +100 {CR} (badge 📉 pendant 24 h)</button>}
+    {state.isAdmin && <AdminPanel state={state} />}
 
-    <nav className="bets-stages" aria-label="Moment de la soirée">
-      {([['paris', 'Avant-match'], ['vote', 'Fin de match'], ['heros', 'Fin de session']] as const).map(([id, label]) =>
-        <button key={id} type="button" aria-current={stage === id ? 'step' : undefined} onClick={() => setStage(id)}>{label}</button>)}
-    </nav>
+    {state.votes.map((v) => <VoteCard key={v.id} vote={v} state={state} />)}
 
-    {stage === 'paris' && <>
-      <div className="bets-grid">
-        {markets.filter((m) => !m.extra).map((m) => <MarketCard key={m.id} market={m} selected={picks[m.id]} onPick={(o) => toggle(m.id, o)} />)}
-      </div>
-      <details className="bets-more">
-        <summary>Plus de paris <b>{markets.filter((m) => m.extra).length}</b></summary>
-        <div className="bets-grid">
-          {markets.filter((m) => m.extra).map((m) => <MarketCard key={m.id} market={m} selected={picks[m.id]} onPick={(o) => toggle(m.id, o)} />)}
-        </div>
-      </details>
-      {placed.length > 0 && <section className="bets-card bets-slip">
-        <header><h3>Mes paris</h3><p>Cotes figées au moment de la mise.</p></header>
-        <ul>{placed.map((p, i) => <li key={i}><span>{p.market.title} · {p.option.label}</span><b>{p.stake} DC × {p.option.odds.toFixed(2)}</b></li>)}</ul>
-      </section>}
-      <div className="bets-bar">
-        <div className="bets-stakes" role="group" aria-label="Mise par pari">
-          {[...STAKES, 'max' as const].map((s) => <button key={s} type="button" aria-pressed={stakeChoice === s} onClick={() => setStakeChoice(s)}>{s === 'max' ? 'Max' : s}</button>)}
-        </div>
-        <button type="button" className="bets-validate" disabled={stake === null} onClick={validate}>
-          {selection.length === 0 ? 'Choisis une cote' : stake === null ? 'Solde insuffisant' : <>Valider {selection.length} pari{selection.length > 1 ? 's' : ''} · gain possible {potential} DC <span aria-hidden="true">↗</span></>}
-        </button>
-      </div>
-    </>}
+    {fixture?.status === 'open' && <Betting key={fixture.id} state={state} />}
+    {fixture?.status === 'locked' && <LiveMatch state={state} />}
+    {!fixture && state.votes.length === 0 && <section className="bets-card bets-empty">
+      <header><h3>Pas de paris ouverts</h3><p>Ils s’ouvrent juste avant le prochain match, dans le lobby. Reviens à ce moment-là : ça prend 10 secondes.</p></header>
+    </section>}
 
-    {stage === 'vote' && <>
-      <p className="bets-score">FoodBall <b>{MOCK.goalsFor} – {MOCK.goalsAgainst}</b> {MOCK.opponent}</p>
-      {myMemberId === null && <p className="bets-hint">Ton compte n’est pas lié à un joueur : en vrai, tu ne pourrais pas voter. Lie-le depuis ton profil.</p>}
-      <div className="bets-grid">
-        <VoteCard title="Le Crack du match" question="Le plus décisif ce match ?" present={present} votes={crackVotes} mine={votes.crack}
-          myMemberId={myMemberId} onVote={(id) => !closed && setVotes((v) => ({ ...v, crack: id }))} />
-        <VoteCard title="La Casserole d’or" question="La bévue du match ?" tone="flop" present={present} votes={flopVotes} mine={votes.flop}
-          myMemberId={myMemberId} onVote={(id) => !closed && setVotes((v) => ({ ...v, flop: id }))} />
-      </div>
-      {!closed
-        ? <button type="button" className="bets-admin-close" onClick={() => setWinning(settle())}>Fermer le vote et régler les paris <small>(admin)</small></button>
-        : <section className="bets-card bets-slip">
-          <header><h3>Paris réglés</h3><p>Le vote est fermé. Les égalités sont tranchées par l’admin.</p></header>
-          {placed.length === 0 ? <p className="bets-hint">Aucun pari placé avant le match.</p>
-            : <ul>{placed.map((p, i) => {
-              const won = winning?.[p.market.id] === p.option.id;
-              return <li key={i} className={won ? 'is-won' : 'is-lost'}><span>{p.market.title} · {p.option.label}</span>
-                <b>{won ? `+${payout(p.stake, p.option.odds)} DC` : `−${p.stake} DC`}</b></li>;
-            })}</ul>}
-        </section>}
-    </>}
-
-    {stage === 'heros' && <>
-      <p className="bets-countdown" aria-live="off">Vote ouvert encore <b>{heroLeft > 0 ? mmss : 'terminé'}</b></p>
-      <VoteCard title="Le Héros de la session" question="Qui a porté l’équipe ce soir ?" present={present} votes={heroVotes} mine={votes.hero}
-        myMemberId={myMemberId} onVote={(id) => heroLeft > 0 && setVotes((v) => ({ ...v, hero: id }))} />
-      {heroLeft === 0 && <p className="bets-hero-result">🦸 {heroes.map((id) => present.find((m) => m.id === id)?.gamertag).join(' & ')}</p>}
-    </>}
+    <History state={state} />
+    <Leaderboard state={state} />
   </div>;
 }
 
 export function BetsView() {
   usePageTitle('Vestiaire Bets');
+  const me = useMe();
   const { status, ready } = useBetsStatus();
-  const members = useMembers();
-  if (!ready) return <div className="fc-view"><Skeleton rows={[[[1], 120], [[1, 1], 260]]} /></div>;
+  const signedIn = me.data?.signedIn === true;
+  const state = useBetsState(ready && status.access !== 'locked' && signedIn);
+  if (!ready || me.isPending) return <div className="fc-view"><Skeleton rows={[[[1], 120], [[1, 1], 260]]} /></div>;
   if (status.access === 'locked') return <div className="fc-view"><Locked /></div>;
-  return <div className="fc-view"><DataGate queries={[members]} skeleton={<Skeleton rows={[[[1, 1], 260]]} />}>
-    {() => <Prototype members={members.data!} />}
+  if (!signedIn) return <div className="fc-view"><SignInCard /></div>;
+  return <div className="fc-view"><DataGate queries={[state]} skeleton={<Skeleton rows={[[[1], 120], [[1, 1], 260]]} />}>
+    {() => <Evening state={state.data!} preview={status.access === 'preview'} />}
   </DataGate></div>;
 }

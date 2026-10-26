@@ -55,6 +55,12 @@ const GLYPHS = {
   dribble: <path d="M3 18l4-6 4 5 4-7 3 4M19 5h2v2" />,
   shield: <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />,
   bolt: <path d="M13 3 5 14h6l-1 7 8-11h-6z" />,
+  coin: (
+    <>
+      <ellipse cx="12" cy="7" rx="7" ry="3" />
+      <path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" />
+    </>
+  ),
   glove: <path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V4.5a1.5 1.5 0 0 1 3 0V10.5M13 10.5V5.5a1.5 1.5 0 0 1 3 0V11M16 11.5V8.5a1.5 1.5 0 0 1 3 0V14c0 4-3 7-7 7-3 0-5-1.5-6.5-4.5l-2-4a1.5 1.5 0 0 1 2.6-1.5L7 13" />,
 } satisfies Record<string, ReactNode>;
 

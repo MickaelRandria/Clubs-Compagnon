@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router';
+import { useBetsStatus } from '../../api/bets';
 import { useFC27 } from '../../api/fc27';
 import { Glyph, type GlyphName } from '../ui/Glyph';
 
@@ -25,6 +26,11 @@ export function BottomNav() {
   const location = useLocation();
   const preparation = useFC27();
   const showFC27 = preparation.data?.campaign.status !== 'archived';
+  const bets = useBetsStatus().status;
+  // Six entrées tiennent à 320 px : quand les paris sont accessibles, ils prennent la place
+  // des Playoffs, une page souvenir qui reste joignable depuis l'accueil.
+  const items: NavItem[] = bets.access === 'locked' ? ITEMS
+    : [...ITEMS.filter((item) => item.to !== '/playoffs'), { to: '/paris', label: 'Paris', glyph: 'coin' }];
 
   const handleItemClick = (to: string) => {
     if (location.pathname === to) {
@@ -34,7 +40,7 @@ export function BottomNav() {
 
   return (
     <nav className="fc-bottom-nav" aria-label="Navigation principale mobile">
-      {ITEMS.map((item) => (
+      {items.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
@@ -44,6 +50,7 @@ export function BottomNav() {
         >
           <span className="fc-bnav-icon">
             <Glyph name={item.glyph} size={20} />
+            {item.to === '/paris' && bets.live === 'open' && <span className="fc-bnav-live" aria-label="Paris ouverts" />}
           </span>
           <span className="fc-bnav-label">{item.label}</span>
         </NavLink>

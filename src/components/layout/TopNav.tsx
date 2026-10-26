@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router';
 import { useMe } from '../../api/auth';
 import { useProfile } from '../../api/profile';
+import { useBetsStatus } from '../../api/bets';
 import { useFC27 } from '../../api/fc27';
 import { SHIELD_PATH } from '../../lib/shield';
 import { FC } from '../../lib/tokens';
@@ -27,6 +28,7 @@ export function TopNav() {
   const role = !account ? 'Connexion Discord' : profile.data?.isAdmin ? 'Admin · Profil'
     : player ? 'Statistiques Club Pro' : pending ? 'Validation en attente' : 'Choisir mon joueur';
   const preparation = useFC27();
+  const bets = useBetsStatus().status;
 
   return (
     <header className="fc-top">
@@ -61,6 +63,11 @@ export function TopNav() {
         ))}
         {preparation.data?.campaign.status !== 'archived' && (
           <NavLink to="/fc27" className="fc-tab fc-tab--preparation">FC 27</NavLink>
+        )}
+        {bets.access !== 'locked' && (
+          <NavLink to="/paris" className="fc-tab fc-tab--bets">
+            Paris{bets.live === 'open' && <span className="fc-tab-live">Ouverts</span>}
+          </NavLink>
         )}
       </nav>
 

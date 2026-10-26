@@ -2,7 +2,7 @@
    Même langage que FC 27 (aplats, biseaux, Barlow Condensed) ; l'ambre est réservé
    aux cotes et aux pièces, le rouge à la Casserole. */
 
-.bets, .bets-teaser { --b-ambre: #FFB547; --b-rouge: var(--fc-rouge); --p-ink: #0B1A3A;
+.bets, .bets-teaser, .bets-live-banner { --b-ambre: #FFB547; --b-rouge: var(--fc-rouge); --p-ink: #0B1A3A;
   --b-cut: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); }
 
 /* ---------- Tuile sur /fc27 ---------- */
@@ -82,11 +82,16 @@ a.bets-teaser-card:hover, a.bets-teaser-card:focus-visible { outline: 4px solid 
 .bets-more[open] > summary { box-shadow: inset 0 -1px 0 rgba(242,244,248,.1); }
 .bets-more .bets-grid { padding: 6px; }
 
-.bets-slip ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
-.bets-slip li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; background: rgba(242,244,248,.05); font: 600 14px/1.3 var(--fc-text); }
-.bets-slip li b { font: 800 16px/1.2 var(--fc-display); color: var(--b-ambre); white-space: nowrap; }
+.bets-slip ul, ul.bets-slip { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.bets-slip li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(242,244,248,.05); font: 600 15px/1.3 var(--fc-text); }
+.bets-slip li strong { color: var(--fc-craie); }
+.bets-slip li em { font-style: normal; color: var(--fc-brume); font-size: 13px; }
+.bets-slip li b { font: 800 17px/1.2 var(--fc-display); color: var(--b-ambre); white-space: nowrap; }
+.bets-slip li.is-won { box-shadow: inset 3px 0 0 var(--fc-pos-mf); }
 .bets-slip li.is-won b { color: var(--fc-pos-mf); }
+.bets-slip li.is-lost { box-shadow: inset 3px 0 0 var(--b-rouge); }
 .bets-slip li.is-lost b { color: var(--b-rouge); }
+.bets-slip li.is-refunded b { color: var(--fc-brume); }
 
 /* Barre de validation collante : au-dessus de la BottomNav sur mobile. */
 .bets-bar { position: sticky; bottom: 12px; z-index: 5; display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: rgba(6,12,31,.96);
@@ -98,6 +103,7 @@ a.bets-teaser-card:hover, a.bets-teaser-card:focus-visible { outline: 4px solid 
 .bets-validate { flex: 1 1 240px; min-height: 48px; border: 0; background: var(--fc-blue); color: #fff; cursor: pointer;
   font: 800 17px/1.1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
 .bets-validate:disabled { background: rgba(242,244,248,.12); color: var(--fc-acier); cursor: not-allowed; }
+.bets-bar--done .bets-validate:disabled { background: rgba(111,200,255,.18); color: var(--fc-glacier); cursor: default; }
 
 .bets-score { margin: 0; padding: 14px; background: var(--p-ink); text-align: center; font: 800 20px/1 var(--fc-display); text-transform: uppercase; letter-spacing: .06em; }
 .bets-score b { margin: 0 10px; font-size: 32px; color: var(--fc-glacier); }
@@ -124,6 +130,56 @@ a.bets-teaser-card:hover, a.bets-teaser-card:focus-visible { outline: 4px solid 
 .bets-hero-result { margin: 0; padding: 18px; background: var(--b-ambre); color: var(--p-ink); text-align: center;
   font: italic 800 30px/1 var(--fc-display); text-transform: uppercase; }
 
+/* ---------- Phase 2 : paris réels ---------- */
+.bets-signin { display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 22px; background: #5865F2; color: #fff; text-decoration: none;
+  font: 800 18px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; clip-path: var(--b-cut); }
+.bets-lead b { color: var(--b-ambre); }
+
+.bets-steps { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.bets-steps li { flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(11,26,58,.8);
+  font: 700 15px/1.2 var(--fc-text); color: var(--fc-brume); }
+.bets-steps b { display: grid; place-items: center; flex-shrink: 0; width: 26px; height: 26px; background: var(--b-ambre); color: var(--p-ink);
+  font: italic 800 17px/1 var(--fc-display); }
+
+.bets-card--placed { box-shadow: inset 0 3px 0 var(--b-ambre); }
+.bets-placed { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px;
+  background: rgba(255,181,71,.1); font: 600 14px/1.35 var(--fc-text); color: var(--fc-craie); }
+.bets-placed b { color: var(--b-ambre); }
+.bets-placed button { min-height: 36px; padding: 0 12px; border: 1px solid rgba(242,244,248,.35); background: none; color: var(--fc-craie); cursor: pointer;
+  font: 700 13px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; }
+.bets-ok, .bets-error { margin: 0; padding: 12px 14px; font: 700 15px/1.35 var(--fc-text); }
+.bets-ok { background: rgba(111,200,255,.14); box-shadow: inset 3px 0 0 var(--fc-glacier); color: var(--fc-craie); }
+.bets-error { background: rgba(255,77,94,.14); box-shadow: inset 3px 0 0 var(--b-rouge); color: #FFC2C8; }
+
+.bets-admin { display: grid; gap: 8px; justify-items: start; padding: 16px; background: rgba(255,181,71,.08); box-shadow: inset 4px 0 0 var(--b-ambre); }
+.bets-admin-tag { margin: 0; font: 800 12px/1 var(--fc-display); letter-spacing: .16em; text-transform: uppercase; color: var(--b-ambre); }
+.bets-admin-go { min-height: 56px; padding: 0 26px; border: 0; background: var(--b-ambre); color: var(--p-ink); cursor: pointer; clip-path: var(--b-cut);
+  font: italic 800 22px/1 var(--fc-display); letter-spacing: .04em; text-transform: uppercase; }
+.bets-admin-go--kickoff { background: var(--fc-glacier); }
+.bets-admin-go:disabled, .bets-admin-close:disabled { opacity: .6; cursor: wait; }
+.bets-admin-cancel { padding: 0; border: 0; background: none; color: var(--fc-brume); text-decoration: underline; cursor: pointer; font: 600 13px/1.4 var(--fc-text); }
+
+.bets-live { box-shadow: inset 0 3px 0 var(--fc-glacier); }
+.bets-empty header p { max-width: 560px; }
+.bets-vote-block { display: grid; gap: 6px; }
+.bets-history { gap: 14px; }
+.bets-history-item { display: grid; gap: 6px; }
+.bets-history-item > p { margin: 0; font: 700 15px/1.3 var(--fc-text); color: var(--fc-brume); }
+.bets-history-item > p b { color: var(--fc-craie); font-family: var(--fc-display); font-size: 18px; }
+
+.bets-board ol { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.bets-board li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px;
+  background: rgba(242,244,248,.04); }
+.bets-board li > span { font: italic 800 18px/1 var(--fc-display); color: var(--fc-brume); }
+.bets-board li strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 15px/1.2 var(--fc-text); }
+.bets-board li b { font: 800 18px/1 var(--fc-display); color: var(--b-ambre); font-variant-numeric: tabular-nums; }
+.bets-board li.is-me { background: rgba(255,181,71,.12); box-shadow: inset 3px 0 0 var(--b-ambre); }
+.bets-board li:first-child > span { color: var(--b-ambre); }
+
+.bets-bailout { justify-self: start; min-height: 44px; padding: 0 16px; border: 1px dashed var(--b-ambre); background: rgba(255,181,71,.08);
+  color: var(--b-ambre); cursor: pointer; font: 700 14px/1.3 var(--fc-text); text-align: left; }
+.bets-wallet em { font-style: normal; }
+
 @media (prefers-reduced-motion: reduce) {
   .bets-vote-bar i, .bets-odd { transition: none; }
 }
@@ -138,7 +194,24 @@ a.bets-teaser-card:hover, a.bets-teaser-card:focus-visible { outline: 4px solid 
   .bets-stages button { font-size: 13px; letter-spacing: .04em; }
   .bets-bar { position: fixed; left: 0; right: 0; bottom: calc(var(--fc-bnav-h, 56px) + env(safe-area-inset-bottom, 0px)); padding: 8px 12px; }
   .bets-stakes { flex: 1 1 100%; }
+  /* La barre fixe (~120 px) ne doit pas masquer le bas de la page. */
+  .bets:has(.bets-bar) { padding-bottom: 220px; }
   .bets-stakes button { flex: 1; }
   .bets-validate { flex-basis: 100%; }
   .bets-vote-list button { grid-template-columns: minmax(80px, 1fr) 1.4fr 40px; }
+  .bets-steps li { flex-direction: column; gap: 4px; padding: 8px 6px; font-size: 13px; text-align: center; }
+  .bets-odds--players { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bets-admin-go { width: 100%; font-size: 19px; }
+  .bets-validate { font-size: 15px; }
 }
+
+/* ---------- Bandeau d'accueil et navigation ---------- */
+.bets-live-banner { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 12px 18px; background: var(--b-ambre); color: var(--p-ink);
+  text-decoration: none; clip-path: var(--b-cut); animation: fcIn .4s ease both; }
+.bets-live-banner--vote { background: var(--fc-glacier); }
+.bets-live-banner .bets-coin { flex-shrink: 0; width: 30px; height: 30px; }
+.bets-live-banner span { flex: 1; font: 600 15px/1.35 var(--fc-text); }
+.bets-live-banner b { margin-right: 6px; font: italic 800 20px/1 var(--fc-display); text-transform: uppercase; }
+.bets-live-banner em { font: 800 17px/1 var(--fc-display); font-style: normal; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.bets-live-banner:hover, .bets-live-banner:focus-visible { outline: 3px solid var(--fc-craie); outline-offset: -3px; }
+@media (max-width: 767px) { .bets-live-banner b { display: block; margin-bottom: 2px; } }

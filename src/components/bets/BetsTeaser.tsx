@@ -19,8 +19,8 @@ export function BetsTeaser() {
     <div className="bets-teaser-copy">
       <span className="fc27-tag">{locked ? 'Bientôt · Sessions FC 27' : status.access === 'preview' ? 'Aperçu capitaines' : 'Sessions Clubs Pro'}</span>
       <h2 className="bets-teaser-title">Vestiaire <span>Bets</span></h2>
-      <p>Parie tes Dommage Coins avant le coup d’envoi, élis le Crack et la Casserole au coup de sifflet, puis le héros de la soirée.</p>
-      <span className="bets-teaser-cta">{locked ? 'Ouvre avec les sessions FC 27' : <>Entrer au vestiaire <span aria-hidden="true">→</span></>}</span>
+      <p>Parie tes crédits avant le coup d’envoi, puis élis le Crack et la Casserole au coup de sifflet. Les résultats tombent tout seuls avec EA.</p>
+      <span className="bets-teaser-cta">{locked ? 'Ouvre avec les sessions FC 27' : status.live === 'open' ? <>Paris ouverts · parier <span aria-hidden="true">→</span></> : <>Entrer au vestiaire <span aria-hidden="true">→</span></>}</span>
     </div>
   </>;
 

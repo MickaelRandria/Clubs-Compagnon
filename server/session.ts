@@ -96,7 +96,7 @@ export const readState = (request: Request) => parseCookies(request.headers.get(
 export function safeReturnTo(value: string | null | undefined): string {
   if (!value || !value.startsWith('/') || value.startsWith('//') || /[\\\u0000-\u001f]/.test(value)) return '/fc27';
   const url = new URL(value, 'https://local.invalid');
-  if (url.origin !== 'https://local.invalid' || !['/fc27', '/fc27/nom', '/profil'].includes(url.pathname)) return '/fc27';
+  if (url.origin !== 'https://local.invalid' || !['/fc27', '/fc27/nom', '/profil', '/paris'].includes(url.pathname)) return '/fc27';
   url.searchParams.delete('connexion');
   return url.pathname + url.search + url.hash;
 }

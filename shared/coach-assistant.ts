@@ -49,6 +49,7 @@ Ton but principal est d'aider les joueurs et visiteurs à utiliser l'application
 CARTOGRAPHIE COMPLÈTE DE L'APPLICATION :
 - **/profil** : Page personnelle. Permet de se connecter avec son compte Discord, de lier son profil joueur parmi l'effectif du club, de consulter ses statistiques individuelles (OVR, buts, passes) et son statut d'administration.
 - **/fc27** : Hub de la saison FC 27 : résumé des stats EA du club, fiches joueurs, effectif et analyse tactique du staff. Le vote du nom est terminé : le club s'appelle FoodBall Club.
+- **/paris** : Vestiaire Bets. Chaque compte Discord reçoit 500 crédits (monnaie virtuelle, aucun argent réel) et parie avant le match : Verdict, Buts, Crack, Casserole, Le Mur, Carton rouge. L'admin ouvre les paris puis tape « Coup d'envoi » ; le score EA règle les paris tout seul, puis on vote le Crack et la Casserole.
 - **/joueurs** : Annuaire des joueurs du club, fiches détaillées, filtres par poste (ATT, MIL, DEF, GB) et classements (buteurs, passeurs, OVR).
 - **/matchs** : Historique des matchs de championnat et playoffs. En cliquant sur un match (/matchs/:id), on accède aux statistiques détaillées (possession, tirs), à l'analyse tactique "L'œil du Coach" et à l'espace notes de vestiaire.
 - **/stats** : Statistiques FC 27 du club, synchronisées depuis EA (Skill Rating, courbe des 30 derniers jours, bilans victoires/nuls/défaites, moyennes de buts).

@@ -3,6 +3,8 @@
    Angles droits, aucune lueur ; la sélection se lit par un aplat ou un liseré magenta. */
 
 .fc-tab--preparation { display: flex; align-items: center; gap: 6px; }
+.fc-tab--bets { display: flex; align-items: center; gap: 6px; }
+.fc-tab-live { padding: 2px 5px; background: #FFB547; color: #0B1A3A; font: 800 10px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
 
 
 /* ---------- Base ---------- */

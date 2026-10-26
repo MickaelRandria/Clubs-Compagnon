@@ -157,6 +157,8 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
     await db.insert(matches).values(rows)
       .onConflictDoUpdate({ target: matches.eaMatchId, set: { playerStats: sql`excluded.player_stats` } });
   }
+  // Un nouveau match peut régler les paris en attente (Vestiaire Bets).
+  await db.execute(sql`select bets_settle()`).catch((error) => console.error('[ea-sync] règlement des paris impossible :', error));
 }
 
 /**

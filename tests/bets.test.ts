@@ -36,9 +36,9 @@ const statusOf = async (handlers: ReturnType<typeof router>['handlers'], account
 
 test('status : chaque visiteur voit l’accès que lui donne le mode', async () => {
   const { handlers, state } = router('admins');
-  assert.deepEqual(await statusOf(handlers, null), { mode: 'admins', access: 'locked', canConfigure: false });
-  assert.deepEqual(await statusOf(handlers, PLAYER), { mode: 'admins', access: 'locked', canConfigure: false });
-  assert.deepEqual(await statusOf(handlers, ADMIN), { mode: 'admins', access: 'preview', canConfigure: true });
+  assert.deepEqual(await statusOf(handlers, null), { mode: 'admins', access: 'locked', canConfigure: false, live: null });
+  assert.deepEqual(await statusOf(handlers, PLAYER), { mode: 'admins', access: 'locked', canConfigure: false, live: null });
+  assert.deepEqual(await statusOf(handlers, ADMIN), { mode: 'admins', access: 'preview', canConfigure: true, live: null });
   state.mode = 'on';
   assert.equal((await statusOf(handlers, null)).access, 'open');
 });

@@ -1,4 +1,5 @@
 import { useClub, useMatches, useMembers } from '../api/queries';
+import { BetsLiveBanner } from '../components/bets/BetsLiveBanner';
 import { CoachHomeBanner } from '../components/home/CoachHomeBanner';
 import { FormTile } from '../components/home/FormTile';
 import { HeroTile } from '../components/home/HeroTile';
@@ -23,6 +24,7 @@ export function HomeView() {
     >
       {() => (
         <div className="fc-grid">
+          <BetsLiveBanner />
           <div className="fc-row fc-row--top">
             <HeroTile club={club.data!} />
             <InhouseTile />

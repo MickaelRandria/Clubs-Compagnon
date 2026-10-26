@@ -82,3 +82,7 @@
 .fc-bnav-item:focus-visible { outline: 2px solid var(--fc-glacier); outline-offset: -2px; }
 
 
+
+/* Point ambre : des paris sont ouverts. */
+.fc-bnav-live { position: absolute; top: -2px; right: -5px; width: 8px; height: 8px; border-radius: 50%; background: #FFB547;
+  box-shadow: 0 0 0 2px var(--fc-abysse), 0 0 8px #FFB547; }

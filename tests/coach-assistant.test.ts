@@ -63,7 +63,7 @@ test('getDeterministicCoachFallback répond immédiatement pour Discord avec act
 test('getDeterministicCoachFallback répond immédiatement pour FC 27', () => {
   const fallback = getDeterministicCoachFallback('Où en est la saison FC 27 ?', mockClub, mockMembers);
   assert.match(fallback.reply, /FC 27/);
-  assert.equal(fallback.action?.to, '/fc27');
+  assert.equal(fallback.action?.to, '/club', 'la préparation FC 27 est archivée : la saison se suit dans Club');
 });
 
 test('getDeterministicCoachFallback répond pour les buteurs en utilisant mockMembers', () => {

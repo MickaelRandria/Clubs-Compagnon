@@ -23,6 +23,7 @@ export function MatchRow({ match, mobile }: { match: Match; mobile: boolean }) {
           {type}
         </span>
       )}
+      {match.opponentQuit && <span className="fc-mtype-badge fc-mtype-badge--quit">Abandon</span>}
     </span>
   );
   const score = (

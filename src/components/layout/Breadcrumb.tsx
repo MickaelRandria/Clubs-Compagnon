@@ -8,12 +8,13 @@ interface Crumb {
 /** Fil d'Ariane façon FIFA 17 (« PLAY › NEW CAREER »), déduit de l'adresse. */
 function crumbsFor(pathname: string): Crumb[] {
   if (/^\/matchs\/[^/]+/.test(pathname)) return [{ label: 'Matchs', to: '/matchs' }, { label: 'Fiche du match' }];
+  if (/^\/joueurs\/[^/]+/.test(pathname)) return [{ label: 'Effectif', to: '/joueurs' }, { label: 'Fiche joueur' }];
   switch (pathname) {
     case '/': return [{ label: 'Accueil' }];
-    case '/joueurs': return [{ label: 'Club', to: '/' }, { label: 'Joueurs' }];
-    case '/matchs': return [{ label: 'Club', to: '/' }, { label: 'Matchs' }];
-    case '/stats': return [{ label: 'Club', to: '/' }, { label: 'Stats' }];
-    case '/playoffs': return [{ label: 'Club', to: '/' }, { label: 'Playoffs' }];
+    case '/matchs': return [{ label: 'Matchs' }];
+    case '/joueurs': return [{ label: 'Effectif' }];
+    case '/club': return [{ label: 'Club' }];
+    case '/playoffs': return [{ label: 'Club', to: '/club' }, { label: 'Nuit Inhouse 1' }];
     case '/profil': return [{ label: 'Mon profil' }];
     case '/paris': return [{ label: 'Vestiaire' }, { label: 'Paris' }];
     case '/fc27': return [{ label: 'Saison' }, { label: 'FC 27' }];

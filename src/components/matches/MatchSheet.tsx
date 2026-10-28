@@ -4,8 +4,8 @@ import { MATCH_TYPE_LABEL, RESULT } from '../../lib/labels';
 import { Glyph } from '../ui/Glyph';
 import { HeroShards } from '../ui/HeroShards';
 
-/** Fiche d'un match — tile Bleu Dommage. */
-export function MatchSheet({ match }: { match: Match }) {
+/** Fiche d'un match — tile Bleu Dommage. `minutes` : durée lue dans le match EA brut. */
+export function MatchSheet({ match, minutes = null }: { match: Match; minutes?: number | null }) {
   const r = RESULT[match.result];
   const diff = match.goalsFor - match.goalsAgainst;
   const kpis = [
@@ -24,11 +24,12 @@ export function MatchSheet({ match }: { match: Match }) {
           <span className={`fc-sheet-type${match.type === 'playoff' ? ' fc-sheet-type--playoff' : ''}`}>
             {MATCH_TYPE_LABEL[match.type]}
           </span>
+          {match.opponentQuit && <span className="fc-sheet-type fc-sheet-type--quit">Abandon adverse</span>}
         </div>
         <span className={`fc-title fc-title--xl fc-name${match.opponent.length > 12 ? ' fc-name--long' : ''}`}>vs {match.opponent}</span>
         <span className="fc-mention">
           <Glyph name="clock" />
-          <span>{formatMatchDate(match.playedAt)}</span>
+          <span>{formatMatchDate(match.playedAt)}{minutes !== null && ` · ${minutes} min`}</span>
         </span>
         <span className="fc-kpis">
           {kpis.map(([value, label]) => (

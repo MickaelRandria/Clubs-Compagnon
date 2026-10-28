@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Member } from '../../../shared/types';
 import { frNum } from '../../lib/format';
 import { POS_LABEL, POS_SHORT, posColorClass } from '../../lib/labels';
@@ -56,7 +57,7 @@ export function PlayerLeadTile({
   };
 
   return (
-    <div className="fc-block fc-hero">
+    <Link to={`/joueurs/${player.id}`} className="fc-block fc-hero">
       <div className="fc-hero-copy">
         <div className="fc-hero-lead-header">
           <span className="fc-rank">01</span>
@@ -88,6 +89,6 @@ export function PlayerLeadTile({
         <span className="fc-hero-num">{formatStat(player, sortKey)}</span>
       </div>
       {spill && <Spill at="bottom" />}
-    </div>
+    </Link>
   );
 }

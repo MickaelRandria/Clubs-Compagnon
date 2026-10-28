@@ -69,7 +69,8 @@
 /* Tile actif (aplat Bleu Dommage) : bande en biais et coin coupé en bas à gauche. */
 .fc-hero::after, .fc-stat--principal::after { content: ""; position: absolute; left: 0; bottom: 0; z-index: 2; width: 26px; height: 26px;
   background: var(--fc-abysse); clip-path: polygon(0 0, 0 100%, 100% 100%); pointer-events: none; }
-.fc-stat--principal { background-image: linear-gradient(118deg, transparent 62%, rgba(6,12,31,.24) 62% 68%, transparent 68%); }
+/* Doit suivre .fc-card ci-dessus : une tuile principale garde son aplat bleu. */
+.fc-stat--principal { background-color: var(--fc-blue); background-image: linear-gradient(118deg, transparent 62%, rgba(6,12,31,.24) 62% 68%, transparent 68%); }
 .fc-stat--principal .fc-corner { display: none; }
 
 /* Blocs Marine et tuiles discrètes : même matière que les panneaux. */

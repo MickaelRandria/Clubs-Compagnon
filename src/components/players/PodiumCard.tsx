@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Member } from '../../../shared/types';
 import { pad2 } from '../../lib/format';
 import { POS_SHORT, posColorClass } from '../../lib/labels';
@@ -19,7 +20,7 @@ export function PodiumCard({
   delay: number;
 }) {
   return (
-    <div className="fc-block fc-card" style={{ animationDelay: `${delay}ms` }}>
+    <Link to={`/joueurs/${player.id}`} className="fc-block fc-card" style={{ animationDelay: `${delay}ms` }}>
       <span className="fc-card-copy">
         <span className="fc-rank">{pad2(rank)}</span>
         <span className="fc-title fc-title--md fc-name">{player.gamertag}</span>
@@ -36,6 +37,6 @@ export function PodiumCard({
         <span className="fc-big">{formatStat(player, sortKey)}</span>
         <span className="fc-big-label">{sortLabel}</span>
       </span>
-    </div>
+    </Link>
   );
 }

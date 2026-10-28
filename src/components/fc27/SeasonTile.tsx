@@ -13,7 +13,7 @@ export function SeasonTile() {
   const c = club.data;
   const last = (matches.data ?? []).slice(0, 5).reverse();
 
-  return <Link className="fc27-arena-entry fc27-season-tile" to="/stats">
+  return <Link className="fc27-arena-entry fc27-season-tile" to="/club">
     <div className="fc27-arena-visual" aria-hidden="true"><StadiumCrowd /><b className="fc27-arena-stamp">FC<br />27</b></div>
     <div className="fc27-arena-copy">
       <span className="fc27-tag">La saison est lancée · Stats EA</span>

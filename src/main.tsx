@@ -29,6 +29,8 @@ import './styles/tour.css';
 import './styles/pwa.css';
 import './styles/coach.css';
 import './styles/responsive.css';
+// Pages de la réorganisation : leurs règles mobiles doivent passer après responsive.css.
+import './styles/club-pages.css';
 // Thème FIFA 17 : ne touche qu'à la matière (couleurs, fonds, éclats), d'où sa place après responsive.css.
 import './styles/fifa17.css';
 

@@ -1,4 +1,13 @@
-// Contenu éditorial de la nuit des Playoffs — statique (hors base pour l'instant).
+// Contenu éditorial des nuits Inhouse — statique (hors base pour l'instant).
+
+/** Prochaine nuit : annoncée sur l'accueil et dans Club › Palmarès jusqu'à ce qu'on écrive son récit. */
+export const NEXT_NIGHT = {
+  number: 2,
+  date: '2026-10-30T20:00:00+01:00',
+  pitch: 'Toute la squad en LAN. Bilan, MVP et photos ajoutés après la soirée.',
+} as const;
+
+/** Nuit Inhouse 1 : la page /playoffs lui est consacrée. */
 
 export const PLAYOFF_NIGHT = {
   season: 2026,

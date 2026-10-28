@@ -10,11 +10,10 @@ import { Glyph } from '../ui/Glyph';
 import { useCoach } from '../coach/CoachContext';
 
 const TABS = [
-  { to: '/', label: 'Dashboard', end: true },
-  { to: '/joueurs', label: 'Joueurs', end: false },
+  { to: '/', label: 'Accueil', end: true },
   { to: '/matchs', label: 'Matchs', end: false },
-  { to: '/stats', label: 'Stats', end: false },
-  { to: '/playoffs', label: 'Playoffs', end: false },
+  { to: '/joueurs', label: 'Effectif', end: false },
+  { to: '/club', label: 'Club', end: false },
 ];
 
 /** Bandeau haut : sur desktop onglets + profil, sur mobile identité club + profil. */
@@ -74,7 +73,7 @@ export function TopNav() {
         )}
         {bets.access !== 'locked' && (
           <NavLink to="/paris" className="fc-tab fc-tab--bets">
-            Paris{bets.live === 'open' && <span className="fc-tab-live">Ouverts</span>}
+            Vestiaire{bets.live === 'open' && <span className="fc-tab-live">Ouverts</span>}
           </NavLink>
         )}
       </nav>

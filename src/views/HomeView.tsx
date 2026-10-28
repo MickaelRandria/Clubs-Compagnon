@@ -1,16 +1,15 @@
 import { useClub, useMatches, useMembers } from '../api/queries';
 import { BetsLiveBanner } from '../components/bets/BetsLiveBanner';
-import { CoachHomeBanner } from '../components/home/CoachHomeBanner';
-import { FormTile } from '../components/home/FormTile';
-import { HeroTile } from '../components/home/HeroTile';
-import { InhouseTile } from '../components/home/InhouseTile';
 import { LastMatchTile } from '../components/home/LastMatchTile';
-import { TopScorerTile } from '../components/home/TopScorerTile';
+import { MotmTile } from '../components/home/MotmTile';
+import { NextNightTile } from '../components/home/NextNightTile';
+import { RankTile } from '../components/home/RankTile';
+import { StreakTile } from '../components/home/StreakTile';
 import { DataGate } from '../components/ui/DataGate';
 import { Skeleton } from '../components/ui/Skeleton';
 import { usePageTitle } from '../lib/hooks';
 
-/** Grille FIFA 20 : [A grand | B large] / [C | D | E étroit]. */
+/** Accueil « où on en est » : série en cours, dernier match, classement, hommes du match, prochaine nuit. */
 export function HomeView() {
   usePageTitle();
   const club = useClub();
@@ -20,21 +19,20 @@ export function HomeView() {
   return (
     <DataGate
       queries={[club, members, matches]}
-      skeleton={<Skeleton rows={[[[1.55, 1], 420], [[1, 1, 0.58], 196]]} />}
+      skeleton={<Skeleton rows={[[[1.55, 1], 300], [[1, 1, 1], 150]]} />}
     >
       {() => (
         <div className="fc-grid">
           <BetsLiveBanner />
           <div className="fc-row fc-row--top">
-            <HeroTile club={club.data!} />
-            <InhouseTile />
+            <StreakTile club={club.data!} last={matches.data![0]} />
+            <LastMatchTile match={matches.data![0]} />
           </div>
           <div className="fc-row fc-row--bottom">
-            <LastMatchTile match={matches.data![0]} />
-            <TopScorerTile members={members.data!} />
-            <FormTile matches={matches.data!} />
+            <RankTile club={club.data!} />
+            <MotmTile members={members.data!} />
+            <NextNightTile />
           </div>
-          <CoachHomeBanner />
         </div>
       )}
     </DataGate>

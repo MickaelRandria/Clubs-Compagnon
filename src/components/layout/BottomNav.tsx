@@ -12,10 +12,9 @@ interface NavItem {
 
 const ITEMS: NavItem[] = [
   { to: '/', label: 'Accueil', glyph: 'home', end: true },
-  { to: '/joueurs', label: 'Joueurs', glyph: 'users' },
   { to: '/matchs', label: 'Matchs', glyph: 'ball' },
-  { to: '/stats', label: 'Stats', glyph: 'bars' },
-  { to: '/playoffs', label: 'Playoffs', glyph: 'trophy' },
+  { to: '/joueurs', label: 'Effectif', glyph: 'users' },
+  { to: '/club', label: 'Club', glyph: 'shield' },
 ];
 
 /**
@@ -27,10 +26,8 @@ export function BottomNav() {
   const preparation = useFC27();
   const showFC27 = preparation.data?.campaign.status !== 'archived';
   const bets = useBetsStatus().status;
-  // Six entrées tiennent à 320 px : quand les paris sont accessibles, ils prennent la place
-  // des Playoffs, une page souvenir qui reste joignable depuis l'accueil.
-  const items: NavItem[] = bets.access === 'locked' ? ITEMS
-    : [...ITEMS.filter((item) => item.to !== '/playoffs'), { to: '/paris', label: 'Paris', glyph: 'coin' }];
+  // Le Vestiaire (paris et votes) n'apparaît qu'une fois les paris ouverts au visiteur.
+  const items: NavItem[] = bets.access === 'locked' ? ITEMS : [...ITEMS, { to: '/paris', label: 'Vestiaire', glyph: 'coin' }];
 
   const handleItemClick = (to: string) => {
     if (location.pathname === to) {

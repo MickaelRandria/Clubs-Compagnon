@@ -45,7 +45,8 @@ async function claimSync() {
   return claimed?.eaClubId ? { id: claimed.id, eaClubId: claimed.eaClubId, platform: (claimed.platform ?? 'common-gen5') as Platform } : null;
 }
 
-function toPlayers(eaClubId: string, m: ClubMatch): MatchPlayer[] {
+/** Feuille de match d'une des deux équipes (la nôtre, ou l'adversaire depuis `ea_raw`). */
+export function toPlayers(eaClubId: string, m: ClubMatch): MatchPlayer[] {
   return Object.values(m.players?.[eaClubId] ?? {})
     .map((p) => ({
       gamertag: String(p.playername ?? ''),
@@ -103,6 +104,13 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
     ea.members.stats(request),
     ...MATCH_TYPES.map(([type]) => ea.matches.list({ ...request, type, limit: 10 })),
   ]);
+  // Classement de la saison (EA le cherche par nom) et palmarès des playoffs : secondaires,
+  // une panne ici ne doit pas faire échouer la synchro du reste.
+  const [ranking, playoffs] = await Promise.all([
+    info?.name ? ea.rankings.searchCurrentSeason({ name: info.name }).catch(() => []) : [],
+    ea.clubs.playoffAchievements(request).catch(() => []),
+  ]);
+  const season = ranking.find((entry) => String(entry.clubId) === target.eaClubId) ?? null;
   const db = getDb();
 
   if (overall) {
@@ -120,7 +128,7 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
       goalsAgainst: int(overall.goalsAgainst),
       leagueApps: int(overall.leagueAppearances),
       playoffApps: int(overall.gamesPlayedPlayoff),
-      eaRaw: { info, overall },
+      eaRaw: { info, overall, season, playoffs },
       updatedAt: sql`now()`,
     }).where(eq(clubs.id, target.id));
 

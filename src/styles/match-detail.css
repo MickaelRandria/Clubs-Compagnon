@@ -5,8 +5,9 @@
            font: 700 14px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; color: var(--fc-acier); }
 .fc-back:hover, .fc-back:focus-visible { outline: none; color: var(--fc-glacier); }
 
-.fc-detail { display: grid; gap: 6px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); grid-template-rows: auto auto 1fr;
-             grid-template-areas: "sheet form" "lineup form" "notes form"; }
+.fc-detail { display: grid; gap: 6px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); grid-template-rows: auto auto auto 1fr;
+             grid-template-areas: "sheet form" "duel form" "lineup form" "notes form"; }
+.fc-lineups { grid-area: lineup; display: flex; flex-direction: column; gap: 6px; }
 .fc-sheet { grid-area: sheet; min-height: 300px; }
 .fc-sheet-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .fc-sheet .fc-chip { align-self: flex-start; }
@@ -233,7 +234,7 @@ h2.fc-title { margin: 0; }
 }
 
 /* Feuille de match EA */
-.fc-lineup { grid-area: lineup; padding: 24px 28px 14px; }
+.fc-lineup { padding: 24px 28px 14px; }
 .fc-lineup-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; padding-bottom: 12px; }
 .fc-lineup-row { display: grid; align-items: center; gap: 10px; min-height: 52px;
                  grid-template-columns: minmax(0, 2.2fr) 58px 40px 40px 46px minmax(0, 1.1fr) 64px;

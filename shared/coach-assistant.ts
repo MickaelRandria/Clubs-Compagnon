@@ -27,8 +27,8 @@ export const COACH_JSON_SCHEMA = {
     action: {
       type: ['object', 'null'],
       properties: {
-        label: { type: 'string', description: 'Libellé court du bouton d’action (ex: "Ouvrir Mon Profil", "Voir les Stats", "Voir les Buteurs").' },
-        to: { type: 'string', description: 'Chemin interne dans l’app : /profil, /fc27, /joueurs, /matchs, /stats, ou /playoffs.' },
+        label: { type: 'string', description: 'Libellé court du bouton d’action (ex: "Ouvrir Mon Profil", "Voir le Club", "Voir l’effectif").' },
+        to: { type: 'string', description: 'Chemin interne dans l’app : /, /matchs, /joueurs, /club, /paris ou /profil.' },
       },
       required: ['label', 'to'],
       additionalProperties: false,
@@ -48,13 +48,13 @@ export const COACH_SYSTEM = `Tu es le "Coach IA" officiel du club "FoodBall Club
 Ton but principal est d'aider les joueurs et visiteurs à utiliser l'application et à trouver ce qu'ils cherchent immédiatement.
 
 CARTOGRAPHIE COMPLÈTE DE L'APPLICATION :
-- **/profil** : Page personnelle. Permet de se connecter avec son compte Discord, de lier son profil joueur parmi l'effectif du club, de consulter ses statistiques individuelles (OVR, buts, passes) et son statut d'administration.
-- **/fc27** : Hub de la saison FC 27 : résumé des stats EA du club, fiches joueurs, effectif et analyse tactique du staff. Le vote du nom est terminé : le club s'appelle FoodBall Club.
-- **/paris** : Vestiaire Bets. Chaque compte Discord reçoit 500 crédits (monnaie virtuelle, aucun argent réel) et parie avant le match : Verdict, Buts, Crack, Casserole, Le Mur, Carton rouge. L'admin ouvre les paris puis tape « Coup d'envoi » ; le score EA règle les paris tout seul, puis on vote le Crack et la Casserole.
-- **/joueurs** : Annuaire des joueurs du club, fiches détaillées, filtres par poste (ATT, MIL, DEF, GB) et classements (buteurs, passeurs, OVR).
-- **/matchs** : Historique des matchs de championnat et playoffs. En cliquant sur un match (/matchs/:id), on accède aux statistiques détaillées (possession, tirs), à l'analyse tactique "L'œil du Coach" et à l'espace notes de vestiaire.
-- **/stats** : Statistiques FC 27 du club, synchronisées depuis EA (Skill Rating, courbe des 30 derniers jours, bilans victoires/nuls/défaites, moyennes de buts).
-- **/playoffs** : Rétrospective de la soirée LAN Playoffs, récit épique du tournoi et galerie de photos souvenir.
+- **/** (Accueil) : série en cours calculée par EA, skill rating, dernier match avec le duel nous / eux, classement, hommes du match, prochaine nuit Inhouse.
+- **/matchs** : Historique des matchs de championnat et playoffs. En cliquant sur un match (/matchs/:id) : duel nous / eux (tirs, passes, tacles, notes), feuilles de match des deux équipes, analyse "L'œil du Coach" et notes de vestiaire.
+- **/joueurs** (Effectif) : classements (buteurs, passeurs, OVR) et filtres par poste. Chaque joueur a sa fiche (/joueurs/:id) : son Pro EA, hommes du match, % de victoires, de tirs, de tacles et de passes, forme sur ses 10 derniers matchs.
+- **/club** : classement EA de la saison, division, montées et descentes, palmarès (nuits Inhouse et playoffs EA), bilan complet (victoires, buts, courbe) et identité (stade, maillots). La rétrospective de la Nuit Inhouse 1 est sur /playoffs.
+- **/paris** (Vestiaire) : Vestiaire Bets. Chaque compte Discord reçoit 500 crédits (monnaie virtuelle, aucun argent réel) et parie avant le match sur le pari tiré au sort (Verdict, Buts, Crack, Casserole, Le Mur, Carton rouge, Rage-quit). Le score EA règle les paris tout seul, puis on vote le Crack et la Casserole.
+- **/profil** : Page personnelle. Permet de se connecter avec son compte Discord, de lier son profil joueur parmi l'effectif du club et de consulter son statut d'administration.
+- La préparation FC 27 (fiches, vote du nom) est terminée : le club s'appelle FoodBall Club.
 
 DIRECTIVES :
 1. Reste concis (1 à 3 petits paragraphes max), percutant, avec l'esprit d'un coach de vestiaire complice.
@@ -116,9 +116,9 @@ export function getDeterministicCoachFallback(question: string, club: Club | nul
 
   if (q.includes('vote') || q.includes('nom') || q.includes('fc27') || q.includes('fc 27') || q.includes('saison')) {
     return {
-      reply: "FC 27 est lancé et le club s'appelle désormais **FoodBall Club** ! Le résumé de la saison, ta fiche joueur et l'analyse du staff t'attendent dans l'onglet FC 27.",
-      action: { label: 'Ouvrir la saison FC 27', to: '/fc27' },
-      suggestedQuestions: ['Comment préparer ma fiche joueur ?', 'Quel est le bilan du club ?'],
+      reply: "FC 27 est lancé et le club s'appelle désormais **FoodBall Club** ! Le classement de la saison, la division et le palmarès sont dans l'onglet **Club**.",
+      action: { label: 'Voir le Club', to: '/club' },
+      suggestedQuestions: ['Quel est notre classement ?', 'Quel est le bilan du club ?'],
     };
   }
 
@@ -126,7 +126,7 @@ export function getDeterministicCoachFallback(question: string, club: Club | nul
     const topScorer = members.length > 0 ? [...members].sort((a, b) => b.goals - a.goals)[0] : null;
     const topScorerText = topScorer ? `Notre goleador actuel est **${topScorer.gamertag}** avec **${topScorer.goals} buts** au compteur.` : '';
     return {
-      reply: `${topScorerText} Tu peux retrouver l'ensemble des fiches joueurs, les ratios de passes et le classement complet dans la section **Joueurs**.`,
+      reply: `${topScorerText} Tu peux retrouver la fiche de chaque joueur, ses hommes du match et sa forme dans l'onglet **Effectif**.`,
       action: { label: 'Voir l’effectif et buteurs', to: '/joueurs' },
       suggestedQuestions: ['Quel est notre bilan général ?', 'Comment voir les matchs ?'],
     };
@@ -137,24 +137,24 @@ export function getDeterministicCoachFallback(question: string, club: Club | nul
       ? `FoodBall Club affiche un bilan de **${club.wins}V / ${club.draws}N / ${club.losses}D** pour **${club.gamesPlayed} matchs** disputés, avec un Skill Rating de **${club.skillRating} pts** (Meilleure division : ${club.bestDivision === null ? 'inconnue' : divisionLabel(club.bestDivision)}).`
       : 'Le club continue d’écrire son histoire sur le terrain !';
     return {
-      reply: `${statsText} Retrouve toutes les métriques détaillées et la progression sur 30 jours dans l'onglet **Stats**.`,
-      action: { label: 'Consulter les Stats', to: '/stats' },
+      reply: `${statsText} Classement, palmarès et bilan détaillé t'attendent dans l'onglet **Club**.`,
+      action: { label: 'Voir le Club', to: '/club' },
       suggestedQuestions: ['Qui est le meilleur buteur ?', 'Où revoir la soirée LAN ?'],
     };
   }
 
   if (q.includes('lan') || q.includes('playoff') || q.includes('soiree') || q.includes('photo')) {
     return {
-      reply: "La légendaire soirée LAN Playoffs du club est immortalisée dans l'onglet **Playoffs** ! Tu y trouveras le récapitulatif du tournoi ainsi que la galerie photos complète.",
-      action: { label: 'Voir la soirée Playoffs', to: '/playoffs' },
+      reply: "Les nuits Inhouse du club sont dans **Club › Palmarès** ! La Nuit Inhouse 1 a sa page avec le récit et la galerie photos.",
+      action: { label: 'Voir la Nuit Inhouse 1', to: '/playoffs' },
       suggestedQuestions: ['Quel est le bilan du club ?', 'Comment lier mon compte Discord ?'],
     };
   }
 
   return {
-    reply: "Je suis là pour t'accompagner sur l'app de FoodBall Club ! Tu peux naviguer entre le **Dashboard**, les fiches **Joueurs**, l'historique des **Matchs**, les **Stats** du club, la **LAN Playoffs** et la saison **FC 27**.",
-    action: { label: 'Voir le Dashboard', to: '/' },
-    suggestedQuestions: ['Comment lier mon profil Discord ?', 'Qui est notre meilleur buteur ?', 'Quel est le bilan FC 27 ?'],
+    reply: "Je suis là pour t'accompagner sur l'app de FoodBall Club ! Tu peux naviguer entre l'**Accueil**, les **Matchs**, l'**Effectif**, le **Club** et le **Vestiaire**.",
+    action: { label: 'Voir l’accueil', to: '/' },
+    suggestedQuestions: ['Comment lier mon profil Discord ?', 'Qui est notre meilleur buteur ?', 'Quel est notre classement ?'],
   };
 }
 

@@ -22,6 +22,18 @@ export interface Club {
   goalsAgainst: number;
   leagueApps: number;
   playoffApps: number;
+  /** Séries en cours, calculées par EA. */
+  winStreak: number;
+  unbeatenStreak: number;
+  promotions: number;
+  relegations: number;
+  /** Classement de la saison EA en cours (null tant qu'EA ne l'a pas renvoyé). */
+  season: { rank: number | null; division: number | null; points: number | null } | null;
+  /** Playoffs EA, de la saison la plus récente à la plus ancienne. */
+  playoffHistory: { season: string; division: number | null; finish: string | null }[];
+  stadium: string | null;
+  /** Couleurs des maillots (#rrggbb), 4 par tenue. */
+  kits: { home: string[]; away: string[]; third: string[] } | null;
 }
 
 export interface Member {
@@ -34,6 +46,16 @@ export interface Member {
   assists: number;
   avgRating: number | null;
   passPct: number | null;
+  /** Le Pro créé dans EA (nom affiché, taille en cm). */
+  proName: string | null;
+  heightCm: number | null;
+  winPct: number | null;
+  motm: number;
+  shotPct: number | null;
+  tacklePct: number | null;
+  redCards: number;
+  /** Ses 10 derniers matchs au club, du plus ancien au plus récent (feuilles de match EA). */
+  form: { matchId: number; goals: number; rating: number }[];
 }
 
 export interface Match {
@@ -46,6 +68,8 @@ export interface Match {
   result: MatchResult;
   possessionPct: number | null;
   shots: number | null;
+  /** L'adversaire a quitté le match. null : inconnu (match synchronisé avant le 28/10/2026). */
+  opponentQuit: boolean | null;
 }
 
 /** Ligne de la feuille de match EA, pour un joueur du club. */
@@ -81,4 +105,6 @@ export interface MatchDetail {
   /** Vide pour les matchs enregistrés avant la synchro des feuilles de match. */
   players: MatchPlayer[];
   notes: MatchNote[];
+  /** Feuille de match adverse et minutes jouées. null : match synchronisé avant le 28/10/2026. */
+  opponent: { players: MatchPlayer[]; minutes: number | null } | null;
 }

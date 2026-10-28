@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router';
 import { ApiError } from '../api/client';
 import { useMatchDetail, useMembers } from '../api/queries';
 import { MatchCoachDebrief } from '../components/matches/MatchCoachDebrief';
+import { MatchDuel } from '../components/matches/MatchDuel';
 import { MatchLineup } from '../components/matches/MatchLineup';
 import { MatchSheet } from '../components/matches/MatchSheet';
 import { NoteForm } from '../components/matches/NoteForm';
@@ -46,15 +47,22 @@ export function MatchDetailView() {
         <Glyph name="back" /> Retour
       </button>
       <DataGate queries={[detail, members]} skeleton={<Skeleton rows={[[[1.55, 1], 300], [[1.55, 1], 260]]} />}>
-        {() => (
-          <div className="fc-detail">
-            <MatchSheet match={detail.data!.match} />
-            <MatchLineup players={detail.data!.players ?? []} />
-            <MatchCoachDebrief matchId={matchId} />
-            <NoteForm matchId={matchId} members={members.data!} />
-            <NoteList notes={detail.data!.notes} />
-          </div>
-        )}
+        {() => {
+          const { match, players, notes, opponent } = detail.data!;
+          return (
+            <div className="fc-detail">
+              <MatchSheet match={match} minutes={opponent?.minutes ?? null} />
+              <MatchDuel ours={players ?? []} theirs={opponent?.players ?? []} opponent={match.opponent} />
+              <div className="fc-lineups">
+                <MatchLineup players={players ?? []} />
+                <MatchLineup players={opponent?.players ?? []} title={match.opponent} id="fc-lineup-opponent" />
+              </div>
+              <MatchCoachDebrief matchId={matchId} />
+              <NoteForm matchId={matchId} members={members.data!} />
+              <NoteList notes={notes} />
+            </div>
+          );
+        }}
       </DataGate>
     </div>
   );

@@ -7,13 +7,13 @@ const pct = (made: number, attempts: number) => (attempts > 0 ? `${Math.round((m
 /** Note EA : verte dès 7,5, rouge sous 6 — le reste reste neutre. */
 const ratingTone = (rating: number) => (rating >= 7.5 ? 'is-high' : rating < 6 ? 'is-low' : '');
 
-/** Feuille de match EA — une ligne par joueur du club, du mieux noté au moins bien noté. */
-export function MatchLineup({ players }: { players: MatchPlayer[] }) {
+/** Feuille de match EA — une ligne par joueur, du mieux noté au moins bien noté. La nôtre par défaut, ou celle de l'adversaire. */
+export function MatchLineup({ players, title = 'Feuille de match', id = 'fc-lineup-title' }: { players: MatchPlayer[]; title?: string; id?: string }) {
   if (players.length === 0) return null;
   return (
-    <section className="fc-block fc-marine fc-lineup" aria-labelledby="fc-lineup-title">
+    <section className="fc-block fc-marine fc-lineup" aria-labelledby={id}>
       <div className="fc-lineup-head">
-        <h2 id="fc-lineup-title" className="fc-title fc-title--md">Feuille de match</h2>
+        <h2 id={id} className="fc-title fc-title--md">{title}</h2>
         <span className="fc-muted">Stats EA · {players.length} joueur{players.length > 1 ? 's' : ''}</span>
       </div>
       <div className="fc-lineup-table" role="table" aria-label="Stats des joueurs sur ce match">

@@ -44,7 +44,7 @@ export const clubs = pgTable('clubs', {
   goalsAgainst: integer('goals_against').notNull().default(0),
   leagueApps: integer('league_apps').notNull().default(0),
   playoffApps: integer('playoff_apps').notNull().default(0),
-  /** Réponses EA brutes `{ info, overall }` (voir drizzle/0019_ea_raw.sql). */
+  /** Réponses EA brutes `{ info, overall, season, playoffs }` (voir drizzle/0019_ea_raw.sql). */
   eaRaw: jsonb('ea_raw'),
   /** Dernière synchro EA tentée — sert aussi de verrou (voir server/ea-sync.ts). */
   eaSyncedAt: timestamp('ea_synced_at', { withTimezone: true }),

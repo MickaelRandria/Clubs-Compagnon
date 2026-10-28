@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Member } from '../../../shared/types';
 import { frNum, pad2 } from '../../lib/format';
 import { useIsMobile } from '../../lib/hooks';
@@ -51,7 +52,7 @@ export function PlayersTable({
 
       {players.map((p, i) =>
         isMobile ? (
-          <div key={p.id} className="fc-prow fc-prow--m">
+          <Link key={p.id} to={`/joueurs/${p.id}`} className="fc-prow fc-prow--m">
             <span className="fc-rank">{pad2(firstRank + i)}</span>
             <span style={{ display: 'block', minWidth: 0 }}>
               <span className="fc-player">
@@ -75,9 +76,9 @@ export function PlayersTable({
               {meter(p)}
             </span>
             <OvrBadge ovr={p.ovr} />
-          </div>
+          </Link>
         ) : (
-          <div key={p.id} className="fc-prow">
+          <Link key={p.id} to={`/joueurs/${p.id}`} className="fc-prow">
             <span className="fc-rank">{pad2(firstRank + i)}</span>
             <span className="fc-player">
               <span className="fc-initials">{p.gamertag.slice(0, 2).toUpperCase()}</span>
@@ -95,7 +96,7 @@ export function PlayersTable({
               </span>
             ))}
             {meter(p)}
-          </div>
+          </Link>
         ),
       )}
     </div>

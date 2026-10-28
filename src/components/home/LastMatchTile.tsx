@@ -1,7 +1,6 @@
 import type { Match } from '../../../shared/types';
 import { timeAgo } from '../../lib/format';
 import { MATCH_TYPE_LABEL, RESULT } from '../../lib/labels';
-import { FC } from '../../lib/tokens';
 import { Glyph } from '../ui/Glyph';
 import { Tile } from '../ui/Tile';
 
@@ -38,11 +37,6 @@ export function LastMatchTile({ match }: { match: Match | undefined }) {
         </span>
       </span>
       <span className="fc-card-art">
-        <svg viewBox="0 0 200 196" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
-          <polygon points="70,0 200,0 200,196 20,196 90,104 45,112" fill={FC.glacier} opacity=".35" />
-          <polygon points="178,-4 192,-4 152,200 138,200" fill={FC.blue} />
-          <polygon points="200,130 160,196 200,196" fill={FC.marine} opacity=".14" />
-        </svg>
         <span className="fc-chip" style={{ background: r.bg, color: r.fg }}>
           {r.word}
         </span>

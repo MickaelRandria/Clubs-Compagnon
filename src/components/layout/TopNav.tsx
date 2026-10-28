@@ -3,6 +3,7 @@ import { useMe } from '../../api/auth';
 import { useProfile } from '../../api/profile';
 import { useBetsStatus } from '../../api/bets';
 import { useFC27 } from '../../api/fc27';
+import { useClub } from '../../api/queries';
 import { SHIELD_PATH } from '../../lib/shield';
 import { FC } from '../../lib/tokens';
 import { Glyph } from '../ui/Glyph';
@@ -29,6 +30,7 @@ export function TopNav() {
     : player ? 'Statistiques Club Pro' : pending ? 'Validation en attente' : 'Choisir mon joueur';
   const preparation = useFC27();
   const bets = useBetsStatus().status;
+  const club = useClub();
 
   return (
     <header className="fc-top">
@@ -52,6 +54,12 @@ export function TopNav() {
         <span className="fc-top-brand-text">
           FOODBALL<span>CLUB</span>
         </span>
+        {club.data && (
+          <span className="fc-top-brand-sr" title="Skill rating du club">
+            {club.data.skillRating}
+            <small>SR</small>
+          </span>
+        )}
       </Link>
 
       {/* Sur desktop : bande d'onglets */}

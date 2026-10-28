@@ -7,7 +7,7 @@ import { router } from './routes';
 import { PwaProvider } from './components/pwa/PwaProvider';
 import { persistOptions } from './lib/persist';
 
-// Ordre d'import = ordre de la cascade d'origine. responsive.css doit rester en dernier.
+// Ordre d'import = ordre de la cascade d'origine. responsive.css doit rester après les styles de page.
 import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/base.css';
@@ -29,6 +29,8 @@ import './styles/tour.css';
 import './styles/pwa.css';
 import './styles/coach.css';
 import './styles/responsive.css';
+// Thème FIFA 17 : ne touche qu'à la matière (couleurs, fonds, éclats), d'où sa place après responsive.css.
+import './styles/fifa17.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

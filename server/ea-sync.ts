@@ -104,13 +104,18 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
     ea.members.stats(request),
     ...MATCH_TYPES.map(([type]) => ea.matches.list({ ...request, type, limit: 10 })),
   ]);
-  // Classement de la saison (EA le cherche par nom) et palmarès des playoffs : secondaires,
-  // une panne ici ne doit pas faire échouer la synchro du reste.
-  const [ranking, playoffs] = await Promise.all([
+  // Classements (EA les cherche par nom), palmarès des playoffs et carrières des joueurs :
+  // secondaires, une panne ici ne doit pas faire échouer la synchro du reste.
+  const [ranking, allTimeRanking, playoffs, careers] = await Promise.all([
     info?.name ? ea.rankings.searchCurrentSeason({ name: info.name }).catch(() => []) : [],
+    info?.name ? ea.rankings.searchAllTime({ name: info.name }).catch(() => []) : [],
     ea.clubs.playoffAchievements(request).catch(() => []),
+    ea.members.careerStats(request).catch(() => null),
   ]);
-  const season = ranking.find((entry) => String(entry.clubId) === target.eaClubId) ?? null;
+  const ours = (entries: typeof ranking) => entries.find((entry) => String(entry.clubId) === target.eaClubId) ?? null;
+  const season = ours(ranking);
+  const allTime = ours(allTimeRanking);
+  const careerByName = new Map((careers?.members ?? []).map((c) => [c.name, c]));
   const db = getDb();
 
   if (overall) {
@@ -128,7 +133,7 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
       goalsAgainst: int(overall.goalsAgainst),
       leagueApps: int(overall.leagueAppearances),
       playoffApps: int(overall.gamesPlayedPlayoff),
-      eaRaw: { info, overall, season, playoffs },
+      eaRaw: { info, overall, season, allTime, playoffs },
       updatedAt: sql`now()`,
     }).where(eq(clubs.id, target.id));
 
@@ -152,7 +157,8 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
         avgRating: p.ratingAve ? String(between(Number(p.ratingAve), 0, 10)) : null,
         passPct: p.passSuccessRate ? between(int(p.passSuccessRate), 0, 100) : null,
         isActive: true,
-        eaRaw: p,
+        // `career` : la fiche EA du Pro sur toute sa carrière, tous clubs confondus.
+        eaRaw: { ...p, career: careerByName.get(p.name) ?? null },
         updatedAt: sql`now()`,
       };
       await db.insert(members).values({ clubId: target.id, gamertag: p.name, ...values })

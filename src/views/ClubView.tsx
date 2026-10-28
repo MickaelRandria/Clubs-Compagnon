@@ -79,16 +79,23 @@ function Ranking({ club }: { club: Club }) {
   const rank = season?.rank != null ? `${season.rank}e` : null;
   const division = season?.division != null ? divisionLabel(season.division) : null;
   const points = season?.points != null ? `${season.points} pts` : null;
+  const record = season ? `${season.wins} V · ${season.draws} N · ${season.losses} D` : null;
   return (
     <section id="classement" className="fc-club-section" aria-label="Classement">
       <h2 className="fc-section-head">Classement <small>Saison EA en cours</small></h2>
       <div className="fc-club-row">
         <StatTile label={rank ? 'Rang' : 'Division actuelle'} value={rank ?? division ?? '—'} text={!rank}
-          sub={[rank && division, points].filter(Boolean).join(' · ') || 'En attente du classement EA'} tone="principal" />
+          sub={[rank && division, points, record].filter(Boolean).join(' · ') || 'En attente du classement EA'} tone="principal" />
         <StatTile label="Meilleure div." value={club.bestDivision === null ? '—' : divisionLabel(club.bestDivision)} text delay={60} />
         <StatTile label="Montées" value={club.promotions} delay={120} />
         <StatTile label="Descentes" value={club.relegations} tone="discret" delay={180} />
       </div>
+      {season && (
+        <div className="fc-stats-bottom">
+          <StatTile label="Buts saison" value={season.goalsFor} sub={`${season.goalsAgainst} encaissés`} delay={200} />
+          <StatTile label="Clean sheets" value={season.cleanSheets} sub="cette saison" delay={250} />
+        </div>
+      )}
     </section>
   );
 }

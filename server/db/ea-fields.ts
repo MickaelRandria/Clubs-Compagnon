@@ -43,7 +43,11 @@ export function clubExtras(eaRaw: unknown): ClubExtras {
     unbeatenStreak: num(overall.unbeatenstreak) ?? 0,
     promotions: num(overall.promotions) ?? 0,
     relegations: num(overall.relegations) ?? 0,
-    season: season && { rank: num(season.rank), division: num(season.currentDivision), points: num(season.points) },
+    season: season && {
+      rank: num(season.rank), division: num(season.currentDivision), points: num(season.points),
+      wins: num(season.wins) ?? 0, draws: num(season.ties) ?? 0, losses: num(season.losses) ?? 0,
+      goalsFor: num(season.goals) ?? 0, goalsAgainst: num(season.goalsAgainst) ?? 0, cleanSheets: num(season.cleanSheets) ?? 0,
+    },
     playoffHistory: playoffs
       .sort((a, b) => (num(b.seasonId) ?? 0) - (num(a.seasonId) ?? 0))
       .map((p) => ({
@@ -56,11 +60,19 @@ export function clubExtras(eaRaw: unknown): ClubExtras {
   };
 }
 
-export type MemberExtras = Pick<Member, 'proName' | 'heightCm' | 'winPct' | 'motm' | 'shotPct' | 'tacklePct' | 'redCards'>;
+export type MemberExtras = Pick<Member, 'proName' | 'heightCm' | 'winPct' | 'motm' | 'shotPct' | 'tacklePct' | 'redCards' | 'career'>;
 
 export function memberExtras(eaRaw: unknown): MemberExtras {
   const raw = obj(eaRaw);
+  const career = raw.career ? obj(raw.career) : null;
   return {
+    career: career && {
+      matches: num(career.gamesPlayed) ?? 0,
+      goals: num(career.goals) ?? 0,
+      assists: num(career.assists) ?? 0,
+      motm: num(career.manOfTheMatch) ?? 0,
+      rating: num(career.ratingAve),
+    },
     proName: text(raw.proName),
     heightCm: num(raw.proHeight),
     winPct: num(raw.winRate),

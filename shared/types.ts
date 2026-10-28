@@ -27,8 +27,11 @@ export interface Club {
   unbeatenStreak: number;
   promotions: number;
   relegations: number;
-  /** Classement de la saison EA en cours (null tant qu'EA ne l'a pas renvoyé). */
-  season: { rank: number | null; division: number | null; points: number | null } | null;
+  /** Saison EA en cours (null tant qu'EA ne l'a pas renvoyée). EA ne publie pas toujours le rang. */
+  season: {
+    rank: number | null; division: number | null; points: number | null;
+    wins: number; draws: number; losses: number; goalsFor: number; goalsAgainst: number; cleanSheets: number;
+  } | null;
   /** Playoffs EA, de la saison la plus récente à la plus ancienne. */
   playoffHistory: { season: string; division: number | null; finish: string | null }[];
   stadium: string | null;
@@ -54,6 +57,8 @@ export interface Member {
   shotPct: number | null;
   tacklePct: number | null;
   redCards: number;
+  /** Toute sa carrière Pro Clubs, tous clubs confondus (null : EA ne l'a pas renvoyée). */
+  career: { matches: number; goals: number; assists: number; motm: number; rating: number | null } | null;
   /** Ses 10 derniers matchs au club, du plus ancien au plus récent (feuilles de match EA). */
   form: { matchId: number; goals: number; rating: number }[];
 }

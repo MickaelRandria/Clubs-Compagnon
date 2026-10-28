@@ -39,6 +39,30 @@ export function PlayerView() {
   );
 }
 
+/** Toute sa carrière Pro Clubs : la part jouée chez nous, et ce qu'il a fait ailleurs. */
+function Career({ player: p, career }: { player: Member; career: NonNullable<Member['career']> }) {
+  const elsewhere = Math.max(0, career.matches - p.matchesPlayed);
+  const share = career.matches > 0 ? Math.round((p.matchesPlayed / career.matches) * 100) : null;
+  return (
+    <>
+      <h2 className="fc-pro-section">Carrière <small>tous clubs confondus</small></h2>
+      <div className="fc-pro-counts">
+        {([[career.matches, 'Matchs'], [career.goals, 'Buts'], [career.assists, 'Passes D']] as const).map(([value, label]) => (
+          <span key={label}><b>{value}</b>{label}</span>
+        ))}
+      </div>
+      <ProLine label="Matchs au FoodBall Club" value={share === null ? '—' : `${share} %`} pct={share} active />
+      <ProLine label="Hommes du match" value={String(career.motm)} pct={career.matches > 0 ? (career.motm / career.matches) * 100 : null} />
+      <ProLine label="Note moyenne" value={career.rating === null ? '—' : frNum(career.rating, 1)} pct={career.rating === null ? null : career.rating * 10} />
+      <p className="fc-muted fc-pro-note">
+        {elsewhere > 0
+          ? `Avant ou ailleurs : ${elsewhere} matchs, ${Math.max(0, career.goals - p.goals)} buts, ${Math.max(0, career.assists - p.assists)} passes D.`
+          : 'Toute sa carrière Pro Clubs s’est jouée au FoodBall Club.'}
+      </p>
+    </>
+  );
+}
+
 function ProSheet({ player: p }: { player: Member }) {
   const motmPct = p.matchesPlayed > 0 ? Math.round((p.motm / p.matchesPlayed) * 100) : null;
   const pro = [p.proName && `Pro : ${p.proName}`, p.heightCm && `${frNum(p.heightCm / 100, 2)} m`].filter(Boolean).join(' · ');
@@ -59,7 +83,7 @@ function ProSheet({ player: p }: { player: Member }) {
       </div>
 
       <section className="fc-block fc-marine fc-pro" aria-label={`Saison de ${p.gamertag}`}>
-        <h2 className="fc-pro-section">Saison <small>au club</small></h2>
+        <h2 className="fc-pro-section">Au club <small>depuis son arrivée</small></h2>
         <div className="fc-pro-counts">
           {([[p.matchesPlayed, 'Matchs'], [p.goals, 'Buts'], [p.assists, 'Passes D']] as const).map(([value, label]) => (
             <span key={label}><b>{value}</b>{label}</span>
@@ -72,6 +96,8 @@ function ProSheet({ player: p }: { player: Member }) {
         <ProLine label="Tirs réussis" value={percent(p.shotPct)} pct={p.shotPct} />
         <ProLine label="Tacles réussis" value={percent(p.tacklePct)} pct={p.tacklePct} />
         <ProLine label="Cartons rouges" value={String(p.redCards)} />
+
+        {p.career && <Career player={p} career={p.career} />}
 
         <h2 className="fc-pro-section">Forme <small>buts et note, ses {p.form.length} derniers matchs</small></h2>
         {p.form.length === 0 ? (

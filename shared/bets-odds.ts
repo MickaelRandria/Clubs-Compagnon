@@ -14,6 +14,8 @@ export interface FormMatch {
   goalsAgainst: number;
   /** null : feuille de match inconnue. */
   redCard: boolean | null;
+  /** L'adversaire a quitté le match. Absent ou null : inconnu (synchro antérieure à la migration 0019). */
+  opponentQuit?: boolean | null;
   /** Note EA de chaque joueur présent, par id de membre. */
   ratings: Record<number, number>;
 }
@@ -49,19 +51,23 @@ function probabilities<T extends string>(outcomes: T[], history: T[]): Record<T,
 const goalsBucket = (goals: number) => (goals <= 1 ? '0-1' : goals <= 3 ? '2-3' : '4+');
 
 type Labeled = { id: string; label: string };
-const FIXED: Record<'verdict' | 'goals' | 'cleansheet' | 'red', Labeled[]> = {
+const FIXED: Record<'verdict' | 'goals' | 'cleansheet' | 'red' | 'ragequit', Labeled[]> = {
   verdict: [{ id: 'win', label: 'Victoire' }, { id: 'draw', label: 'Nul' }, { id: 'loss', label: 'Défaite' }],
   goals: [{ id: '0-1', label: '0 ou 1' }, { id: '2-3', label: '2 ou 3' }, { id: '4+', label: '4 et plus' }],
   cleansheet: [{ id: 'oui', label: 'Oui' }, { id: 'non', label: 'Non' }],
   red: [{ id: 'oui', label: 'Oui' }, { id: 'non', label: 'Non' }],
+  ragequit: [{ id: 'oui', label: 'Oui' }, { id: 'non', label: 'Non' }],
 };
+
+const yesNo = (value: boolean) => (value ? 'oui' : 'non');
 
 function teamOdds(id: keyof typeof FIXED, history: FormMatch[]): Record<string, number> {
   const ids = FIXED[id].map((o) => o.id);
   const seen = id === 'verdict' ? history.map((m) => m.result)
     : id === 'goals' ? history.map((m) => goalsBucket(m.goalsFor))
-    : id === 'cleansheet' ? history.map((m) => (m.goalsAgainst === 0 ? 'oui' : 'non'))
-    : history.filter((m) => m.redCard !== null).map((m) => (m.redCard ? 'oui' : 'non'));
+    : id === 'cleansheet' ? history.map((m) => yesNo(m.goalsAgainst === 0))
+    : id === 'red' ? history.flatMap((m) => (m.redCard === null ? [] : [yesNo(m.redCard)]))
+    : history.flatMap((m) => (m.opponentQuit == null ? [] : [yesNo(m.opponentQuit)]));
   const p = probabilities(ids, seen);
   return Object.fromEntries(ids.map((o) => [o, toOdds(p[o])]));
 }
@@ -103,10 +109,13 @@ export function priceMarket(id: MarketId, history: FormMatch[], players: FormPla
 }
 
 /** Tirage pondéré : les paris d'équipe sortent plus souvent ; jamais deux fois le même d'affilée. */
-const POOL: [MarketId, number][] = [['verdict', 3], ['goals', 3], ['crack', 2], ['flop', 2], ['cleansheet', 2], ['red', 1]];
+const POOL: [MarketId, number][] = [['verdict', 3], ['goals', 3], ['crack', 2], ['flop', 2], ['cleansheet', 2], ['red', 1], ['ragequit', 1]];
 
-export function drawMarket(previous: MarketId | null, random: () => number = Math.random): MarketId {
-  const pool = POOL.filter(([id]) => id !== previous);
+/** Matchs à l'issue connue qu'il faut avant de coter un abandon : en dessous, la cote serait du hasard. */
+export const RAGEQUIT_MIN_KNOWN = 10;
+
+export function drawMarket(previous: MarketId | null, random: () => number = Math.random, excluded: MarketId[] = []): MarketId {
+  const pool = POOL.filter(([id]) => id !== previous && !excluded.includes(id));
   const total = pool.reduce((sum, [, w]) => sum + w, 0);
   let roll = random() * total;
   for (const [id, w] of pool) { roll -= w; if (roll < 0) return id; }
@@ -114,7 +123,8 @@ export function drawMarket(previous: MarketId | null, random: () => number = Mat
 }
 
 export function openMatchBet(previous: MarketId | null, history: FormMatch[], players: FormPlayer[], random?: () => number): Opening {
-  const id = drawMarket(previous, random);
+  const known = history.filter((m) => m.opponentQuit != null).length;
+  const id = drawMarket(previous, random, known >= RAGEQUIT_MIN_KNOWN ? [] : ['ragequit']);
   return { markets: [priceMarket(id, history, players)], context: { reason: formReason(history[0]) } };
 }
 

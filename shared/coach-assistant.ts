@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { divisionLabel } from './division.js';
 import type { Club, Member } from './types.js';
 
 export const coachActionSchema = z.object({
@@ -84,7 +85,7 @@ export function buildCoachPrompt(
     clubContext = `CONTEXTE ACTUEL DU CLUB :
 - Nom : ${club.name}
 - Matchs joués : ${club.gamesPlayed} (${club.wins} victoires, ${club.draws} nuls, ${club.losses} défaites)
-- Meilleure division atteinte : Division ${club.bestDivision}
+- Meilleure division atteinte : ${club.bestDivision === null ? 'inconnue' : divisionLabel(club.bestDivision)}
 - Skill Rating : ${club.skillRating} points
 - Buts marqués : ${club.goalsFor} | Buts encaissés : ${club.goalsAgainst}
 - Meilleur buteur : ${topScorer ? `${topScorer.gamertag} (${topScorer.goals} buts en ${topScorer.matchesPlayed} matchs)` : 'N/A'}
@@ -133,7 +134,7 @@ export function getDeterministicCoachFallback(question: string, club: Club | nul
 
   if (q.includes('stats') || q.includes('bilan') || q.includes('classement') || q.includes('skill') || q.includes('division')) {
     const statsText = club
-      ? `FoodBall Club affiche un bilan de **${club.wins}V / ${club.draws}N / ${club.losses}D** pour **${club.gamesPlayed} matchs** disputés, avec un Skill Rating de **${club.skillRating} pts** (Meilleure division : ${club.bestDivision}).`
+      ? `FoodBall Club affiche un bilan de **${club.wins}V / ${club.draws}N / ${club.losses}D** pour **${club.gamesPlayed} matchs** disputés, avec un Skill Rating de **${club.skillRating} pts** (Meilleure division : ${club.bestDivision === null ? 'inconnue' : divisionLabel(club.bestDivision)}).`
       : 'Le club continue d’écrire son histoire sur le terrain !';
     return {
       reply: `${statsText} Retrouve toutes les métriques détaillées et la progression sur 30 jours dans l'onglet **Stats**.`,

@@ -103,7 +103,7 @@ export function tally(targets: number[]): Tally {
 
 export const CURRENCY = { name: 'crédits', short: 'CR' } as const;
 
-export type MarketId = 'crack' | 'flop' | 'verdict' | 'goals' | 'cleansheet' | 'red';
+export type MarketId = 'crack' | 'flop' | 'verdict' | 'goals' | 'cleansheet' | 'red' | 'ragequit';
 export type SlipStatus = 'pending' | 'won' | 'lost' | 'refunded';
 
 /** Textes des paris. Les options et leurs cotes viennent du serveur, seule source des cotes. */
@@ -114,9 +114,10 @@ export const MARKET_COPY: Record<MarketId, { title: string; question: string; em
   flop: { title: 'La Casserole', question: 'Qui va tenter la roulette de trop ?', emoji: '🍳' },
   cleansheet: { title: 'Le Mur', question: 'Zéro but encaissé ?', emoji: '🧱' },
   red: { title: 'Carton rouge', question: 'Un des nôtres prend un rouge ?', emoji: '🟥' },
+  ragequit: { title: 'Le Rage-quit', question: 'L’adversaire quitte avant la fin ?', emoji: '🏃' },
 };
 /** Ordre d'affichage : les paris d'équipe d'abord, les plus simples à comprendre. */
-export const MARKET_ORDER: MarketId[] = ['verdict', 'goals', 'crack', 'flop', 'cleansheet', 'red'];
+export const MARKET_ORDER: MarketId[] = ['verdict', 'goals', 'crack', 'flop', 'cleansheet', 'red', 'ragequit'];
 
 /** `trend` : effet du dernier match sur la cote (positif = elle monte). Absent sur les anciennes rencontres. */
 export interface MarketOption { id: string; label: string; odds: number; trend?: number }
@@ -143,7 +144,7 @@ export interface BetsState {
   leaderboard: { accountId: number; name: string; balance: number; me: boolean }[];
 }
 
-const market = z.enum(['crack', 'flop', 'verdict', 'goals', 'cleansheet', 'red']);
+const market = z.enum(['crack', 'flop', 'verdict', 'goals', 'cleansheet', 'red', 'ragequit']);
 const id = z.number().int().positive();
 
 /** Actions d'un parieur. Les cotes ne sont jamais acceptées du client. */

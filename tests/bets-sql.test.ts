@@ -17,12 +17,12 @@ let rina: number, chef: number, absent: number;
 const playerOdds = () => [rina, chef, absent].map((memberId, i) => ({
   memberId, gamertag: ['Rina', 'Chef', 'Absent'][i], crack: [1.8, 2.5, 6][i], flop: [6, 3, 1.5][i],
 }));
-const playedMatch = async (minutesAgo: number, goalsFor: number, goalsAgainst: number, red = 0) => {
+const playedMatch = async (minutesAgo: number, goalsFor: number, goalsAgainst: number, red = 0, opponentQuit: boolean | null = null) => {
   const result = goalsFor > goalsAgainst ? 'win' : goalsFor < goalsAgainst ? 'loss' : 'draw';
   const stats = JSON.stringify([{ gamertag: 'Rina', redCards: red }, { gamertag: 'Chef', redCards: 0 }]);
-  return (await one<{ id: number }>(`insert into matches(club_id, ea_match_id, played_at, match_type, opponent_name, goals_for, goals_against, result, player_stats)
-    values (1, $1, now() - $2::interval, 'league', 'Adversaire', $3, $4, $5, $6::jsonb) returning id`,
-  [`ea-${Math.random()}`, `${minutesAgo} minutes`, goalsFor, goalsAgainst, result, stats])).id;
+  return (await one<{ id: number }>(`insert into matches(club_id, ea_match_id, played_at, match_type, opponent_name, goals_for, goals_against, result, player_stats, opponent_quit)
+    values (1, $1, now() - $2::interval, 'league', 'Adversaire', $3, $4, $5, $6::jsonb, $7) returning id`,
+  [`ea-${Math.random()}`, `${minutesAgo} minutes`, goalsFor, goalsAgainst, result, stats, opponentQuit])).id;
 };
 const backdate = (minutes: number) => db.exec(`update bet_fixtures set opened_at = opened_at - interval '${minutes} minutes',
   locked_at = locked_at - interval '${minutes} minutes'; update bet_slips set created_at = created_at - interval '${minutes} minutes'`);
@@ -173,4 +173,21 @@ test('pari unique tiré au sort : seul ce pari est jouable, réglé sans vote pa
   assert.equal(state.votes.length, 0, 'pas de vote pour un pari réglé par le score');
   assert.equal(state.history[0].mySlips[0].status, 'won');
   assert.equal(state.wallet.balance, before - 100 + 220);
+});
+
+test('rage-quit : réglé par l’abandon EA, remboursé si l’abandon est inconnu', async () => {
+  const markets = [{ id: 'ragequit', options: [{ id: 'oui', label: 'Oui', odds: 4, trend: 0 }, { id: 'non', label: 'Non', odds: 1.2, trend: 0 }] }];
+  const play = async (opponentQuit: boolean | null) => {
+    const fixture = (await call('open', admin, { markets, context: { reason: null } }, true)).fixture!;
+    await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'ragequit', option: 'oui', stake: 50 }] });
+    await call('lock', admin, {}, true);
+    await backdate(30);
+    await playedMatch(3, 3, 0, 0, opponentQuit);
+    return (await call('state', fan)).history[0].mySlips[0];
+  };
+  const before = (await call('state', fan)).wallet.balance;
+  assert.equal((await play(true)).status, 'won');
+  assert.equal((await play(null)).status, 'refunded');
+  assert.equal((await play(false)).status, 'lost');
+  assert.equal((await call('state', fan)).wallet.balance, before + 200 - 50 - 50, 'abandon à 4.00 : 50 → 200');
 });

@@ -88,6 +88,9 @@ function toMatchRow(clubId: number, eaClubId: string, type: 'league' | 'playoff'
     possessionPct: null,
     shots: shots === undefined ? null : int(shots),
     playerStats: toPlayers(eaClubId, m),
+    eaRaw: m,
+    // EA marque `winnerByDnf` sur le club vainqueur d'un match que l'adversaire n'a pas fini.
+    opponentQuit: ours.winnerByDnf === undefined || ours.winnerByDnf === null ? null : int(ours.winnerByDnf) > 0,
   };
 }
 
@@ -117,6 +120,7 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
       goalsAgainst: int(overall.goalsAgainst),
       leagueApps: int(overall.leagueAppearances),
       playoffApps: int(overall.gamesPlayedPlayoff),
+      eaRaw: { info, overall },
       updatedAt: sql`now()`,
     }).where(eq(clubs.id, target.id));
 
@@ -140,6 +144,7 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
         avgRating: p.ratingAve ? String(between(Number(p.ratingAve), 0, 10)) : null,
         passPct: p.passSuccessRate ? between(int(p.passSuccessRate), 0, 100) : null,
         isActive: true,
+        eaRaw: p,
         updatedAt: sql`now()`,
       };
       await db.insert(members).values({ clubId: target.id, gamertag: p.name, ...values })
@@ -152,10 +157,14 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
 
   const rows = MATCH_TYPES.flatMap(([, type], i) => lists[i].map((m) => toMatchRow(target.id, target.eaClubId, type, m)))
     .filter((row) => row !== null);
-  // Mise à jour de la feuille de match : les matchs déjà en base la reçoivent aussi.
+  // Mise à jour de la feuille de match : les matchs déjà en base la reçoivent aussi, tant qu'EA les renvoie.
   if (rows.length > 0) {
     await db.insert(matches).values(rows)
-      .onConflictDoUpdate({ target: matches.eaMatchId, set: { playerStats: sql`excluded.player_stats` } });
+      .onConflictDoUpdate({ target: matches.eaMatchId, set: {
+        playerStats: sql`excluded.player_stats`,
+        eaRaw: sql`excluded.ea_raw`,
+        opponentQuit: sql`excluded.opponent_quit`,
+      } });
   }
   // Un nouveau match peut régler les paris en attente (Vestiaire Bets).
   await db.execute(sql`select bets_settle()`).catch((error) => console.error('[ea-sync] règlement des paris impossible :', error));

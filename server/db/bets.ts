@@ -62,7 +62,7 @@ interface StatsRow { gamertag?: string; rating?: number; redCards?: number }
 export async function buildOpening() {
   const db = getDb();
   const [matchRows, memberRows, previousRows] = await Promise.all([
-    db.execute(sql`select opponent_name, result, goals_for, goals_against, player_stats from matches
+    db.execute(sql`select opponent_name, result, goals_for, goals_against, player_stats, opponent_quit from matches
       where club_id = (select min(id) from clubs) order by played_at desc limit 20`),
     db.execute(sql`select id, gamertag, avg_rating from members where club_id = (select min(id) from clubs) and is_active order by gamertag`),
     db.execute(sql`select markets->0->>'id' as market from bet_fixtures where markets is not null order by id desc limit 1`),
@@ -73,7 +73,8 @@ export async function buildOpening() {
     const ratings: Record<number, number> = {};
     for (const p of stats ?? []) { const id = byTag.get(String(p.gamertag)); if (id !== undefined && p.rating) ratings[id] = Number(p.rating); }
     return { opponent: String(r.opponent_name), result: r.result as FormMatch['result'], goalsFor: Number(r.goals_for),
-      goalsAgainst: Number(r.goals_against), redCard: stats && stats.length ? stats.some((p) => Number(p.redCards) > 0) : null, ratings };
+      goalsAgainst: Number(r.goals_against), redCard: stats && stats.length ? stats.some((p) => Number(p.redCards) > 0) : null,
+      opponentQuit: r.opponent_quit === null ? null : Boolean(r.opponent_quit), ratings };
   });
   const recent = new Set(history.slice(0, 10).flatMap((m) => Object.keys(m.ratings).map(Number)));
   const players: FormPlayer[] = memberRows.rows

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, lte, sql } from 'drizzle-orm';
 import type { NewMatchNote } from '../../shared/notes.js';
 import type { Club, Match, MatchDetail, MatchNote, Member } from '../../shared/types.js';
 import { syncFromEa } from '../ea-sync.js';
@@ -6,7 +6,11 @@ import { HttpError } from '../http.js';
 import { getDb } from './client.js';
 import { clubRatingSnapshots, clubs, matches, matchNotes, members } from './schema.js';
 
-type MatchRow = typeof matches.$inferSelect;
+// Les réponses EA brutes (`ea_raw`) pèsent lourd et ne servent qu'au serveur : les lectures les laissent en base.
+const { eaRaw: _matchRaw, ...matchColumns } = getTableColumns(matches);
+const { eaRaw: _memberRaw, ...memberColumns } = getTableColumns(members);
+
+type MatchRow = Omit<typeof matches.$inferSelect, 'eaRaw'>;
 type NoteRow = typeof matchNotes.$inferSelect;
 
 const toMatch = (m: MatchRow): Match => ({
@@ -73,7 +77,7 @@ export async function fetchMembers(): Promise<Member[]> {
   await syncFromEa();
   const club = await requireClub();
   const rows = await getDb()
-    .select()
+    .select(memberColumns)
     .from(members)
     .where(and(eq(members.clubId, club.id), eq(members.isActive, true)))
     .orderBy(asc(members.id)); // ordre d'arrivée : départage les ex æquo comme avant
@@ -95,7 +99,7 @@ export async function fetchMatches(limit: number): Promise<Match[]> {
   await syncFromEa();
   const club = await requireClub();
   const rows = await getDb()
-    .select()
+    .select(matchColumns)
     .from(matches)
     .where(eq(matches.clubId, club.id))
     .orderBy(desc(matches.playedAt))
@@ -105,7 +109,7 @@ export async function fetchMatches(limit: number): Promise<Match[]> {
 
 async function requireMatch(clubId: number, matchId: number) {
   const [match] = await getDb()
-    .select()
+    .select(matchColumns)
     .from(matches)
     .where(and(eq(matches.id, matchId), eq(matches.clubId, clubId)))
     .limit(1);

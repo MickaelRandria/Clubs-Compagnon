@@ -1,3 +1,4 @@
+import { divisionLabel } from '../../shared/division';
 import { useClub, useMatches } from '../api/queries';
 import { AveragesTile } from '../components/stats/AveragesTile';
 import { CareerTile } from '../components/stats/CareerTile';
@@ -36,7 +37,7 @@ export function StatsView() {
               */}
               <StatTile label="Ligue" value={c.leagueApps} sub="apparitions" delay={200} />
               <StatTile label="Playoff" value={c.playoffApps} sub="apparitions" delay={250} />
-              <StatTile label="Meilleure div." value={c.bestDivision === null ? '—' : `Div. ${c.bestDivision}`} text tone="discret" delay={300} />
+              <StatTile label="Meilleure div." value={c.bestDivision === null ? '—' : divisionLabel(c.bestDivision)} text tone="discret" delay={300} />
               <StatTile label="Réputation" value={c.reputation} text tone="discret" delay={350} />
             </div>
           </div>

@@ -44,6 +44,8 @@ export const clubs = pgTable('clubs', {
   goalsAgainst: integer('goals_against').notNull().default(0),
   leagueApps: integer('league_apps').notNull().default(0),
   playoffApps: integer('playoff_apps').notNull().default(0),
+  /** Réponses EA brutes `{ info, overall }` (voir drizzle/0019_ea_raw.sql). */
+  eaRaw: jsonb('ea_raw'),
   /** Dernière synchro EA tentée — sert aussi de verrou (voir server/ea-sync.ts). */
   eaSyncedAt: timestamp('ea_synced_at', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -79,6 +81,8 @@ export const members = pgTable(
     avgRating: numeric('avg_rating', { precision: 3, scale: 1 }),
     passPct: smallint('pass_pct'),
     isActive: boolean('is_active').notNull().default(true),
+    /** Fiche EA brute du joueur (voir drizzle/0019_ea_raw.sql). */
+    eaRaw: jsonb('ea_raw'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -108,6 +112,10 @@ export const matches = pgTable(
     shots: smallint('shots'),
     /** Feuille de match EA des joueurs du club (voir server/ea-sync.ts). */
     playerStats: jsonb('player_stats').$type<MatchPlayer[]>(),
+    /** Match EA brut, les deux équipes comprises (voir drizzle/0019_ea_raw.sql). */
+    eaRaw: jsonb('ea_raw'),
+    /** L'adversaire a quitté le match. null : inconnu (synchro antérieure). */
+    opponentQuit: boolean('opponent_quit'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

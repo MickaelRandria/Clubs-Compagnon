@@ -17,7 +17,7 @@ test('après une défaite, la cote de la défaite baisse et celle de la victoire
 });
 
 test('cotes bornées et arrondies à 0,05 ; un historique vide reste jouable', () => {
-  for (const id of ['verdict', 'goals', 'cleansheet', 'red'] as const) {
+  for (const id of ['verdict', 'goals', 'cleansheet', 'red', 'ragequit'] as const) {
     for (const history of [[], mixed, Array(20).fill(match('win', 6, 0))]) {
       for (const o of priceMarket(id, history, []).options) {
         assert.ok(o.odds >= ODDS_MIN && o.odds <= ODDS_MAX, `${id} ${o.odds}`);
@@ -43,7 +43,17 @@ test('tirage : jamais deux fois le même pari d’affilée, tous les paris peuve
     assert.notEqual(id, 'verdict');
     seen.add(id);
   }
-  assert.deepEqual([...seen].sort(), ['cleansheet', 'crack', 'flop', 'goals', 'red']);
+  assert.deepEqual([...seen].sort(), ['cleansheet', 'crack', 'flop', 'goals', 'ragequit', 'red']);
+});
+
+test('rage-quit : jamais tiré tant que moins de 10 matchs ont une issue connue', () => {
+  const unknown = Array(20).fill(match('win', 3, 1));
+  const known = Array(10).fill(match('win', 3, 1, { opponentQuit: false }));
+  const draws = (history: typeof unknown) => new Set(Array.from({ length: 1000 }, (_, i) => openMatchBet(null, history, [], () => i / 1000).markets[0].id));
+  assert.ok(!draws(unknown).has('ragequit'));
+  assert.ok(draws(known).has('ragequit'));
+  const odds = priceMarket('ragequit', [...known, match('win', 3, 0, { opponentQuit: true })], []).options;
+  assert.ok(odds.find((o) => o.id === 'oui')!.odds > odds.find((o) => o.id === 'non')!.odds, 'l’abandon reste l’issue rare');
 });
 
 test('ouverture : un seul pari et la phrase de contexte du dernier match', () => {

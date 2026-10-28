@@ -1,12 +1,13 @@
-import { and, asc, desc, eq, getTableColumns, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, isNotNull, lte, sql } from 'drizzle-orm';
 import type { ClubMatch } from 'proclubs-sdk';
 import type { NewMatchNote } from '../../shared/notes.js';
+import { opponentStrength } from '../../shared/skill-rating.js';
 import type { Club, Match, MatchDetail, MatchNote, Member } from '../../shared/types.js';
 import { syncFromEa, toPlayers } from '../ea-sync.js';
-import { clubExtras, memberExtras } from './ea-fields.js';
+import { clubExtras, kitColor, memberExtras, opponentClubSheet } from './ea-fields.js';
 import { HttpError } from '../http.js';
 import { getDb } from './client.js';
-import { clubRatingSnapshots, clubs, matches, matchNotes, members } from './schema.js';
+import { clubRatingSnapshots, clubs, matches, matchNotes, members, opponentClubs } from './schema.js';
 
 // Les matchs EA bruts (`ea_raw`) pèsent lourd : les listes les laissent en base, seule la fiche d'un match les lit.
 const { eaRaw: _matchRaw, ...matchColumns } = getTableColumns(matches);
@@ -25,6 +26,9 @@ const toMatch = (m: MatchRow): Match => ({
   possessionPct: m.possessionPct,
   shots: m.shots,
   opponentQuit: m.opponentQuit,
+  opponentSkillRating: m.opponentSkillRating,
+  ourSkillRating: m.ourSkillRating,
+  opponentSrEstimated: m.opponentSrEstimated,
 });
 
 const toNote = (n: NoteRow, motmGamertag: string | null): MatchNote => ({
@@ -73,6 +77,28 @@ export async function fetchClub(): Promise<Club> {
     leagueApps: club.leagueApps,
     playoffApps: club.playoffApps,
     ...clubExtras(club.eaRaw),
+    opponents: await opponentsSummary(club.id),
+  };
+}
+
+/** Niveau de nos adversaires : moyenne des 10 derniers connus, bilan selon l'écart de niveau. */
+async function opponentsSummary(clubId: number): Promise<Club['opponents']> {
+  const rows = await getDb()
+    .select({ result: matches.result, ours: matches.ourSkillRating, theirs: matches.opponentSkillRating })
+    .from(matches)
+    .where(and(eq(matches.clubId, clubId), isNotNull(matches.opponentSkillRating)))
+    .orderBy(desc(matches.playedAt));
+  const recent = rows.slice(0, 10);
+  const blank = () => ({ wins: 0, draws: 0, losses: 0 });
+  const record: Club['opponents']['record'] = { stronger: blank(), even: blank(), weaker: blank() };
+  for (const r of rows) {
+    const strength = opponentStrength(r.ours, r.theirs);
+    if (strength) record[strength][r.result === 'win' ? 'wins' : r.result === 'draw' ? 'draws' : 'losses']++;
+  }
+  return {
+    averageSr: recent.length > 0 ? Math.round(recent.reduce((sum, r) => sum + r.theirs!, 0) / recent.length) : null,
+    sample: recent.length,
+    record,
   };
 }
 
@@ -147,7 +173,7 @@ async function requireMatch(clubId: number, matchId: number) {
 export async function fetchMatchDetail(matchId: number): Promise<MatchDetail> {
   const club = await requireClub();
   const match = await requireMatch(club.id, matchId);
-  const [rows, [raw]] = await Promise.all([
+  const [rows, [raw], [sheet], headToHead] = await Promise.all([
     getDb()
       .select({ note: matchNotes, motmGamertag: members.gamertag })
       .from(matchNotes)
@@ -155,6 +181,14 @@ export async function fetchMatchDetail(matchId: number): Promise<MatchDetail> {
       .where(eq(matchNotes.matchId, matchId))
       .orderBy(desc(matchNotes.createdAt)),
     getDb().select({ eaRaw: matches.eaRaw }).from(matches).where(eq(matches.id, matchId)).limit(1),
+    match.opponentEaClubId
+      ? getDb().select().from(opponentClubs).where(eq(opponentClubs.eaClubId, match.opponentEaClubId)).limit(1)
+      : Promise.resolve([]),
+    match.opponentEaClubId
+      ? getDb().select(matchColumns).from(matches)
+        .where(and(eq(matches.clubId, club.id), eq(matches.opponentEaClubId, match.opponentEaClubId)))
+        .orderBy(desc(matches.playedAt))
+      : Promise.resolve([match]),
   ]);
 
   return {
@@ -162,15 +196,24 @@ export async function fetchMatchDetail(matchId: number): Promise<MatchDetail> {
     players: match.playerStats ?? [],
     notes: rows.map((r) => toNote(r.note, r.motmGamertag)),
     opponent: opponentSheet(raw?.eaRaw as ClubMatch | null, match.opponentEaClubId),
+    opponentClub: sheet ? opponentClubSheet(sheet.overall, sheet.fetchedAt) : null,
+    headToHead: headToHead.map(toMatch),
   };
 }
 
-/** Feuille adverse et durée du match, lues dans le match EA brut. */
+/** Moins des trois quarts du temps de jeu du plus présent : parti en cours de match. */
+const LEFT_EARLY = 0.75;
+
+/** Feuille adverse, durée du match et couleur du maillot adverse, lues dans le match EA brut. */
 function opponentSheet(raw: ClubMatch | null, opponentEaClubId: string | null): MatchDetail['opponent'] {
   if (!raw || !opponentEaClubId) return null;
   const seconds = Object.values(raw.players ?? {}).flatMap((team) => Object.values(team).map((p) => Number(p.secondsPlayed) || 0));
   const longest = Math.max(0, ...seconds);
-  return { players: toPlayers(opponentEaClubId, raw), minutes: longest > 0 ? Math.round(longest / 60) : null };
+  const played = new Map(Object.values(raw.players?.[opponentEaClubId] ?? {})
+    .map((p) => [String(p.playername ?? ''), Number(p.secondsPlayed) || 0]));
+  const players = toPlayers(opponentEaClubId, raw).map((p) =>
+    (longest > 0 && (played.get(p.gamertag) ?? longest) < longest * LEFT_EARLY ? { ...p, leftEarly: true } : p));
+  return { players, minutes: longest > 0 ? Math.round(longest / 60) : null, kitColor: kitColor(raw, opponentEaClubId) };
 }
 
 export async function addMatchNote(matchId: number, input: NewMatchNote): Promise<MatchNote> {

@@ -57,5 +57,26 @@
       "#1d4230",
       "#1d4230"
     ]
+  },
+  "opponents": {
+    "averageSr": 1536,
+    "sample": 10,
+    "record": {
+      "stronger": {
+        "wins": 1,
+        "draws": 0,
+        "losses": 0
+      },
+      "even": {
+        "wins": 2,
+        "draws": 0,
+        "losses": 0
+      },
+      "weaker": {
+        "wins": 5,
+        "draws": 2,
+        "losses": 0
+      }
+    }
   }
 }

@@ -9,7 +9,10 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 8,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1433,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 212,
@@ -21,7 +24,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 9,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1615,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 213,
@@ -33,7 +39,10 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 7,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1576,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 214,
@@ -45,7 +54,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 9,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1516,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 215,
@@ -57,7 +69,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 12,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1541,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 151,
@@ -69,7 +84,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 10,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1521,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 131,
@@ -81,7 +99,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 6,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1722,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 132,
@@ -93,7 +114,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 10,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1689,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 133,
@@ -105,7 +129,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 13,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1271,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 121,
@@ -117,7 +144,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 17,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1476,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   {
     "id": 111,
@@ -129,7 +159,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 6,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 112,
@@ -141,7 +174,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 5,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 113,
@@ -153,7 +189,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 13,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 114,
@@ -165,7 +204,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 11,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 11,
@@ -177,7 +219,10 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 8,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 12,
@@ -189,7 +234,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 5,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 13,
@@ -201,7 +249,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 10,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 14,
@@ -213,7 +264,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 9,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 15,
@@ -225,7 +279,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 10,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 16,
@@ -237,7 +294,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 0,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 17,
@@ -249,7 +309,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 5,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 18,
@@ -261,7 +324,10 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 8,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 19,
@@ -273,7 +339,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 6,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   {
     "id": 20,
@@ -285,6 +354,9 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 9,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   }
 ]

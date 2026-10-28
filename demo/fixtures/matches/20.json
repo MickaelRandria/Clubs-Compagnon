@@ -9,7 +9,10 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 9,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -104,5 +107,23 @@
     }
   ],
   "notes": [],
-  "opponent": null
+  "opponent": null,
+  "headToHead": [
+    {
+      "id": 20,
+      "playedAt": "2026-10-22T22:11:13.000Z",
+      "type": "league",
+      "opponent": "Atlas Wolves",
+      "goalsFor": 4,
+      "goalsAgainst": 4,
+      "result": "draw",
+      "possessionPct": null,
+      "shots": 9,
+      "opponentQuit": null,
+      "opponentSkillRating": null,
+      "ourSkillRating": null,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": null
 }

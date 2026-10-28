@@ -9,7 +9,10 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 8,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1433,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -122,6 +125,37 @@
         "motm": false
       }
     ],
-    "minutes": 91
+    "minutes": 91,
+    "kitColor": "#f2f2f2"
+  },
+  "headToHead": [
+    {
+      "id": 211,
+      "playedAt": "2026-10-27T22:56:21.000Z",
+      "type": "league",
+      "opponent": "Le Saloon",
+      "goalsFor": 5,
+      "goalsAgainst": 5,
+      "result": "draw",
+      "possessionPct": null,
+      "shots": 8,
+      "opponentQuit": false,
+      "opponentSkillRating": 1433,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1433,
+    "wins": 14,
+    "draws": 2,
+    "losses": 19,
+    "gamesPlayed": 35,
+    "goalsFor": 99,
+    "goalsAgainst": 115,
+    "winStreak": 0,
+    "unbeatenStreak": 0,
+    "bestDivision": 6,
+    "fetchedAt": "2026-10-28T14:20:22.015Z"
   }
 }

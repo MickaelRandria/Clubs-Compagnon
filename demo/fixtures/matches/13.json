@@ -9,7 +9,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 10,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -74,5 +77,23 @@
     }
   ],
   "notes": [],
-  "opponent": null
+  "opponent": null,
+  "headToHead": [
+    {
+      "id": 13,
+      "playedAt": "2026-10-25T10:25:14.000Z",
+      "type": "league",
+      "opponent": "GuardianRanking",
+      "goalsFor": 2,
+      "goalsAgainst": 6,
+      "result": "loss",
+      "possessionPct": null,
+      "shots": 10,
+      "opponentQuit": null,
+      "opponentSkillRating": null,
+      "ourSkillRating": null,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": null
 }

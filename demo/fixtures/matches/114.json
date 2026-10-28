@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 11,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -74,5 +77,23 @@
     }
   ],
   "notes": [],
-  "opponent": null
+  "opponent": null,
+  "headToHead": [
+    {
+      "id": 114,
+      "playedAt": "2026-10-26T20:17:23.000Z",
+      "type": "league",
+      "opponent": "Vallée Ouveze",
+      "goalsFor": 4,
+      "goalsAgainst": 1,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 11,
+      "opponentQuit": null,
+      "opponentSkillRating": null,
+      "ourSkillRating": null,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": null
 }

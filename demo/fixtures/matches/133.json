@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 13,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1271,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -122,6 +125,37 @@
         "motm": false
       }
     ],
-    "minutes": 92
+    "minutes": 92,
+    "kitColor": "#f2f2f2"
+  },
+  "headToHead": [
+    {
+      "id": 133,
+      "playedAt": "2026-10-26T21:46:04.000Z",
+      "type": "league",
+      "opponent": "lékipdebeauvais",
+      "goalsFor": 5,
+      "goalsAgainst": 3,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 13,
+      "opponentQuit": false,
+      "opponentSkillRating": 1271,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1271,
+    "wins": 108,
+    "draws": 31,
+    "losses": 156,
+    "gamesPlayed": 295,
+    "goalsFor": 964,
+    "goalsAgainst": 1125,
+    "winStreak": 0,
+    "unbeatenStreak": 0,
+    "bestDivision": null,
+    "fetchedAt": "2026-10-28T14:20:22.024Z"
   }
 }

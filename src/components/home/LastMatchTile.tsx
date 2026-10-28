@@ -1,3 +1,4 @@
+import { FEAT_LABEL, matchFeat, srText } from '../../../shared/skill-rating';
 import type { Match, MatchPlayer } from '../../../shared/types';
 import { useMatchDetail } from '../../api/queries';
 import { timeAgo } from '../../lib/format';
@@ -39,6 +40,7 @@ export function LastMatchTile({ match }: { match: Match | undefined }) {
   }
 
   const r = RESULT[match.result];
+  const feat = matchFeat(match);
   const ours = detail.data?.players ?? [];
   const theirs = detail.data?.opponent?.players ?? [];
   const oursPass = passPct(ours);
@@ -48,14 +50,20 @@ export function LastMatchTile({ match }: { match: Match | undefined }) {
     <Tile className="fc-card fc-card--last" to={`/matchs/${match.id}`} delay={70}>
       <span className="fc-last-head">
         <span className="fc-title fc-title--md">Dernier match</span>
-        <span className="fc-muted">{MATCH_TYPE_LABEL[match.type]} · {timeAgo(match.playedAt)}</span>
+        <span className="fc-muted">
+          {[MATCH_TYPE_LABEL[match.type], timeAgo(match.playedAt),
+            match.opponentSkillRating !== null && `SR adv. ${srText(match.opponentSkillRating, match.opponentSrEstimated)}`].filter(Boolean).join(' · ')}
+        </span>
       </span>
       <span className="fc-last-score">
         <span>FoodBall</span>
         <span className="fc-score">{match.goalsFor}<span>–</span>{match.goalsAgainst}</span>
         <span>{match.opponent}</span>
       </span>
-      <span className="fc-chip" style={{ background: r.bg, color: r.fg }}>{match.opponentQuit ? `${r.word} · abandon adverse` : r.word}</span>
+      <span className="fc-last-chips">
+        <span className="fc-chip" style={{ background: r.bg, color: r.fg }}>{match.opponentQuit ? `${r.word} · abandon adverse` : r.word}</span>
+        {feat && <span className={`fc-sheet-type fc-sheet-type--${feat}`}>{FEAT_LABEL[feat]}</span>}
+      </span>
       {ours.length > 0 && theirs.length > 0 && (
         <span className="fc-last-duel">
           <DuelLine label="Tirs" ours={total(ours, 'shots')} theirs={total(theirs, 'shots')} />

@@ -9,7 +9,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 13,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -74,5 +77,23 @@
     }
   ],
   "notes": [],
-  "opponent": null
+  "opponent": null,
+  "headToHead": [
+    {
+      "id": 113,
+      "playedAt": "2026-10-26T20:35:32.000Z",
+      "type": "league",
+      "opponent": "AS Boufféré",
+      "goalsFor": 1,
+      "goalsAgainst": 2,
+      "result": "loss",
+      "possessionPct": null,
+      "shots": 13,
+      "opponentQuit": null,
+      "opponentSkillRating": null,
+      "ourSkillRating": null,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": null
 }

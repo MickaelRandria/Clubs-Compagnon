@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 17,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1476,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -107,6 +110,37 @@
         "motm": false
       }
     ],
-    "minutes": 92
+    "minutes": 92,
+    "kitColor": null
+  },
+  "headToHead": [
+    {
+      "id": 121,
+      "playedAt": "2026-10-26T21:24:26.000Z",
+      "type": "league",
+      "opponent": "DuckbillBoyz FC",
+      "goalsFor": 4,
+      "goalsAgainst": 2,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 17,
+      "opponentQuit": false,
+      "opponentSkillRating": 1476,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1476,
+    "wins": 61,
+    "draws": 15,
+    "losses": 74,
+    "gamesPlayed": 150,
+    "goalsFor": 409,
+    "goalsAgainst": 478,
+    "winStreak": 0,
+    "unbeatenStreak": 0,
+    "bestDivision": 4,
+    "fetchedAt": "2026-10-28T14:20:22.025Z"
   }
 }

@@ -9,7 +9,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 0,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -44,5 +47,23 @@
     }
   ],
   "notes": [],
-  "opponent": null
+  "opponent": null,
+  "headToHead": [
+    {
+      "id": 16,
+      "playedAt": "2026-10-23T22:03:55.000Z",
+      "type": "league",
+      "opponent": "Sun Tzu Footy",
+      "goalsFor": 1,
+      "goalsAgainst": 5,
+      "result": "loss",
+      "possessionPct": null,
+      "shots": 0,
+      "opponentQuit": null,
+      "opponentSkillRating": null,
+      "ourSkillRating": null,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": null
 }

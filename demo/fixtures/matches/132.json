@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 10,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1689,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -119,9 +122,41 @@
         "tackleAttempts": 2,
         "saves": 0,
         "redCards": 0,
-        "motm": false
+        "motm": false,
+        "leftEarly": true
       }
     ],
-    "minutes": 93
+    "minutes": 93,
+    "kitColor": "#f2f2f2"
+  },
+  "headToHead": [
+    {
+      "id": 132,
+      "playedAt": "2026-10-26T22:07:22.000Z",
+      "type": "league",
+      "opponent": "LZ TEAM",
+      "goalsFor": 6,
+      "goalsAgainst": 4,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 10,
+      "opponentQuit": false,
+      "opponentSkillRating": 1689,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1689,
+    "wins": 38,
+    "draws": 4,
+    "losses": 31,
+    "gamesPlayed": 73,
+    "goalsFor": 266,
+    "goalsAgainst": 250,
+    "winStreak": 8,
+    "unbeatenStreak": 8,
+    "bestDivision": 5,
+    "fetchedAt": "2026-10-28T14:20:22.023Z"
   }
 }

@@ -13,7 +13,7 @@ function streakTitle(club: Club) {
 export function StreakTile({ club, last }: { club: Club; last: Match | undefined }) {
   const lastLine = last ? `Dernier : ${last.goalsFor}–${last.goalsAgainst} contre ${last.opponent}. ` : '';
   return (
-    <Tile className="fc-hero fc-series" to="/club" delay={0}>
+    <Tile className="fc-hero fc-series" to="/club#niveau" delay={0}>
       <span className="fc-hero-copy">
         <span className="fc-badge">Série en cours · EA</span>
         <span className="fc-title fc-title--xl">{streakTitle(club)}</span>

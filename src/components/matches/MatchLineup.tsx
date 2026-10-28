@@ -33,6 +33,7 @@ export function MatchLineup({ players, title = 'Feuille de match', id = 'fc-line
               <strong>{p.gamertag}</strong>
               {p.motm && <span className="fc-lineup-motm" title="Homme du match">★ HDM</span>}
               {p.redCards > 0 && <span className="fc-lineup-red" title="Carton rouge" aria-label="Carton rouge" />}
+              {p.leftEarly && <span className="fc-lineup-left" title="A quitté le match bien avant la fin">Parti</span>}
             </span>
             <span role="cell" className={`fc-lineup-rating ${ratingTone(p.rating)}`}>{frNum(p.rating, 1)}</span>
             <span role="cell" className={p.goals > 0 ? 'is-on' : undefined}>{p.goals}</span>

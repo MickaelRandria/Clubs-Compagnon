@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 6,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1722,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -137,6 +140,37 @@
         "motm": false
       }
     ],
-    "minutes": 92
+    "minutes": 92,
+    "kitColor": "#f2f2f2"
+  },
+  "headToHead": [
+    {
+      "id": 131,
+      "playedAt": "2026-10-26T22:26:18.000Z",
+      "type": "league",
+      "opponent": "LaEsquina",
+      "goalsFor": 3,
+      "goalsAgainst": 0,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 6,
+      "opponentQuit": false,
+      "opponentSkillRating": 1722,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1722,
+    "wins": 109,
+    "draws": 26,
+    "losses": 94,
+    "gamesPlayed": 229,
+    "goalsFor": 789,
+    "goalsAgainst": 764,
+    "winStreak": 1,
+    "unbeatenStreak": 1,
+    "bestDivision": 3,
+    "fetchedAt": "2026-10-28T14:20:22.022Z"
   }
 }

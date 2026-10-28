@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 9,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1615,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -152,6 +155,37 @@
         "motm": false
       }
     ],
-    "minutes": 91
+    "minutes": 91,
+    "kitColor": "#dfa0a5"
+  },
+  "headToHead": [
+    {
+      "id": 212,
+      "playedAt": "2026-10-27T22:36:06.000Z",
+      "type": "league",
+      "opponent": "SshhhhFC",
+      "goalsFor": 4,
+      "goalsAgainst": 1,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 9,
+      "opponentQuit": false,
+      "opponentSkillRating": 1615,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1615,
+    "wins": 24,
+    "draws": 10,
+    "losses": 15,
+    "gamesPlayed": 49,
+    "goalsFor": 161,
+    "goalsAgainst": 151,
+    "winStreak": 1,
+    "unbeatenStreak": 3,
+    "bestDivision": null,
+    "fetchedAt": "2026-10-28T14:20:22.017Z"
   }
 }

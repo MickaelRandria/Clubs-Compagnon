@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { MatchPlayer } from '../../../shared/types';
 import { frNum } from '../../lib/format';
 
@@ -27,12 +28,14 @@ const ROWS: [label: string, value: (t: Totals) => number | null, format: (n: num
 ];
 
 /** Duel « Nous contre eux » : les totaux des deux feuilles de match EA, ligne à ligne. */
-export function MatchDuel({ ours, theirs, opponent }: { ours: MatchPlayer[]; theirs: MatchPlayer[]; opponent: string }) {
+export function MatchDuel({ ours, theirs, opponent, color = null }: { ours: MatchPlayer[]; theirs: MatchPlayer[]; opponent: string; color?: string | null }) {
   if (ours.length === 0 || theirs.length === 0) return null;
   const a = totals(ours);
   const b = totals(theirs);
   return (
-    <section className="fc-block fc-marine fc-versus" aria-labelledby="fc-versus-title">
+    // Leur côté prend la couleur de leur maillot quand elle se lit sur le thème.
+    <section className="fc-block fc-marine fc-versus" aria-labelledby="fc-versus-title"
+      style={color ? { '--fc-them': color } as CSSProperties : undefined}>
       <h2 id="fc-versus-title" className="fc-section-head">Nous contre eux <small>{ours.length} joueurs contre {theirs.length}</small></h2>
       <div className="fc-versus-legend"><span>FoodBall</span><span>{opponent}</span></div>
       {ROWS.map(([label, value, format]) => {

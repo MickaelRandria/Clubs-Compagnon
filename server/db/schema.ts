@@ -116,6 +116,11 @@ export const matches = pgTable(
     eaRaw: jsonb('ea_raw'),
     /** L'adversaire a quitté le match. null : inconnu (synchro antérieure). */
     opponentQuit: boolean('opponent_quit'),
+    /** Skill ratings des deux clubs au moment du match (voir drizzle/0020_opponents.sql). */
+    opponentSkillRating: integer('opponent_skill_rating'),
+    ourSkillRating: integer('our_skill_rating'),
+    opponentSrEstimated: boolean('opponent_sr_estimated').notNull().default(false),
+    opponentCheckedAt: timestamp('opponent_checked_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -126,6 +131,14 @@ export const matches = pgTable(
     check('matches_shots_check', sql`${t.shots} >= 0`),
   ],
 );
+
+/** Dernière fiche EA (`clubs.overallStats`) de chaque club rencontré. */
+export const opponentClubs = pgTable('opponent_clubs', {
+  eaClubId: text('ea_club_id').primaryKey(),
+  name: text('name').notNull(),
+  overall: jsonb('overall').notNull(),
+  fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 // Compléments saisis à la main — ces infos ne viennent jamais de l'API EA.
 export const matchNotes = pgTable(

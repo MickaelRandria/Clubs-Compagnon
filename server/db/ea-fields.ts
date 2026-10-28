@@ -1,4 +1,4 @@
-import type { Club, Member } from '../../shared/types.js';
+import type { Club, MatchDetail, Member } from '../../shared/types.js';
 
 // Lecture des réponses EA brutes (`ea_raw`, voir drizzle/0019_ea_raw.sql) : EA renvoie des
 // nombres en texte et omet les champs inconnus, d'où les lectures défensives.
@@ -81,4 +81,35 @@ export function memberExtras(eaRaw: unknown): MemberExtras {
     tacklePct: num(raw.tackleSuccessRate),
     redCards: num(raw.redCards) ?? 0,
   };
+}
+
+/** Fiche EA d'un club adverse (`clubs.overallStats`, table opponent_clubs). */
+export function opponentClubSheet(overall: unknown, fetchedAt: Date): NonNullable<MatchDetail['opponentClub']> {
+  const raw = obj(overall);
+  const sr = num(raw.skillRating);
+  return {
+    skillRating: sr && sr > 0 ? sr : null,
+    wins: num(raw.wins) ?? 0,
+    draws: num(raw.ties) ?? 0,
+    losses: num(raw.losses) ?? 0,
+    gamesPlayed: num(raw.gamesPlayed) ?? 0,
+    goalsFor: num(raw.goals) ?? 0,
+    goalsAgainst: num(raw.goalsAgainst) ?? 0,
+    winStreak: num(raw.wstreak) ?? 0,
+    unbeatenStreak: num(raw.unbeatenstreak) ?? 0,
+    bestDivision: num(raw.bestDivision),
+    fetchedAt: fetchedAt.toISOString(),
+  };
+}
+
+/**
+ * Couleur principale du maillot d'un club, lue dans un match EA brut. null si elle est trop
+ * sombre pour se voir sur les panneaux du thème : le front garde alors sa couleur neutre.
+ */
+export function kitColor(match: unknown, eaClubId: string): string | null {
+  const club = obj(obj(obj(match).clubs)[eaClubId]);
+  const color = hex(obj(obj(club.details).customKit).kitColor1);
+  if (!color) return null;
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16) / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.18 ? null : color;
 }

@@ -9,7 +9,10 @@
     "result": "loss",
     "possessionPct": null,
     "shots": 5,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -59,5 +62,23 @@
     }
   ],
   "notes": [],
-  "opponent": null
+  "opponent": null,
+  "headToHead": [
+    {
+      "id": 17,
+      "playedAt": "2026-10-23T21:51:18.000Z",
+      "type": "league",
+      "opponent": "MAKILA FC",
+      "goalsFor": 1,
+      "goalsAgainst": 2,
+      "result": "loss",
+      "possessionPct": null,
+      "shots": 5,
+      "opponentQuit": null,
+      "opponentSkillRating": null,
+      "ourSkillRating": null,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": null
 }

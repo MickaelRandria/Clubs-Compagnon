@@ -9,7 +9,10 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 8,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -59,5 +62,23 @@
     }
   ],
   "notes": [],
-  "opponent": null
+  "opponent": null,
+  "headToHead": [
+    {
+      "id": 11,
+      "playedAt": "2026-10-25T11:04:48.000Z",
+      "type": "league",
+      "opponent": "DaronneàLabris5",
+      "goalsFor": 3,
+      "goalsAgainst": 3,
+      "result": "draw",
+      "possessionPct": null,
+      "shots": 8,
+      "opponentQuit": null,
+      "opponentSkillRating": null,
+      "ourSkillRating": null,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": null
 }

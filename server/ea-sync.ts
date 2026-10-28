@@ -1,8 +1,8 @@
 import { ProClubsClient, resolveReputationLabel, type ClubMatch, type Platform } from 'proclubs-sdk';
-import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNotNull, isNull, notInArray, sql } from 'drizzle-orm';
 import type { MatchPlayer, Position } from '../shared/types.js';
 import { getDb } from './db/client.js';
-import { clubRatingSnapshots, clubs, matches, members } from './db/schema.js';
+import { clubRatingSnapshots, clubs, matches, members, opponentClubs } from './db/schema.js';
 
 // Synchronisation du club depuis l'API publique Pro Clubs d'EA (via proclubs-sdk).
 //
@@ -21,6 +21,11 @@ const MATCH_TYPES = [
   ['playoffMatch', 'playoff'],
   ['friendlyMatch', 'friendly'],
 ] as const;
+
+/** Fiches adverses lues par synchro : les matchs déjà en base sont rattrapés par paquets. */
+const OPPONENT_BATCH = 10;
+/** Lu plus tard, le skill rating adverse n'est plus forcément celui du jour du match. */
+const FRESH_MATCH_MS = 3 * 3_600_000;
 
 const POSITIONS: Record<string, Position> = { forward: 'FW', midfielder: 'MF', defender: 'DF', goalkeeper: 'GK' };
 
@@ -180,8 +185,51 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
         opponentQuit: sql`excluded.opponent_quit`,
       } });
   }
+  await rateOpponents(ea, target.id, overall ? int(overall.skillRating) : null)
+    .catch((error) => console.error('[ea-sync] niveau des adversaires indisponible :', error));
   // Un nouveau match peut régler les paris en attente (Vestiaire Bets).
   await db.execute(sql`select bets_settle()`).catch((error) => console.error('[ea-sync] règlement des paris impossible :', error));
+}
+
+/**
+ * Skill rating des adversaires. EA ne le met pas dans les matchs : on lit la fiche de chaque
+ * club adverse et on fige sur le match son SR et le nôtre (dernier relevé avant le coup d'envoi).
+ * Un club introuvable compte comme lu ; une panne EA laisse le match à relire au passage suivant.
+ */
+export async function rateOpponents(ea: Pick<ProClubsClient, 'clubs'>, clubId: number, currentSr: number | null) {
+  const db = getDb();
+  const pending = await db
+    .select({ id: matches.id, playedAt: matches.playedAt, opponentName: matches.opponentName, opponentId: matches.opponentEaClubId })
+    .from(matches)
+    .where(and(eq(matches.clubId, clubId), isNull(matches.opponentCheckedAt), isNotNull(matches.opponentEaClubId)))
+    .orderBy(desc(matches.playedAt))
+    .limit(OPPONENT_BATCH);
+  if (pending.length === 0) return;
+
+  // Par club : sa fiche, null s'il est introuvable chez EA, undefined si EA n'a pas répondu.
+  const names = new Map(pending.map((m) => [m.opponentId!, m.opponentName]));
+  const sheets = new Map(await Promise.all([...names.keys()].map(async (id) =>
+    [id, await ea.clubs.overallStats({ clubId: id }).catch(() => undefined)] as const)));
+  for (const [id, sheet] of sheets) {
+    if (!sheet) continue;
+    await db.insert(opponentClubs).values({ eaClubId: id, name: names.get(id)!, overall: sheet })
+      .onConflictDoUpdate({ target: opponentClubs.eaClubId, set: { name: names.get(id)!, overall: sheet, fetchedAt: sql`now()` } });
+  }
+
+  const snapshots = await db.select().from(clubRatingSnapshots).where(eq(clubRatingSnapshots.clubId, clubId))
+    .orderBy(asc(clubRatingSnapshots.takenAt));
+  for (const m of pending) {
+    const sheet = sheets.get(m.opponentId!);
+    if (sheet === undefined) continue;
+    const sr = int(sheet?.skillRating, 0);
+    const ours = snapshots.filter((s) => s.takenAt <= m.playedAt).at(-1)?.skillRating ?? currentSr;
+    await db.update(matches).set({
+      opponentSkillRating: sr > 0 ? sr : null,
+      ourSkillRating: ours,
+      opponentSrEstimated: Date.now() - m.playedAt.getTime() > FRESH_MATCH_MS,
+      opponentCheckedAt: sql`now()`,
+    }).where(eq(matches.id, m.id));
+  }
 }
 
 /**

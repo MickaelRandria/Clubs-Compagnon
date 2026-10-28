@@ -7,6 +7,7 @@ import { MatchLineup } from '../components/matches/MatchLineup';
 import { MatchSheet } from '../components/matches/MatchSheet';
 import { NoteForm } from '../components/matches/NoteForm';
 import { NoteList } from '../components/matches/NoteList';
+import { OpponentCard } from '../components/matches/OpponentCard';
 import { DataGate } from '../components/ui/DataGate';
 import { Glyph } from '../components/ui/Glyph';
 import { NotFoundBlock } from '../components/ui/NotFoundBlock';
@@ -52,7 +53,8 @@ export function MatchDetailView() {
           return (
             <div className="fc-detail">
               <MatchSheet match={match} minutes={opponent?.minutes ?? null} />
-              <MatchDuel ours={players ?? []} theirs={opponent?.players ?? []} opponent={match.opponent} />
+              <OpponentCard detail={detail.data!} />
+              <MatchDuel ours={players ?? []} theirs={opponent?.players ?? []} opponent={match.opponent} color={opponent?.kitColor} />
               <div className="fc-lineups">
                 <MatchLineup players={players ?? []} />
                 <MatchLineup players={opponent?.players ?? []} title={match.opponent} id="fc-lineup-opponent" />

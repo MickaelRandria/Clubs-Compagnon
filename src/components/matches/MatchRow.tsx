@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { FEAT_LABEL, matchFeat, srText } from '../../../shared/skill-rating';
 import type { Match } from '../../../shared/types';
 import { formatShortDate, timeAgo } from '../../lib/format';
 import { MATCH_TYPE_LABEL, RESULT } from '../../lib/labels';
@@ -9,6 +10,8 @@ import { Meter } from '../ui/Meter';
 export function MatchRow({ match, mobile }: { match: Match; mobile: boolean }) {
   const r = RESULT[match.result];
   const type = MATCH_TYPE_LABEL[match.type];
+  const feat = matchFeat(match);
+  const sr = match.opponentSkillRating === null ? null : `SR ${srText(match.opponentSkillRating, match.opponentSrEstimated)}`;
   const res = (
     <span className="fc-res" style={{ background: r.bg, color: r.fg }} title={r.word}>
       {r.letter}
@@ -24,6 +27,8 @@ export function MatchRow({ match, mobile }: { match: Match; mobile: boolean }) {
         </span>
       )}
       {match.opponentQuit && <span className="fc-mtype-badge fc-mtype-badge--quit">Abandon</span>}
+      {feat && <span className={`fc-mtype-badge fc-mtype-badge--${feat}`}>{FEAT_LABEL[feat]}</span>}
+      {!mobile && sr && <span className="fc-muted fc-opp-sr">{sr}</span>}
     </span>
   );
   const score = (
@@ -40,6 +45,7 @@ export function MatchRow({ match, mobile }: { match: Match; mobile: boolean }) {
   if (mobile) {
     const details = [
       timeAgo(match.playedAt),
+      sr,
       match.possessionPct !== null && `${match.possessionPct}% poss.`,
       match.shots !== null && `${match.shots} tirs`,
     ].filter(Boolean);

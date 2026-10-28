@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { divisionLabel } from '../../shared/division';
+import { levelDivision, SR_DIVISIONS, SR_SURVEY_DATE, SR_TOP100, SR_WORLD_BEST, type Strength } from '../../shared/skill-rating';
 import type { Club } from '../../shared/types';
 import { useClub, useMatches } from '../api/queries';
 import { AveragesTile } from '../components/stats/AveragesTile';
@@ -14,13 +15,15 @@ import { formatShortDate } from '../lib/format';
 import { usePageTitle } from '../lib/hooks';
 
 const SECTIONS = [
+  ['niveau', 'Niveau'],
   ['classement', 'Classement'],
+  ['adversaires', 'Adversaires'],
   ['palmares', 'Palmarès'],
   ['bilan', 'Bilan'],
   ['identite', 'Identité'],
 ] as const;
 
-/** Club : classement EA, palmarès (nuits Inhouse et playoffs EA), bilan et identité. Remplace Stats et Playoffs. */
+/** Club : niveau (skill rating expliqué), classement EA, adversaires, palmarès, bilan et identité. Remplace Stats et Playoffs. */
 export function ClubView() {
   usePageTitle('Club');
   const club = useClub();
@@ -48,7 +51,9 @@ export function ClubView() {
               ))}
             </nav>
 
+            <Level club={c} />
             <Ranking club={c} />
+            <Rivals club={c} />
             <Honours club={c} />
 
             <section id="bilan" className="fc-club-section" aria-label="Bilan">
@@ -70,6 +75,105 @@ export function ClubView() {
         );
       }}
     </DataGate>
+  );
+}
+
+/** Ce que dit notre note par rapport à la division où l'on joue. */
+function levelSentence(sr: number, division: number | null) {
+  const level = levelDivision(sr);
+  if (level === null) return 'Notre note est encore sous le niveau typique de la Division 5 : chaque victoire la fait grimper.';
+  const levelName = divisionLabel(level);
+  if (division === null) return `Notre note est celle d'un club de ${levelName}.`;
+  if (level < division) return `On joue en ${divisionLabel(division)}, mais notre note est déjà celle d'un club de ${levelName} : on a le niveau pour monter.`;
+  if (level === division) return `Notre note correspond pile à notre division, la ${levelName}.`;
+  return `Notre note est celle d'un club de ${levelName}, un cran sous notre division actuelle : chaque victoire compte.`;
+}
+
+const HOW = [
+  ['Une note qui bouge à chaque match', 'Après chaque match de ligue ou de playoffs, EA ajuste la note du club : elle monte quand on gagne, elle baisse quand on perd. Les amicaux ne comptent pas.'],
+  ['Battre plus fort rapporte plus', 'C’est le principe du classement Elo, celui des échecs. Avant chaque match, EA compare notre note à celle de l’adversaire. Battre un club mieux noté rapporte beaucoup ; battre un club moins bien noté rapporte peu. Et dans l’autre sens : perdre contre plus faible coûte cher, perdre contre plus fort coûte peu.'],
+  ['Le score et les playoffs comptent', 'Une large victoire rapporte plus qu’un petit 1-0, et les matchs de playoffs font bouger la note plus fort que la ligue.'],
+  ['Elle ne choisit pas nos adversaires', 'EA nous fait jouer contre des clubs de notre division, quelle que soit leur note. On peut tomber sur bien plus fort… ou bien plus faible. C’est pour ça que l’app affiche la note de chaque adversaire sur les matchs.'],
+] as const;
+
+/** Le skill rating expliqué à ceux qui n'ont jamais entendu parler d'Elo : où on en est, comment ça bouge. */
+function Level({ club }: { club: Club }) {
+  const rows = [
+    { label: 'N°1 mondial', sr: SR_WORLD_BEST, world: true },
+    { label: 'Top 100 mondial', sr: SR_TOP100, world: true },
+    ...[...SR_DIVISIONS].reverse().map((d) => ({ label: divisionLabel(d.division), sr: d.sr, world: false })),
+  ];
+  // Notre ligne s'insère sous le premier repère qu'on n'atteint pas.
+  const at = rows.findIndex((r) => club.skillRating >= r.sr);
+  const cut = at < 0 ? rows.length : at;
+  const ladder = [...rows.slice(0, cut), null, ...rows.slice(cut)];
+  return (
+    <section id="niveau" className="fc-club-section" aria-label="Niveau du club">
+      <h2 className="fc-section-head">Skill rating <small>la note de niveau du club</small></h2>
+      <div className="fc-level">
+        <div className="fc-block fc-hero fc-level-now">
+          <span className="fc-badge">Notre note · EA</span>
+          <span className="fc-level-num">{club.skillRating}</span>
+          <span className="fc-body">{levelSentence(club.skillRating, club.season?.division ?? null)}</span>
+        </div>
+        <div className="fc-block fc-marine fc-level-ladder" role="list" aria-label="Note typique par division">
+          {ladder.map((r) => r === null ? (
+            <div key="nous" role="listitem" className="fc-level-row is-active"><span>{club.name}</span><span>{club.skillRating}</span></div>
+          ) : (
+            <div key={r.label} role="listitem" className={`fc-level-row${r.world ? ' is-world' : ''}`}>
+              <span>{r.label}</span><span>{r.world ? r.sr : `~${r.sr}`}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="fc-level-how">
+        {HOW.map(([title, text]) => (
+          <div key={title} className="fc-block fc-marine"><h3>{title}</h3><p>{text}</p></div>
+        ))}
+      </div>
+      <div className="fc-block fc-marine fc-level-glossary">
+        <p><span className="fc-mtype-badge fc-mtype-badge--exploit">Exploit</span>Victoire contre un club noté plus de 50 points au-dessus de nous.</p>
+        <p><span className="fc-mtype-badge fc-mtype-badge--upset">Contre-perf</span>Défaite contre un club noté au moins 100 points en dessous.</p>
+        <p><strong>~1650</strong> : note de l’adversaire relevée après le match, elle a pu bouger depuis.</p>
+      </div>
+      <p className="fc-muted fc-level-source">
+        Repères : note médiane des clubs de chaque division parmi les 100 meilleurs de la saison, classements EA du {SR_SURVEY_DATE}.
+        EA ne publie pas sa formule exacte.
+      </p>
+    </section>
+  );
+}
+
+const STRENGTHS: [Strength, string][] = [['stronger', 'Contre plus fort'], ['even', 'À niveau'], ['weaker', 'Contre plus faible']];
+
+/** Le niveau des clubs qu'EA nous a donnés à jouer, et nos résultats selon l'écart. */
+function Rivals({ club }: { club: Club }) {
+  const { averageSr, sample, record } = club.opponents;
+  const gap = averageSr === null ? 0 : averageSr - club.skillRating;
+  return (
+    <section id="adversaires" className="fc-club-section" aria-label="Adversaires">
+      <h2 className="fc-section-head">Adversaires <small>leur skill rating le jour du match</small></h2>
+      {averageSr === null ? (
+        <div className="fc-block fc-marine"><p className="fc-rivals-line">Le niveau des adversaires se remplit au fil des synchros EA.</p></div>
+      ) : (
+        <>
+          <div className="fc-club-row">
+            <StatTile label="Note moyenne" value={averageSr} sub={`${sample} derniers adversaires · nous ${club.skillRating}`} tone="principal" />
+            {STRENGTHS.map(([key, label], i) => (
+              <StatTile key={key} label={label} value={`${record[key].wins}-${record[key].draws}-${record[key].losses}`} text sub="V-N-D" delay={60 * (i + 1)} />
+            ))}
+          </div>
+          <div className="fc-block fc-marine">
+            <p className="fc-rivals-line">
+              {Math.abs(gap) <= 50 ? `On affronte en moyenne des clubs de notre niveau (${gap > 0 ? '+' : ''}${gap} points).`
+                : gap > 0 ? `On affronte en moyenne des clubs mieux notés que nous (+${gap} points) : chaque victoire rapporte gros.`
+                  : `On affronte en moyenne des clubs moins bien notés que nous (${gap} points) : ces victoires rapportent peu, les défaites coûtent cher.`}
+              {' '}« À niveau » : moins de 50 points d’écart.
+            </p>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 

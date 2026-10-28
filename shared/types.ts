@@ -1,5 +1,7 @@
 // Types échangés entre les fonctions /api et le front.
 
+import type { Strength } from './skill-rating.js';
+
 export type Position = 'FW' | 'MF' | 'DF' | 'GK';
 export type MatchType = 'league' | 'playoff' | 'friendly';
 export type MatchResult = 'win' | 'draw' | 'loss';
@@ -37,6 +39,14 @@ export interface Club {
   stadium: string | null;
   /** Couleurs des maillots (#rrggbb), 4 par tenue. */
   kits: { home: string[]; away: string[]; third: string[] } | null;
+  /** Niveau de nos adversaires (skill ratings figés le jour de chaque match). */
+  opponents: {
+    /** Skill rating moyen des 10 derniers adversaires connus, et nombre de matchs pris en compte. */
+    averageSr: number | null;
+    sample: number;
+    /** Bilan selon le niveau de l'adversaire, sur tous les matchs où il est connu. */
+    record: Record<Strength, { wins: number; draws: number; losses: number }>;
+  };
 }
 
 export interface Member {
@@ -75,6 +85,11 @@ export interface Match {
   shots: number | null;
   /** L'adversaire a quitté le match. null : inconnu (match synchronisé avant le 28/10/2026). */
   opponentQuit: boolean | null;
+  /** Skill ratings des deux clubs le jour du match. null : pas encore lus (ou EA indisponible). */
+  opponentSkillRating: number | null;
+  ourSkillRating: number | null;
+  /** Skill rating adverse lu après coup (il a pu bouger depuis le match). */
+  opponentSrEstimated: boolean;
 }
 
 /** Ligne de la feuille de match EA, pour un joueur du club. */
@@ -92,6 +107,8 @@ export interface MatchPlayer {
   saves: number;
   redCards: number;
   motm: boolean;
+  /** Parti nettement avant la fin du match (feuille adverse uniquement). */
+  leftEarly?: boolean;
 }
 
 export interface MatchNote {
@@ -111,5 +128,13 @@ export interface MatchDetail {
   players: MatchPlayer[];
   notes: MatchNote[];
   /** Feuille de match adverse et minutes jouées. null : match synchronisé avant le 28/10/2026. */
-  opponent: { players: MatchPlayer[]; minutes: number | null } | null;
+  opponent: { players: MatchPlayer[]; minutes: number | null; kitColor: string | null } | null;
+  /** Dernière fiche EA connue du club adverse. null : pas encore lue. */
+  opponentClub: {
+    skillRating: number | null; wins: number; draws: number; losses: number; gamesPlayed: number;
+    goalsFor: number; goalsAgainst: number; winStreak: number; unbeatenStreak: number;
+    bestDivision: number | null; fetchedAt: string;
+  } | null;
+  /** Tous nos matchs contre ce club, du plus récent au plus ancien (celui-ci compris). */
+  headToHead: Match[];
 }

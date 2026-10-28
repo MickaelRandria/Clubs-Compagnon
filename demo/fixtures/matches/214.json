@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 9,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1516,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -122,6 +125,37 @@
         "motm": false
       }
     ],
-    "minutes": 92
+    "minutes": 92,
+    "kitColor": null
+  },
+  "headToHead": [
+    {
+      "id": 214,
+      "playedAt": "2026-10-27T21:58:51.000Z",
+      "type": "league",
+      "opponent": "Tiki Massala FC",
+      "goalsFor": 4,
+      "goalsAgainst": 3,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 9,
+      "opponentQuit": false,
+      "opponentSkillRating": 1516,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1516,
+    "wins": 4,
+    "draws": 4,
+    "losses": 4,
+    "gamesPlayed": 12,
+    "goalsFor": 54,
+    "goalsAgainst": 46,
+    "winStreak": 0,
+    "unbeatenStreak": 0,
+    "bestDivision": null,
+    "fetchedAt": "2026-10-28T14:20:22.020Z"
   }
 }

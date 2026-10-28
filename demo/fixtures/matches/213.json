@@ -9,7 +9,10 @@
     "result": "draw",
     "possessionPct": null,
     "shots": 7,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1576,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -137,6 +140,37 @@
         "motm": false
       }
     ],
-    "minutes": 92
+    "minutes": 92,
+    "kitColor": "#f2f2f2"
+  },
+  "headToHead": [
+    {
+      "id": 213,
+      "playedAt": "2026-10-27T22:17:23.000Z",
+      "type": "league",
+      "opponent": "Mitroglouuu",
+      "goalsFor": 4,
+      "goalsAgainst": 4,
+      "result": "draw",
+      "possessionPct": null,
+      "shots": 7,
+      "opponentQuit": false,
+      "opponentSkillRating": 1576,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1576,
+    "wins": 17,
+    "draws": 7,
+    "losses": 16,
+    "gamesPlayed": 40,
+    "goalsFor": 130,
+    "goalsAgainst": 115,
+    "winStreak": 0,
+    "unbeatenStreak": 0,
+    "bestDivision": null,
+    "fetchedAt": "2026-10-28T14:20:22.019Z"
   }
 }

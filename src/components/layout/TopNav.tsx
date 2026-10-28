@@ -33,33 +33,35 @@ export function TopNav() {
 
   return (
     <header className="fc-top">
-      {/* Sur mobile : marque du club à gauche */}
-      <Link to="/" className="fc-top-brand" aria-label="Accueil FoodBall Club">
-        <svg viewBox="0 0 96 106" width="28" height="31" aria-hidden="true">
-          <path d={SHIELD_PATH} fill={FC.blue} stroke={FC.craie} strokeWidth="5" />
-          <text
-            x="48"
-            y="76"
-            textAnchor="middle"
-            fill={FC.craie}
-            fontFamily="'Barlow Condensed', sans-serif"
-            fontWeight="800"
-            fontStyle="italic"
-            fontSize="58"
-          >
-            F
-          </text>
-        </svg>
-        <span className="fc-top-brand-text">
-          FOODBALL<span>CLUB</span>
-        </span>
+      {/* Sur mobile : marque du club à gauche, et le skill rating qui mène à son explication */}
+      <div className="fc-top-brand">
+        <Link to="/" className="fc-top-brand-home" aria-label="Accueil FoodBall Club">
+          <svg viewBox="0 0 96 106" width="28" height="31" aria-hidden="true">
+            <path d={SHIELD_PATH} fill={FC.blue} stroke={FC.craie} strokeWidth="5" />
+            <text
+              x="48"
+              y="76"
+              textAnchor="middle"
+              fill={FC.craie}
+              fontFamily="'Barlow Condensed', sans-serif"
+              fontWeight="800"
+              fontStyle="italic"
+              fontSize="58"
+            >
+              F
+            </text>
+          </svg>
+          <span className="fc-top-brand-text">
+            FOODBALL<span>CLUB</span>
+          </span>
+        </Link>
         {club.data && (
-          <span className="fc-top-brand-sr" title="Skill rating du club">
+          <Link to="/club#niveau" className="fc-top-brand-sr" aria-label={`Skill rating du club : ${club.data.skillRating}. C'est quoi ?`}>
             {club.data.skillRating}
             <small>SR</small>
-          </span>
+          </Link>
         )}
-      </Link>
+      </div>
 
       {/* Sur desktop : bande d'onglets */}
       <nav className="fc-tabs" aria-label="Sections">

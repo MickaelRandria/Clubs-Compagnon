@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 10,
-    "opponentQuit": false
+    "opponentQuit": false,
+    "opponentSkillRating": 1521,
+    "ourSkillRating": 1658,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -137,6 +140,37 @@
         "motm": false
       }
     ],
-    "minutes": 94
+    "minutes": 94,
+    "kitColor": "#f2f2f2"
+  },
+  "headToHead": [
+    {
+      "id": 151,
+      "playedAt": "2026-10-26T22:46:48.000Z",
+      "type": "league",
+      "opponent": "Réaliste FC",
+      "goalsFor": 5,
+      "goalsAgainst": 1,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 10,
+      "opponentQuit": false,
+      "opponentSkillRating": 1521,
+      "ourSkillRating": 1658,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": {
+    "skillRating": 1521,
+    "wins": 31,
+    "draws": 4,
+    "losses": 25,
+    "gamesPlayed": 60,
+    "goalsFor": 157,
+    "goalsAgainst": 154,
+    "winStreak": 0,
+    "unbeatenStreak": 0,
+    "bestDivision": 4,
+    "fetchedAt": "2026-10-28T14:20:22.021Z"
   }
 }

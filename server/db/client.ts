@@ -13,3 +13,8 @@ export function getDb() {
   }
   return db;
 }
+
+/** Tests : branche les requêtes sur une autre base (PGlite en mémoire). */
+export function setDbForTests(instance: unknown) {
+  db = instance as NonNullable<typeof db>;
+}

@@ -9,7 +9,10 @@
     "result": "win",
     "possessionPct": null,
     "shots": 5,
-    "opponentQuit": null
+    "opponentQuit": null,
+    "opponentSkillRating": null,
+    "ourSkillRating": null,
+    "opponentSrEstimated": true
   },
   "players": [
     {
@@ -89,5 +92,23 @@
     }
   ],
   "notes": [],
-  "opponent": null
+  "opponent": null,
+  "headToHead": [
+    {
+      "id": 112,
+      "playedAt": "2026-10-26T20:42:09.000Z",
+      "type": "league",
+      "opponent": "Atletico Zamora",
+      "goalsFor": 3,
+      "goalsAgainst": 0,
+      "result": "win",
+      "possessionPct": null,
+      "shots": 5,
+      "opponentQuit": null,
+      "opponentSkillRating": null,
+      "ourSkillRating": null,
+      "opponentSrEstimated": true
+    }
+  ],
+  "opponentClub": null
 }

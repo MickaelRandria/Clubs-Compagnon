@@ -30,7 +30,7 @@ export function TourHost({ children }: { children: ReactNode }) {
     {invited && !running && <aside className="tour-invite">
       <p>
         <b>Première fois ici ?</b>
-        <span>Fais le tour en une minute : où tout se trouve, et ce qui t’attend sur FC 27.</span>
+        <span>Fais le tour en une minute : où tout se trouve dans l’app du club.</span>
       </p>
       <button type="button" className="tour-invite-go" onClick={start}>Me guider</button>
       <button type="button" className="tour-invite-close" onClick={dismiss} aria-label="Masquer l’invitation">✕</button>

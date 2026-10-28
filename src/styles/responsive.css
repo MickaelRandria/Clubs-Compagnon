@@ -116,17 +116,9 @@
   .fc-kpi-value { font-size: 28px; }
   .fc-kpi-label { font-size: 11px; }
 
-  .fc-clubs { min-height: 230px; }
-  .fc-clubs-copy { padding: 22px 18px 20px; }
 
   .fc-card { min-height: 104px; max-height: 124px; }
   .fc-card-copy { padding: 16px 12px 14px 18px; }
-  .fc-card--trophy { min-height: 104px; max-height: 116px; overflow: hidden; }
-  .fc-card--trophy .fc-card-copy { padding: 14px 12px 14px 18px; gap: 4px; justify-content: center; }
-  .fc-card-art--scorer { flex: 0 0 38%; min-height: 104px; max-height: 116px; overflow: hidden; position: relative; }
-  .fc-card--trophy .fc-card-art { display: flex; }
-  .fc-card--form { min-height: 104px; padding: 14px 16px; }
-  .fc-form { padding: 4px 12px; }
   .fc-mark-name { font-size: 24px; }
 
 

@@ -12,6 +12,9 @@
   justify-content: center;
   padding: 16px;
   animation: fcFadeIn 0.2s ease-out;
+  /* Rendu hors de .fc-app : sans cette ligne, le texte retombait sur la police par défaut du navigateur. */
+  font-family: var(--fc-text);
+  color: var(--fc-craie);
 }
 
 .fc-coach-modal {
@@ -436,110 +439,6 @@
 
 .fc-coach-nav-trigger:active {
   transform: scale(0.94);
-}
-
-/* Bannière d'accueil Coach IA sur le Dashboard */
-.fc-coach-home-banner {
-  grid-column: 1 / -1;
-  background: linear-gradient(135deg, rgba(24, 70, 245, 0.18), rgba(11, 26, 58, 0.85));
-  border: 1px solid rgba(111, 200, 255, 0.25);
-  border-left: 4px solid var(--fc-glacier);
-  padding: 16px 20px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  animation: fcFadeIn 0.3s ease-out backwards;
-}
-
-.fc-coach-hb-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.fc-coach-hb-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  background: rgba(111, 200, 255, 0.15);
-  border: 1px solid var(--fc-glacier);
-  color: var(--fc-glacier);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.fc-coach-hb-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.fc-coach-hb-title {
-  font-family: var(--fc-display);
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--fc-craie);
-}
-
-.fc-coach-hb-sub {
-  font-size: 13px;
-  color: var(--fc-brume);
-}
-
-.fc-coach-hb-chips {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.fc-coach-hb-chip {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(111, 200, 255, 0.2);
-  color: var(--fc-craie);
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.fc-coach-hb-chip:hover {
-  background: rgba(111, 200, 255, 0.15);
-  border-color: var(--fc-glacier);
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-.fc-coach-hb-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--fc-glacier);
-  color: var(--fc-marine);
-  font-family: var(--fc-display);
-  font-weight: 800;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 6px 14px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(111, 200, 255, 0.3);
-  transition: all 0.15s ease;
-}
-
-.fc-coach-hb-btn:hover {
-  background: #fff;
-  transform: translateY(-1px);
 }
 
 /* ---------- Réponse simple : visiteur non connecté ou plafond du jour ---------- */

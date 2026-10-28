@@ -1,0 +1,78 @@
+{
+  "match": {
+    "id": 13,
+    "playedAt": "2026-10-25T10:25:14.000Z",
+    "type": "league",
+    "opponent": "GuardianRanking",
+    "goalsFor": 2,
+    "goalsAgainst": 6,
+    "result": "loss",
+    "possessionPct": null,
+    "shots": 10,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 1,
+      "rating": 7.5,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 10,
+      "tacklesMade": 0,
+      "passAttempts": 17,
+      "tackleAttempts": 2
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 4,
+      "rating": 6.7,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 10,
+      "tacklesMade": 0,
+      "passAttempts": 16,
+      "tackleAttempts": 8
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 2,
+      "rating": 6.4,
+      "assists": 1,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 59,
+      "tacklesMade": 8,
+      "passAttempts": 75,
+      "tackleAttempts": 23
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 3,
+      "rating": 5.9,
+      "assists": 0,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 20,
+      "tacklesMade": 1,
+      "passAttempts": 24,
+      "tackleAttempts": 4
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

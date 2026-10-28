@@ -1,0 +1,142 @@
+{
+  "match": {
+    "id": 131,
+    "playedAt": "2026-10-26T22:26:18.000Z",
+    "type": "league",
+    "opponent": "LaEsquina",
+    "goalsFor": 3,
+    "goalsAgainst": 0,
+    "result": "win",
+    "possessionPct": null,
+    "shots": 6,
+    "opponentQuit": false
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 2,
+      "saves": 0,
+      "shots": 3,
+      "rating": 8.7,
+      "assists": 1,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 11,
+      "tacklesMade": 0,
+      "passAttempts": 14,
+      "tackleAttempts": 4
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 7.2,
+      "assists": 0,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 10,
+      "tacklesMade": 4,
+      "passAttempts": 18,
+      "tackleAttempts": 8
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 1,
+      "rating": 7.2,
+      "assists": 1,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 76,
+      "tacklesMade": 14,
+      "passAttempts": 92,
+      "tackleAttempts": 30
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 7,
+      "assists": 1,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 12,
+      "tacklesMade": 4,
+      "passAttempts": 17,
+      "tackleAttempts": 14
+    }
+  ],
+  "notes": [],
+  "opponent": {
+    "players": [
+      {
+        "gamertag": "Peaz972",
+        "position": "MF",
+        "rating": 8,
+        "goals": 0,
+        "assists": 0,
+        "shots": 0,
+        "passesMade": 15,
+        "passAttempts": 17,
+        "tacklesMade": 2,
+        "tackleAttempts": 4,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "pachinho",
+        "position": "FW",
+        "rating": 6.7,
+        "goals": 0,
+        "assists": 0,
+        "shots": 2,
+        "passesMade": 68,
+        "passAttempts": 79,
+        "tacklesMade": 12,
+        "tackleAttempts": 30,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "Valloup",
+        "position": "FW",
+        "rating": 6.5,
+        "goals": 0,
+        "assists": 0,
+        "shots": 3,
+        "passesMade": 19,
+        "passAttempts": 27,
+        "tacklesMade": 3,
+        "tackleAttempts": 7,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "FaustaJay",
+        "position": "MF",
+        "rating": 6.3,
+        "goals": 0,
+        "assists": 0,
+        "shots": 1,
+        "passesMade": 10,
+        "passAttempts": 12,
+        "tacklesMade": 1,
+        "tackleAttempts": 2,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      }
+    ],
+    "minutes": 92
+  }
+}

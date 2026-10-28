@@ -1,0 +1,127 @@
+{
+  "match": {
+    "id": 214,
+    "playedAt": "2026-10-27T21:58:51.000Z",
+    "type": "league",
+    "opponent": "Tiki Massala FC",
+    "goalsFor": 4,
+    "goalsAgainst": 3,
+    "result": "win",
+    "possessionPct": null,
+    "shots": 9,
+    "opponentQuit": false
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 7.8,
+      "assists": 1,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 12,
+      "tacklesMade": 1,
+      "passAttempts": 15,
+      "tackleAttempts": 5
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 3,
+      "rating": 7.5,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 16,
+      "tacklesMade": 0,
+      "passAttempts": 21,
+      "tackleAttempts": 11
+    },
+    {
+      "motm": false,
+      "goals": 2,
+      "saves": 0,
+      "shots": 4,
+      "rating": 6.8,
+      "assists": 0,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 79,
+      "tacklesMade": 4,
+      "passAttempts": 98,
+      "tackleAttempts": 35
+    }
+  ],
+  "notes": [],
+  "opponent": {
+    "players": [
+      {
+        "gamertag": "mbeldji1999",
+        "position": "MF",
+        "rating": 7.8,
+        "goals": 0,
+        "assists": 0,
+        "shots": 1,
+        "passesMade": 26,
+        "passAttempts": 31,
+        "tacklesMade": 2,
+        "tackleAttempts": 3,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "berkoukes_lover_",
+        "position": "FW",
+        "rating": 7.4,
+        "goals": 1,
+        "assists": 0,
+        "shots": 4,
+        "passesMade": 14,
+        "passAttempts": 15,
+        "tacklesMade": 0,
+        "tackleAttempts": 1,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "vZapro",
+        "position": "FW",
+        "rating": 7.1,
+        "goals": 0,
+        "assists": 1,
+        "shots": 2,
+        "passesMade": 17,
+        "passAttempts": 20,
+        "tacklesMade": 1,
+        "tackleAttempts": 1,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "Dz_Zaix",
+        "position": "FW",
+        "rating": 6.8,
+        "goals": 2,
+        "assists": 2,
+        "shots": 3,
+        "passesMade": 73,
+        "passAttempts": 96,
+        "tacklesMade": 7,
+        "tackleAttempts": 16,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      }
+    ],
+    "minutes": 92
+  }
+}

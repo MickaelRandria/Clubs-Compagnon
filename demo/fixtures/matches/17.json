@@ -1,0 +1,63 @@
+{
+  "match": {
+    "id": 17,
+    "playedAt": "2026-10-23T21:51:18.000Z",
+    "type": "league",
+    "opponent": "MAKILA FC",
+    "goalsFor": 1,
+    "goalsAgainst": 2,
+    "result": "loss",
+    "possessionPct": null,
+    "shots": 5,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 1,
+      "rating": 7.4,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 8,
+      "tacklesMade": 4,
+      "passAttempts": 15,
+      "tackleAttempts": 13
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 3,
+      "rating": 6.8,
+      "assists": 1,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 75,
+      "tacklesMade": 20,
+      "passAttempts": 92,
+      "tackleAttempts": 66
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 1,
+      "rating": 5.9,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 8,
+      "tacklesMade": 1,
+      "passAttempts": 16,
+      "tackleAttempts": 10
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

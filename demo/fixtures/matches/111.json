@@ -1,0 +1,93 @@
+{
+  "match": {
+    "id": 111,
+    "playedAt": "2026-10-26T21:05:11.000Z",
+    "type": "league",
+    "opponent": "67 TastiCrousti",
+    "goalsFor": 2,
+    "goalsAgainst": 4,
+    "result": "loss",
+    "possessionPct": null,
+    "shots": 6,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 7.4,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 11,
+      "tacklesMade": 4,
+      "passAttempts": 13,
+      "tackleAttempts": 10
+    },
+    {
+      "motm": false,
+      "goals": 2,
+      "saves": 0,
+      "shots": 6,
+      "rating": 7,
+      "assists": 0,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 6,
+      "tacklesMade": 0,
+      "passAttempts": 7,
+      "tackleAttempts": 2
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 6.7,
+      "assists": 1,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 16,
+      "tacklesMade": 1,
+      "passAttempts": 20,
+      "tackleAttempts": 15
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 6.1,
+      "assists": 0,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 42,
+      "tacklesMade": 2,
+      "passAttempts": 58,
+      "tackleAttempts": 21
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 6.1,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 9,
+      "tacklesMade": 5,
+      "passAttempts": 13,
+      "tackleAttempts": 18
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

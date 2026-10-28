@@ -1,0 +1,142 @@
+{
+  "match": {
+    "id": 151,
+    "playedAt": "2026-10-26T22:46:48.000Z",
+    "type": "league",
+    "opponent": "Réaliste FC",
+    "goalsFor": 5,
+    "goalsAgainst": 1,
+    "result": "win",
+    "possessionPct": null,
+    "shots": 10,
+    "opponentQuit": false
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 8.2,
+      "assists": 1,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 12,
+      "tacklesMade": 4,
+      "passAttempts": 14,
+      "tackleAttempts": 15
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 3,
+      "rating": 8.2,
+      "assists": 1,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 16,
+      "tacklesMade": 1,
+      "passAttempts": 20,
+      "tackleAttempts": 6
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 7.8,
+      "assists": 1,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 10,
+      "tacklesMade": 2,
+      "passAttempts": 15,
+      "tackleAttempts": 10
+    },
+    {
+      "motm": false,
+      "goals": 2,
+      "saves": 0,
+      "shots": 3,
+      "rating": 6.9,
+      "assists": 2,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 50,
+      "tacklesMade": 8,
+      "passAttempts": 60,
+      "tackleAttempts": 17
+    }
+  ],
+  "notes": [],
+  "opponent": {
+    "players": [
+      {
+        "gamertag": "Ussop_23",
+        "position": "MF",
+        "rating": 8.2,
+        "goals": 1,
+        "assists": 0,
+        "shots": 4,
+        "passesMade": 22,
+        "passAttempts": 28,
+        "tacklesMade": 1,
+        "tackleAttempts": 8,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "M-A-R-C_59A",
+        "position": "MF",
+        "rating": 7.6,
+        "goals": 0,
+        "assists": 0,
+        "shots": 1,
+        "passesMade": 23,
+        "passAttempts": 26,
+        "tacklesMade": 3,
+        "tackleAttempts": 6,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "CissouYT",
+        "position": "FW",
+        "rating": 6.4,
+        "goals": 0,
+        "assists": 0,
+        "shots": 4,
+        "passesMade": 82,
+        "passAttempts": 93,
+        "tacklesMade": 6,
+        "tackleAttempts": 18,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "Dricus24_",
+        "position": "FW",
+        "rating": 5.8,
+        "goals": 0,
+        "assists": 0,
+        "shots": 6,
+        "passesMade": 11,
+        "passAttempts": 14,
+        "tacklesMade": 0,
+        "tackleAttempts": 5,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      }
+    ],
+    "minutes": 94
+  }
+}

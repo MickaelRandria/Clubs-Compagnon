@@ -1,0 +1,93 @@
+{
+  "match": {
+    "id": 112,
+    "playedAt": "2026-10-26T20:42:09.000Z",
+    "type": "league",
+    "opponent": "Atletico Zamora",
+    "goalsFor": 3,
+    "goalsAgainst": 0,
+    "result": "win",
+    "possessionPct": null,
+    "shots": 5,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 8,
+      "assists": 3,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 4,
+      "tacklesMade": 1,
+      "passAttempts": 4,
+      "tackleAttempts": 1
+    },
+    {
+      "motm": false,
+      "goals": 2,
+      "saves": 0,
+      "shots": 2,
+      "rating": 7.8,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 2,
+      "tacklesMade": 0,
+      "passAttempts": 2,
+      "tackleAttempts": 1
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 7.2,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 4,
+      "tacklesMade": 0,
+      "passAttempts": 4,
+      "tackleAttempts": 0
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 6.8,
+      "assists": 0,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 12,
+      "tacklesMade": 5,
+      "passAttempts": 12,
+      "tackleAttempts": 8
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 1,
+      "rating": 6.2,
+      "assists": 0,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 2,
+      "tacklesMade": 0,
+      "passAttempts": 4,
+      "tackleAttempts": 1
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

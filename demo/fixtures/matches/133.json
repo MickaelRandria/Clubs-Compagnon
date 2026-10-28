@@ -1,0 +1,127 @@
+{
+  "match": {
+    "id": 133,
+    "playedAt": "2026-10-26T21:46:04.000Z",
+    "type": "league",
+    "opponent": "lékipdebeauvais",
+    "goalsFor": 5,
+    "goalsAgainst": 3,
+    "result": "win",
+    "possessionPct": null,
+    "shots": 13,
+    "opponentQuit": false
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 1,
+      "saves": 0,
+      "shots": 5,
+      "rating": 9.8,
+      "assists": 3,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 20,
+      "tacklesMade": 0,
+      "passAttempts": 25,
+      "tackleAttempts": 8
+    },
+    {
+      "motm": false,
+      "goals": 2,
+      "saves": 0,
+      "shots": 5,
+      "rating": 8.9,
+      "assists": 1,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 11,
+      "tacklesMade": 3,
+      "passAttempts": 16,
+      "tackleAttempts": 13
+    },
+    {
+      "motm": false,
+      "goals": 2,
+      "saves": 0,
+      "shots": 3,
+      "rating": 6.9,
+      "assists": 0,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 76,
+      "tacklesMade": 13,
+      "passAttempts": 84,
+      "tackleAttempts": 18
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 5.7,
+      "assists": 0,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 1,
+      "passesMade": 5,
+      "tacklesMade": 0,
+      "passAttempts": 8,
+      "tackleAttempts": 2
+    }
+  ],
+  "notes": [],
+  "opponent": {
+    "players": [
+      {
+        "gamertag": "walker95270",
+        "position": "FW",
+        "rating": 7.2,
+        "goals": 1,
+        "assists": 0,
+        "shots": 3,
+        "passesMade": 20,
+        "passAttempts": 23,
+        "tacklesMade": 2,
+        "tackleAttempts": 3,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "fares_zahra",
+        "position": "FW",
+        "rating": 6.7,
+        "goals": 2,
+        "assists": 2,
+        "shots": 3,
+        "passesMade": 98,
+        "passAttempts": 117,
+        "tacklesMade": 8,
+        "tackleAttempts": 42,
+        "saves": 1,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "WallaceVegas",
+        "position": "FW",
+        "rating": 6.2,
+        "goals": 0,
+        "assists": 0,
+        "shots": 1,
+        "passesMade": 9,
+        "passAttempts": 10,
+        "tacklesMade": 1,
+        "tackleAttempts": 14,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      }
+    ],
+    "minutes": 92
+  }
+}

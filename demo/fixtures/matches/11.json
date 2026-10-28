@@ -1,0 +1,63 @@
+{
+  "match": {
+    "id": 11,
+    "playedAt": "2026-10-25T11:04:48.000Z",
+    "type": "league",
+    "opponent": "DaronneàLabris5",
+    "goalsFor": 3,
+    "goalsAgainst": 3,
+    "result": "draw",
+    "possessionPct": null,
+    "shots": 8,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 1,
+      "saves": 0,
+      "shots": 3,
+      "rating": 8.4,
+      "assists": 1,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 15,
+      "tacklesMade": 1,
+      "passAttempts": 21,
+      "tackleAttempts": 10
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 8,
+      "assists": 1,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 18,
+      "tacklesMade": 1,
+      "passAttempts": 20,
+      "tackleAttempts": 10
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 3,
+      "rating": 6.7,
+      "assists": 0,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 84,
+      "tacklesMade": 9,
+      "passAttempts": 100,
+      "tackleAttempts": 24
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

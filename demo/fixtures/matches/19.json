@@ -1,0 +1,93 @@
+{
+  "match": {
+    "id": 19,
+    "playedAt": "2026-10-22T22:30:46.000Z",
+    "type": "league",
+    "opponent": "No Lack",
+    "goalsFor": 2,
+    "goalsAgainst": 3,
+    "result": "loss",
+    "possessionPct": null,
+    "shots": 6,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 7.9,
+      "assists": 1,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 6,
+      "tacklesMade": 4,
+      "passAttempts": 10,
+      "tackleAttempts": 9
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 2,
+      "rating": 7,
+      "assists": 1,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 11,
+      "tacklesMade": 2,
+      "passAttempts": 19,
+      "tackleAttempts": 2
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 1,
+      "rating": 7,
+      "assists": 0,
+      "gamertag": "MajorOfSkill",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 10,
+      "tacklesMade": 0,
+      "passAttempts": 16,
+      "tackleAttempts": 3
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 6.7,
+      "assists": 0,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 55,
+      "tacklesMade": 10,
+      "passAttempts": 66,
+      "tackleAttempts": 26
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 1,
+      "rating": 6.3,
+      "assists": 0,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 11,
+      "tacklesMade": 1,
+      "passAttempts": 14,
+      "tackleAttempts": 8
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

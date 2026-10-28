@@ -11,6 +11,11 @@ Node ≥ 20.12. Vite est volontairement en v7.
 - `npm run build` : vérifie le budget de fonctions Vercel, `tsc`, puis build. À lancer avant tout push.
 - `npm run test:fc27` : toute la suite (PGlite en mémoire, migrations réelles, aucun réseau). Doit rester verte.
 - `npm run dev` : app + `/api` sur :5173. Exige `DATABASE_URL` dans `.env.local` (absent en session cloud).
+- `npm run demo` : la vraie app sur :5175 avec `demo/fixtures/` (photo de l'API publique de prod), sans base ni
+  réseau. `npm run demo -- --connecte` : compte démo, Vestiaire ouvert avec de vraies cotes. Les écritures sont refusées.
+- `npm run captures` : captures 390 px des pages principales dans `captures/` (ignoré par git), signale tout
+  débordement horizontal. Pages au choix : `npm run captures -- /matchs/211 /club`. Sans Chrome :
+  `npx playwright-core install chromium`. `npm run demo:snapshot` rafraîchit les fixtures (demande le réseau).
 - Migrations : SQL écrit à la main dans `drizzle/NNNN_nom.sql` + entrée dans `drizzle/meta/_journal.json`.
   Appliquer : `node --env-file=.env.local --import tsx server/db/migrate.ts` (`.env.local` sans BOM ni CRLF).
 
@@ -45,6 +50,16 @@ Node ≥ 20.12. Vite est volontairement en v7.
 - Navigation : Accueil `/`, Matchs `/matchs` (fiche `/matchs/:id`), Effectif `/joueurs` (fiche `/joueurs/:id`),
   Club `/club` (`/stats` y redirige ; `/playoffs` = page de la Nuit Inhouse 1), Vestiaire `/paris`.
 - Contenu éditorial des nuits Inhouse : `src/content/playoffs.ts` (`NEXT_NIGHT` = Nuit Inhouse 2, 30/10/2026).
+
+## Maquettes et captures (session cloud)
+
+- L'utilisateur suit le travail depuis son téléphone : il juge sur images, pas sur le code.
+- Nouvelle interface : proposer d'abord une maquette (page HTML statique, thème FIFA 17, 390 px), la faire valider,
+  puis coder. Une donnée que l'API ne renvoie pas encore se maquette dans l'app en l'ajoutant aux fixtures de `demo/`.
+- Toute PR qui touche l'interface : lancer `npm run captures`, puis montrer les captures avant / après
+  (publication en artifact si l'outil existe, sinon `git add -f captures/` sur la branche de la PR et images
+  liées dans la description ; retirer `captures/` avant le merge).
+- Travailler sur une branche et ouvrir une PR ; ne jamais pousser sur `main` sans « push sur la prod ».
 
 ## Feuille de route
 

@@ -1,0 +1,78 @@
+{
+  "match": {
+    "id": 113,
+    "playedAt": "2026-10-26T20:35:32.000Z",
+    "type": "league",
+    "opponent": "AS Boufféré",
+    "goalsFor": 1,
+    "goalsAgainst": 2,
+    "result": "loss",
+    "possessionPct": null,
+    "shots": 13,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 0,
+      "saves": 0,
+      "shots": 1,
+      "rating": 7.9,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 12,
+      "tacklesMade": 2,
+      "passAttempts": 16,
+      "tackleAttempts": 3
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 4,
+      "rating": 7.3,
+      "assists": 0,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 11,
+      "tacklesMade": 0,
+      "passAttempts": 16,
+      "tackleAttempts": 3
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 6,
+      "rating": 6.9,
+      "assists": 1,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 79,
+      "tacklesMade": 8,
+      "passAttempts": 94,
+      "tackleAttempts": 25
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 2,
+      "rating": 6.8,
+      "assists": 0,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 16,
+      "tacklesMade": 1,
+      "passAttempts": 26,
+      "tackleAttempts": 8
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

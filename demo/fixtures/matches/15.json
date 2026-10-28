@@ -1,0 +1,78 @@
+{
+  "match": {
+    "id": 15,
+    "playedAt": "2026-10-25T09:51:03.000Z",
+    "type": "league",
+    "opponent": "Impact Game",
+    "goalsFor": 5,
+    "goalsAgainst": 7,
+    "result": "loss",
+    "possessionPct": null,
+    "shots": 10,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": false,
+      "goals": 4,
+      "saves": 0,
+      "shots": 5,
+      "rating": 9.6,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 13,
+      "tacklesMade": 2,
+      "passAttempts": 21,
+      "tackleAttempts": 9
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 4,
+      "rating": 8.8,
+      "assists": 2,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 17,
+      "tacklesMade": 0,
+      "passAttempts": 23,
+      "tackleAttempts": 7
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 7.3,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 10,
+      "tacklesMade": 2,
+      "passAttempts": 12,
+      "tackleAttempts": 4
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 1,
+      "rating": 6.6,
+      "assists": 1,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 89,
+      "tacklesMade": 9,
+      "passAttempts": 105,
+      "tackleAttempts": 23
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

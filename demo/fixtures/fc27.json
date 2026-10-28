@@ -1,0 +1,376 @@
+{
+  "stages": [
+    {
+      "id": 1,
+      "kind": "qualif",
+      "number": 1,
+      "voters": 4,
+      "entries": [
+        {
+          "duel": null,
+          "seed": 1,
+          "votes": 1,
+          "result": "advanced",
+          "proposal_id": 3
+        },
+        {
+          "duel": null,
+          "seed": 2,
+          "votes": 1,
+          "result": "advanced",
+          "proposal_id": 4
+        },
+        {
+          "duel": null,
+          "seed": 3,
+          "votes": 0,
+          "result": "eliminated",
+          "proposal_id": 5
+        },
+        {
+          "duel": null,
+          "seed": 4,
+          "votes": 0,
+          "result": "eliminated",
+          "proposal_id": 6
+        },
+        {
+          "duel": null,
+          "seed": 5,
+          "votes": 0,
+          "result": "eliminated",
+          "proposal_id": 7
+        },
+        {
+          "duel": null,
+          "seed": 6,
+          "votes": 1,
+          "result": "advanced",
+          "proposal_id": 8
+        },
+        {
+          "duel": null,
+          "seed": 7,
+          "votes": 0,
+          "result": "eliminated",
+          "proposal_id": 9
+        },
+        {
+          "duel": null,
+          "seed": 8,
+          "votes": 3,
+          "result": "advanced",
+          "proposal_id": 10
+        },
+        {
+          "duel": null,
+          "seed": 9,
+          "votes": 0,
+          "result": "eliminated",
+          "proposal_id": 11
+        },
+        {
+          "duel": null,
+          "seed": 10,
+          "votes": 0,
+          "result": "eliminated",
+          "proposal_id": 12
+        }
+      ],
+      "closed_at": "2026-09-25T17:15:00.784622+00:00",
+      "opened_at": "2026-09-24T18:32:57.524382+00:00",
+      "max_choices": 3,
+      "tie_break_applied": false
+    },
+    {
+      "id": 2,
+      "kind": "semis",
+      "number": 2,
+      "voters": 1,
+      "entries": [
+        {
+          "duel": 1,
+          "seed": 1,
+          "votes": 1,
+          "result": "advanced",
+          "proposal_id": 10
+        },
+        {
+          "duel": 1,
+          "seed": 4,
+          "votes": 0,
+          "result": "eliminated",
+          "proposal_id": 8
+        },
+        {
+          "duel": 2,
+          "seed": 2,
+          "votes": 1,
+          "result": "advanced",
+          "proposal_id": 3
+        },
+        {
+          "duel": 2,
+          "seed": 3,
+          "votes": 0,
+          "result": "eliminated",
+          "proposal_id": 4
+        }
+      ],
+      "closed_at": "2026-09-25T17:22:13.320317+00:00",
+      "opened_at": "2026-09-25T17:15:00.784622+00:00",
+      "max_choices": 1,
+      "tie_break_applied": false
+    },
+    {
+      "id": 3,
+      "kind": "final",
+      "number": 3,
+      "voters": 1,
+      "entries": [
+        {
+          "duel": null,
+          "seed": 1,
+          "votes": 1,
+          "result": "winner",
+          "proposal_id": 10
+        },
+        {
+          "duel": null,
+          "seed": 2,
+          "votes": 0,
+          "result": "runner_up",
+          "proposal_id": 3
+        }
+      ],
+      "closed_at": "2026-09-25T17:23:41.779666+00:00",
+      "opened_at": "2026-09-25T17:22:13.320317+00:00",
+      "max_choices": 1,
+      "tie_break_applied": false
+    }
+  ],
+  "winner": {
+    "id": 10,
+    "votes": 1,
+    "club_name": "FOODball CLUB",
+    "created_at": "2026-09-24T11:40:05.213375+00:00",
+    "campaign_id": 2,
+    "final_votes": 3,
+    "author_pseudo": "desparte.",
+    "author_account_id": 7
+  },
+  "players": [
+    {
+      "id": 8,
+      "notes": null,
+      "pseudo": "test ",
+      "archetype": "spark",
+      "height_cm": 178,
+      "weak_foot": 4,
+      "weight_kg": 61,
+      "account_id": 1,
+      "created_at": "2026-09-20T09:10:27.105742+00:00",
+      "kit_number": 19,
+      "updated_at": "2026-09-21T19:12:08.394191+00:00",
+      "campaign_id": 2,
+      "play_styles": [],
+      "skill_moves": 4,
+      "in_game_name": "Olise",
+      "preferred_foot": "Droit",
+      "primary_position": "AD",
+      "secondary_positions": [
+        "MOC"
+      ],
+      "attribute_priorities": [
+        "acceleration",
+        "vitesse",
+        "centres",
+        "dribbles",
+        "reactivite"
+      ]
+    },
+    {
+      "id": 9,
+      "notes": "Vista",
+      "pseudo": "Léo",
+      "archetype": "magician",
+      "height_cm": 173,
+      "weak_foot": 4,
+      "weight_kg": 88,
+      "account_id": 5,
+      "created_at": "2026-09-22T02:47:04.973972+00:00",
+      "kit_number": 10,
+      "updated_at": "2026-09-22T02:47:04.973972+00:00",
+      "campaign_id": 2,
+      "play_styles": [],
+      "skill_moves": 3,
+      "in_game_name": "MESSI",
+      "preferred_foot": "Droit",
+      "primary_position": "BU",
+      "secondary_positions": [
+        "MOC"
+      ],
+      "attribute_priorities": [
+        "acceleration",
+        "controle",
+        "dribbles",
+        "vista",
+        "effet"
+      ]
+    },
+    {
+      "id": 10,
+      "notes": null,
+      "pseudo": "Desparte",
+      "archetype": "disruptor",
+      "height_cm": 182,
+      "weak_foot": 5,
+      "weight_kg": 79,
+      "account_id": 7,
+      "created_at": "2026-09-23T06:49:15.546916+00:00",
+      "kit_number": 54,
+      "updated_at": "2026-09-23T06:49:15.546916+00:00",
+      "campaign_id": 2,
+      "play_styles": [],
+      "skill_moves": 2,
+      "in_game_name": "DESPARTE",
+      "preferred_foot": "Droit",
+      "primary_position": "MC",
+      "secondary_positions": [
+        "MOC"
+      ],
+      "attribute_priorities": [
+        "endurance",
+        "interceptions",
+        "luciditeDefensive",
+        "tacleDebout",
+        "agressivite"
+      ]
+    }
+  ],
+  "archives": [
+    {
+      "id": 1,
+      "archived_at": "2026-09-20T09:07:08.752358+00:00"
+    }
+  ],
+  "campaign": {
+    "id": 2,
+    "status": "preparation",
+    "club_id": 1,
+    "created_at": "2026-09-20T09:07:08.751867+00:00",
+    "archived_at": null
+  },
+  "election": {
+    "phase": "closed",
+    "closed_at": "2026-09-25T17:23:41.779666+00:00",
+    "started_at": "2026-09-24T18:32:57.524382+00:00",
+    "campaign_id": 2,
+    "tie_break_applied": false,
+    "winner_proposal_id": 10
+  },
+  "my_ballot": [],
+  "proposals": [
+    {
+      "id": 3,
+      "votes": 1,
+      "club_name": "C T PAS LE JEU",
+      "created_at": "2026-09-22T02:50:50.155394+00:00",
+      "campaign_id": 2,
+      "final_votes": 1,
+      "author_pseudo": "KayDad",
+      "author_account_id": 5
+    },
+    {
+      "id": 4,
+      "votes": 1,
+      "club_name": "Ehhhh merceeee FC",
+      "created_at": "2026-09-22T09:32:13.714415+00:00",
+      "campaign_id": 2,
+      "final_votes": 1,
+      "author_pseudo": "SAUCEGOD",
+      "author_account_id": 1
+    },
+    {
+      "id": 5,
+      "votes": 0,
+      "club_name": "Pilé Pilé Pilé",
+      "created_at": "2026-09-22T14:08:56.424059+00:00",
+      "campaign_id": 2,
+      "final_votes": 0,
+      "author_pseudo": "Kelly",
+      "author_account_id": 6
+    },
+    {
+      "id": 6,
+      "votes": 0,
+      "club_name": "RAVTOUTE FC",
+      "created_at": "2026-09-22T14:10:57.847006+00:00",
+      "campaign_id": 2,
+      "final_votes": 0,
+      "author_pseudo": "Kelly",
+      "author_account_id": 6
+    },
+    {
+      "id": 7,
+      "votes": 0,
+      "club_name": "Union des Îles FC",
+      "created_at": "2026-09-24T08:37:07.356898+00:00",
+      "campaign_id": 2,
+      "final_votes": 0,
+      "author_pseudo": "KayDad",
+      "author_account_id": 5
+    },
+    {
+      "id": 8,
+      "votes": 1,
+      "club_name": "Poulet Coco FC",
+      "created_at": "2026-09-24T08:41:58.827623+00:00",
+      "campaign_id": 2,
+      "final_votes": 1,
+      "author_pseudo": "KayDad",
+      "author_account_id": 5
+    },
+    {
+      "id": 9,
+      "votes": 0,
+      "club_name": "CHEF UNITED",
+      "created_at": "2026-09-24T11:38:39.79082+00:00",
+      "campaign_id": 2,
+      "final_votes": 0,
+      "author_pseudo": "desparte.",
+      "author_account_id": 7
+    },
+    {
+      "id": 10,
+      "votes": 3,
+      "club_name": "FOODball CLUB",
+      "created_at": "2026-09-24T11:40:05.213375+00:00",
+      "campaign_id": 2,
+      "final_votes": 3,
+      "author_pseudo": "desparte.",
+      "author_account_id": 7
+    },
+    {
+      "id": 11,
+      "votes": 0,
+      "club_name": "FC Collectif Métissé",
+      "created_at": "2026-09-24T16:13:03.912556+00:00",
+      "campaign_id": 2,
+      "final_votes": 0,
+      "author_pseudo": "Nakk",
+      "author_account_id": 8
+    },
+    {
+      "id": 12,
+      "votes": 0,
+      "club_name": "OnTMEb1 FC",
+      "created_at": "2026-09-24T17:51:14.181625+00:00",
+      "campaign_id": 2,
+      "final_votes": 0,
+      "author_pseudo": "Kelly",
+      "author_account_id": 6
+    }
+  ],
+  "server_time": "2026-10-28T13:56:53.764044+00:00"
+}

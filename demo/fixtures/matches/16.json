@@ -1,0 +1,48 @@
+{
+  "match": {
+    "id": 16,
+    "playedAt": "2026-10-23T22:03:55.000Z",
+    "type": "league",
+    "opponent": "Sun Tzu Footy",
+    "goalsFor": 1,
+    "goalsAgainst": 5,
+    "result": "loss",
+    "possessionPct": null,
+    "shots": 0,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 7.3,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 9,
+      "tacklesMade": 1,
+      "passAttempts": 12,
+      "tackleAttempts": 3
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 3,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 0,
+      "tacklesMade": 0,
+      "passAttempts": 0,
+      "tackleAttempts": 0
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

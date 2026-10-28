@@ -1,0 +1,63 @@
+{
+  "match": {
+    "id": 18,
+    "playedAt": "2026-10-23T21:29:48.000Z",
+    "type": "league",
+    "opponent": "Fc Valduchesse",
+    "goalsFor": 4,
+    "goalsAgainst": 4,
+    "result": "draw",
+    "possessionPct": null,
+    "shots": 8,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 3,
+      "saves": 0,
+      "shots": 5,
+      "rating": 8.9,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 11,
+      "tacklesMade": 1,
+      "passAttempts": 18,
+      "tackleAttempts": 8
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 8.8,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 0,
+      "tacklesMade": 0,
+      "passAttempts": 0,
+      "tackleAttempts": 0
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 3,
+      "rating": 6.8,
+      "assists": 2,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 107,
+      "tacklesMade": 12,
+      "passAttempts": 128,
+      "tackleAttempts": 48
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

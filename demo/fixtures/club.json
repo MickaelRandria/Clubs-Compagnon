@@ -1,0 +1,61 @@
+{
+  "id": 1,
+  "name": "FoodBall Club",
+  "handle": null,
+  "region": "Southern Europe",
+  "reputation": "Emerging Stars",
+  "skillRating": 1658,
+  "skillRatingTrend": null,
+  "bestDivision": 3,
+  "gamesPlayed": 161,
+  "wins": 75,
+  "draws": 18,
+  "losses": 68,
+  "goalsFor": 475,
+  "goalsAgainst": 461,
+  "leagueApps": 146,
+  "playoffApps": 15,
+  "winStreak": 0,
+  "unbeatenStreak": 10,
+  "promotions": 6,
+  "relegations": 1,
+  "season": {
+    "rank": null,
+    "division": 4,
+    "points": 27,
+    "wins": 13,
+    "draws": 6,
+    "losses": 11,
+    "goalsFor": 94,
+    "goalsAgainst": 89,
+    "cleanSheets": 3
+  },
+  "playoffHistory": [
+    {
+      "season": "Saison 1",
+      "division": 3,
+      "finish": "Participant"
+    }
+  ],
+  "stadium": "Stade de l'UD A",
+  "kits": {
+    "home": [
+      "#1d4230",
+      "#1a1c33",
+      "#16aa87",
+      "#7db1db"
+    ],
+    "away": [
+      "#db1012",
+      "#133975",
+      "#f4d610",
+      "#fea30b"
+    ],
+    "third": [
+      "#c2bbac",
+      "#61784e",
+      "#1d4230",
+      "#1d4230"
+    ]
+  }
+}

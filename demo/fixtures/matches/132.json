@@ -1,0 +1,127 @@
+{
+  "match": {
+    "id": 132,
+    "playedAt": "2026-10-26T22:07:22.000Z",
+    "type": "league",
+    "opponent": "LZ TEAM",
+    "goalsFor": 6,
+    "goalsAgainst": 4,
+    "result": "win",
+    "possessionPct": null,
+    "shots": 10,
+    "opponentQuit": false
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 3,
+      "saves": 0,
+      "shots": 4,
+      "rating": 10,
+      "assists": 1,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 19,
+      "tacklesMade": 1,
+      "passAttempts": 22,
+      "tackleAttempts": 11
+    },
+    {
+      "motm": false,
+      "goals": 2,
+      "saves": 0,
+      "shots": 3,
+      "rating": 8.6,
+      "assists": 1,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 6,
+      "tacklesMade": 0,
+      "passAttempts": 10,
+      "tackleAttempts": 13
+    },
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 0,
+      "rating": 7.1,
+      "assists": 1,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 12,
+      "tacklesMade": 2,
+      "passAttempts": 14,
+      "tackleAttempts": 3
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 1,
+      "shots": 3,
+      "rating": 6.9,
+      "assists": 3,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 62,
+      "tacklesMade": 8,
+      "passAttempts": 72,
+      "tackleAttempts": 37
+    }
+  ],
+  "notes": [],
+  "opponent": {
+    "players": [
+      {
+        "gamertag": "Miioutek_",
+        "position": "FW",
+        "rating": 10,
+        "goals": 4,
+        "assists": 0,
+        "shots": 6,
+        "passesMade": 19,
+        "passAttempts": 22,
+        "tacklesMade": 3,
+        "tackleAttempts": 10,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "tunisiano77",
+        "position": "MF",
+        "rating": 6.9,
+        "goals": 0,
+        "assists": 4,
+        "shots": 3,
+        "passesMade": 93,
+        "passAttempts": 119,
+        "tacklesMade": 10,
+        "tackleAttempts": 19,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "MED9124",
+        "position": "FW",
+        "rating": 6,
+        "goals": 0,
+        "assists": 0,
+        "shots": 2,
+        "passesMade": 8,
+        "passAttempts": 8,
+        "tacklesMade": 0,
+        "tackleAttempts": 2,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      }
+    ],
+    "minutes": 93
+  }
+}

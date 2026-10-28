@@ -1,0 +1,142 @@
+{
+  "match": {
+    "id": 213,
+    "playedAt": "2026-10-27T22:17:23.000Z",
+    "type": "league",
+    "opponent": "Mitroglouuu",
+    "goalsFor": 4,
+    "goalsAgainst": 4,
+    "result": "draw",
+    "possessionPct": null,
+    "shots": 7,
+    "opponentQuit": false
+  },
+  "players": [
+    {
+      "motm": false,
+      "goals": 0,
+      "saves": 0,
+      "shots": 1,
+      "rating": 7.8,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 17,
+      "tacklesMade": 2,
+      "passAttempts": 22,
+      "tackleAttempts": 4
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 7.3,
+      "assists": 0,
+      "gamertag": "Chef695046",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 13,
+      "tacklesMade": 0,
+      "passAttempts": 20,
+      "tackleAttempts": 6
+    },
+    {
+      "motm": false,
+      "goals": 3,
+      "saves": 0,
+      "shots": 4,
+      "rating": 6.9,
+      "assists": 3,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 105,
+      "tacklesMade": 6,
+      "passAttempts": 123,
+      "tackleAttempts": 35
+    }
+  ],
+  "notes": [],
+  "opponent": {
+    "players": [
+      {
+        "gamertag": "l2abtn",
+        "position": "FW",
+        "rating": 9.3,
+        "goals": 2,
+        "assists": 1,
+        "shots": 2,
+        "passesMade": 19,
+        "passAttempts": 24,
+        "tacklesMade": 2,
+        "tackleAttempts": 6,
+        "saves": 0,
+        "redCards": 0,
+        "motm": true
+      },
+      {
+        "gamertag": "Dino_football86",
+        "position": "MF",
+        "rating": 8.8,
+        "goals": 1,
+        "assists": 1,
+        "shots": 2,
+        "passesMade": 18,
+        "passAttempts": 25,
+        "tacklesMade": 1,
+        "tackleAttempts": 5,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "Dougilink",
+        "position": "MF",
+        "rating": 8.5,
+        "goals": 0,
+        "assists": 0,
+        "shots": 0,
+        "passesMade": 14,
+        "passAttempts": 15,
+        "tacklesMade": 5,
+        "tackleAttempts": 9,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "Azatsu974",
+        "position": "MF",
+        "rating": 6.9,
+        "goals": 0,
+        "assists": 2,
+        "shots": 3,
+        "passesMade": 14,
+        "passAttempts": 18,
+        "tacklesMade": 0,
+        "tackleAttempts": 6,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      },
+      {
+        "gamertag": "hoPrAt",
+        "position": "FW",
+        "rating": 6.3,
+        "goals": 1,
+        "assists": 0,
+        "shots": 3,
+        "passesMade": 47,
+        "passAttempts": 58,
+        "tacklesMade": 4,
+        "tackleAttempts": 10,
+        "saves": 0,
+        "redCards": 0,
+        "motm": false
+      }
+    ],
+    "minutes": 92
+  }
+}

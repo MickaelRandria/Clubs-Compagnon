@@ -1,0 +1,78 @@
+{
+  "match": {
+    "id": 114,
+    "playedAt": "2026-10-26T20:17:23.000Z",
+    "type": "league",
+    "opponent": "Vallée Ouveze",
+    "goalsFor": 4,
+    "goalsAgainst": 1,
+    "result": "win",
+    "possessionPct": null,
+    "shots": 11,
+    "opponentQuit": null
+  },
+  "players": [
+    {
+      "motm": true,
+      "goals": 1,
+      "saves": 0,
+      "shots": 3,
+      "rating": 8.9,
+      "assists": 2,
+      "gamertag": "Naaks-75",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 13,
+      "tacklesMade": 0,
+      "passAttempts": 16,
+      "tackleAttempts": 1
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 1,
+      "rating": 8.2,
+      "assists": 0,
+      "gamertag": "vrYmika",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 20,
+      "tacklesMade": 5,
+      "passAttempts": 25,
+      "tackleAttempts": 7
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 2,
+      "rating": 7.9,
+      "assists": 0,
+      "gamertag": "Desparte971",
+      "position": "MF",
+      "redCards": 0,
+      "passesMade": 12,
+      "tacklesMade": 1,
+      "passAttempts": 15,
+      "tackleAttempts": 6
+    },
+    {
+      "motm": false,
+      "goals": 1,
+      "saves": 0,
+      "shots": 5,
+      "rating": 7.1,
+      "assists": 1,
+      "gamertag": "Rina94JJG",
+      "position": "FW",
+      "redCards": 0,
+      "passesMade": 87,
+      "tacklesMade": 7,
+      "passAttempts": 104,
+      "tackleAttempts": 25
+    }
+  ],
+  "notes": [],
+  "opponent": null
+}

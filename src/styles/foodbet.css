@@ -17,13 +17,43 @@
 .fb-screen--night { background: var(--fc-abysse); color: var(--fc-craie); }
 .fb-screen--ice { background: var(--fc-glacier); color: var(--fc-abysse); }
 
-.fb-bars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 14px 14px 0; }
-.fb-bars i { display: block; height: 4px; background: rgba(242,244,248,.28); }
-.fb-bars i.is-done { background: var(--fc-craie); }
-.fb-screen--ice .fb-bars i { background: rgba(6,12,31,.2); }
-.fb-screen--ice .fb-bars i.is-done { background: var(--fc-abysse); }
+/* Les quatre phases de la soirée, toujours en haut : finies cochées, l'actuelle en orange. */
+.fb-phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; margin: 0; padding: 8px 14px 0; list-style: none; }
+.fb-phases li { display: flex; flex-direction: column; gap: 5px; min-width: 0; font: 800 13px/1 var(--fc-display); letter-spacing: .06em;
+  text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .5; }
+.fb-phases i { display: block; height: 5px; background: currentColor; opacity: .35; }
+.fb-phases li.is-done { opacity: .85; }
+.fb-phases li.is-done i { opacity: 1; }
+.fb-phases li.is-on { opacity: 1; color: #FFB547; }
+.fb-phases li.is-on i { opacity: 1; }
+.fb-screen--ice .fb-phases li.is-on { color: var(--fc-blue); }
+.fb-now { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 8px 14px 0; padding: 8px 10px;
+  background: rgba(6,12,31,.35); font: 800 15px/1.1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
+.fb-now b { color: #FFB547; white-space: nowrap; }
+.fb-now b.is-live { color: var(--fc-rouge); }
+.fb-screen--ice .fb-now { background: rgba(6,12,31,.1); }
+.fb-screen--ice .fb-now b { color: var(--fc-blue); }
 
-.fb-top { display: flex; align-items: center; gap: 10px; padding: 8px 8px 0 14px; }
+/* Salle d'attente : maintenant / ensuite, puis qui est là. */
+.fb-room { display: flex; flex-direction: column; background: rgba(242,244,248,.06); }
+.fb-room p { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; margin: 0; padding: 10px 12px;
+  box-shadow: inset 0 -1px 0 rgba(242,244,248,.1); }
+.fb-room p:last-child { box-shadow: none; }
+.fb-room b { font: 800 13px/1.3 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; color: var(--fc-glacier); }
+.fb-room span { font: 600 15px/1.35 var(--fc-text); }
+.fb-who { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 38px; margin: 0;
+  box-shadow: inset 0 -1px 0 rgba(242,244,248,.1); font: 700 17px/1 var(--fc-display); text-transform: uppercase; }
+.fb-who span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-who em { flex: none; font: 600 13px/1 var(--fc-text); font-style: normal; text-transform: none; opacity: .7; }
+.fb-who em.is-done { color: #3DDC97; opacity: 1; }
+
+/* Panneau admin de la salle : la seule commande qui fait passer à la phase suivante. */
+.fb-adm { display: flex; flex-direction: column; gap: 8px; padding: 14px 18px 18px; background: #FFB547; color: var(--fc-abysse); }
+.fb-adm-tag { font: 800 13px/1 var(--fc-display); letter-spacing: .14em; text-transform: uppercase; }
+.fb-adm .fb-admin-go { justify-content: space-between; }
+.fb-adm .fb-admin-go small { font: 600 13px/1.2 var(--fc-text); text-transform: none; opacity: .85; text-align: right; }
+
+.fb-top { display: flex; align-items: center; gap: 10px; padding: 10px 8px 0 14px; }
 .fb-mark { font: italic 800 24px/1 var(--fc-display); text-transform: uppercase; white-space: nowrap; }
 .fb-mark span { color: #FFB547; }
 .fb-screen--ice .fb-mark span { color: var(--fc-blue); }

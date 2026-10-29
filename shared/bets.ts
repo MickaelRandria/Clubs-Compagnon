@@ -149,6 +149,8 @@ export interface BetsState {
   history: { id: number; status: 'settled' | 'cancelled'; settledAt: string; match: BetMatch | null; crack: string[] | null; flop: string[] | null;
     markets: Market[]; mySlips: Slip[]; results: BetPick[]; myVote: number | null }[];
   leaderboard: { accountId: number; name: string; balance: number; me: boolean }[];
+  /** Salle d'attente : présents (FoodBet ouvert ces 2 dernières minutes) et engagés dans la soirée, sans leurs choix. */
+  room: { name: string; me: boolean; here: boolean; played: boolean; voted: boolean }[];
 }
 
 const market = z.enum(['crack', 'flop', 'verdict', 'goals', 'cleansheet', 'red', 'ragequit']);

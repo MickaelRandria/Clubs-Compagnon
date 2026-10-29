@@ -102,6 +102,12 @@ test('cycle complet : mises, changement d’avis, coup d’envoi, règlement EA,
   await call('vote', alex, { fixtureId: vote.id, category: 'crack', memberId: chef });
   await call('vote', sam, { fixtureId: vote.id, category: 'crack', memberId: rina });
   await call('vote', sam, { fixtureId: vote.id, category: 'crack', memberId: chef });
+  // Salle d'attente : qui a joué, qui a voté, jamais leurs choix.
+  const room = (await call('state', fan)).room;
+  assert.deepEqual(room.filter((r) => r.played).map((r) => r.name).sort(), ['Rina', 'sam']);
+  assert.deepEqual(room.filter((r) => r.voted).map((r) => r.name).sort(), ['Rina', 'sam'], 'fan n’a pas encore voté');
+  assert.ok(room[0].me, 'moi en premier');
+  assert.ok(room.every((r) => Object.keys(r).sort().join() === 'here,me,name,played,voted'));
   // Les pronos du club ne se dévoilent qu'à ceux qui ont voté.
   assert.equal((await call('state', fan)).votes[0].picks, null);
   const picks = (await call('state', alex)).votes[0].picks!;

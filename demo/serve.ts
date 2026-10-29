@@ -1,7 +1,7 @@
 // Mode démo : la vraie app, servie avec les données de demo/fixtures/ (photo de la prod).
 // Aucune base, aucun appel EA, aucun secret : marche hors ligne et en session cloud.
 // `npm run demo` (visiteur non connecté) ou `npm run demo -- --connecte` (compte démo, FoodBet ouvert).
-// FoodBet : l'étape se choisit dans l'URL, `/paris?scene=vote` (voir SCENES).
+// FoodBet : l'étape se choisit dans l'URL, `/paris?scene=vote` (voir SCENES), `&admin` pour la vue admin.
 //
 // Pour maquetter une donnée que l'API ne renvoie pas encore, l'ajouter à la main dans les
 // fixtures : le front l'affiche comme si le serveur la renvoyait déjà.
@@ -26,7 +26,7 @@ const SCENES = ['parier', 'joue', 'match', 'tard', 'vote', 'vote-fait', 'gagnant
 type Scene = typeof SCENES[number];
 
 /** Une soirée FoodBet à l'étape demandée, cotée par le vrai calcul à partir des matchs de la photo. */
-function betsState(scene: Scene): BetsState {
+function betsState(scene: Scene, admin: boolean): BetsState {
   const history: FormMatch[] = matches.map((m) => {
     const detail = existsSync(fixture(`matches/${m.id}`)) ? read<MatchDetail>(`matches/${m.id}`) : null;
     return { opponent: m.opponent, result: m.result, goalsFor: m.goalsFor, goalsAgainst: m.goalsAgainst, opponentQuit: m.opponentQuit,
@@ -63,7 +63,7 @@ function betsState(scene: Scene): BetsState {
   const before = scene === 'parier' || scene === 'joue' || scene === 'match' || scene === 'tard';
   const fixtureSlips = scene === 'parier' || scene === 'tard' ? [] : mine;
   return {
-    isAdmin: false,
+    isAdmin: admin,
     myMemberId: me.id,
     wallet: { balance: settled ? 1345 : 1100, canBailout: false, bankrupt: false },
     fixture: before ? { id: 1, status: scene === 'match' || scene === 'tard' ? 'locked' : 'open', openedAt: new Date().toISOString(),
@@ -80,11 +80,17 @@ function betsState(scene: Scene): BetsState {
       { accountId: 1, name: me.gamertag, balance: settled ? 1345 : 1100, me: true },
       ...others.slice(1).map((m, i) => ({ accountId: i + 3, name: m.gamertag, balance: 1020 - i * 230, me: false })),
     ],
+    // Salle d'attente : trois présents, deux absents ; qui a joué et voté suit l'étape.
+    room: [me, ...others].map((m, i) => ({
+      name: m.gamertag, me: m.id === me.id, here: i < 3,
+      played: scene !== 'parier' && scene !== 'rien' && (i === 0 ? scene !== 'tard' : i < 3),
+      voted: scene === 'vote-fait' ? i < 3 : scene === 'vote' ? i === 1 || i === 2 : false,
+    })),
   };
 }
 
 /** Réponse de chaque route GET de /api. `undefined` : route inconnue en démo. */
-function answer(path: string, scene: Scene): [number, unknown] | undefined {
+function answer(path: string, scene: Scene, admin: boolean): [number, unknown] | undefined {
   if (path === '/api/club') return [200, read('club')];
   if (path === '/api/members') return [200, members];
   if (path === '/api/matches') return [200, matches];
@@ -103,7 +109,7 @@ function answer(path: string, scene: Scene): [number, unknown] | undefined {
     const live = scene === 'match' || scene === 'tard' ? 'locked' : scene.startsWith('vote') ? 'voting' : scene === 'parier' || scene === 'joue' ? 'open' : null;
     return [200, { mode: 'on', access: signedIn ? 'open' : 'locked', canConfigure: false, live } satisfies BetsStatus];
   }
-  if (path === '/api/bets/state') return signedIn ? [200, betsState(scene)] : [401, { error: 'Connecte-toi pour parier.' }];
+  if (path === '/api/bets/state') return signedIn ? [200, betsState(scene, admin)] : [401, { error: 'Connecte-toi pour parier.' }];
   return undefined;
 }
 
@@ -114,11 +120,13 @@ const demoApi: Plugin = {
       if (!req.url?.startsWith('/api/')) return next();
       const path = new URL(req.url, 'http://localhost').pathname;
       // L'étape FoodBet suit l'URL de la page qui appelle l'API (`/paris?scene=vote`).
-      let asked: string | null = null;
-      try { asked = new URL(req.headers.referer ?? '').searchParams.get('scene'); } catch { /* pas de page d'origine */ }
-      const scene: Scene = SCENES.find((s) => s === asked) ?? 'parier';
+      // `&admin` : la même étape vue par un admin (panneau de la phase suivante).
+      let page = new URLSearchParams();
+      try { page = new URL(req.headers.referer ?? '').searchParams; } catch { /* pas de page d'origine */ }
+      const scene: Scene = SCENES.find((s) => s === page.get('scene')) ?? 'parier';
+      const admin = page.has('admin');
       const [status, body] = req.method === 'GET'
-        ? answer(path, scene) ?? [404, { error: `Route absente du mode démo : ${path}` }]
+        ? answer(path, scene, admin) ?? [404, { error: `Route absente du mode démo : ${path}` }]
         : [409, { error: 'Mode démo : rien n’est enregistré.' }];
       res.statusCode = status;
       res.setHeader('Content-Type', 'application/json');

@@ -39,7 +39,8 @@ export function useBetsState(enabled: boolean) {
     enabled,
     // Toujours frais : le match peut être réglé à tout moment.
     staleTime: 0,
-    refetchInterval: 30_000,
+    // 15 s : la salle d'attente montre qui est là et passe seule à la phase suivante.
+    refetchInterval: 15_000,
     refetchOnWindowFocus: true,
   });
 }

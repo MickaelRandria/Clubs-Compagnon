@@ -46,6 +46,8 @@ export const betsSettings: BetsSettings = {
 };
 
 async function dispatch(action: string, accountId: number, input: object, admin: boolean): Promise<BetsState> {
+  // Présence dans la salle d'attente : l'écran relit l'état toutes les 15 s tant qu'il est ouvert.
+  await getDb().execute(sql`update credit_wallets set seen_at = now() where account_id = ${accountId}`);
   const result = await getDb().execute(sql`select bets_dispatch(${action}, ${accountId}::integer, ${JSON.stringify(input)}::jsonb, ${admin}) as data`);
   const data = result.rows[0]?.data as BetsState & { error?: string; status?: number };
   if (data.error) throw new HttpError(data.status ?? 400, data.error);

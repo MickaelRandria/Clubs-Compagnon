@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
 import {
   CURRENCY, DEFAULT_STAKE, MARKET_COPY, MARKET_ORDER, STAKES, optionLabel, payout,
-  type BetMatch, type BetsState, type BetPick, type Market, type MarketId,
+  type BetMatch, type BetsAdminAction, type BetsState, type BetPick, type Market, type MarketId,
 } from '../../shared/bets';
 import { useMe } from '../api/auth';
 import { useBetsAdmin, useBetsPlay, useBetsState, useBetsStatus } from '../api/bets';
@@ -13,10 +13,11 @@ import { frNum } from '../lib/format';
 import { usePageTitle } from '../lib/hooks';
 import '../styles/foodbet.css';
 
-// FoodBet : le pari du club, en plein écran façon stories. Une rencontre = le Crack du match
-// (tranché par le vote), parfois un pari d'équipe en plus. Quatre étapes, un écran chacune :
-// parier, attendre le match, voter, découvrir les gagnants. Les pronos des autres se
-// dévoilent à chacun une fois son vote donné (drizzle/0021_foodbet.sql).
+// FoodBet : le pari du club, en plein écran. Une soirée suit quatre phases, toujours visibles
+// en haut de l'écran : 1 Paris, 2 Match, 3 Vote, 4 Résultats. Un joueur ne voit que deux sortes
+// d'écrans : celui où il agit (parier, voter, découvrir les gagnants) et la salle d'attente,
+// qui dit ce qui se passe maintenant, ce qui vient ensuite, et qui est là. L'admin fait avancer
+// les phases depuis un panneau en bas de la salle. Règles : drizzle/0017 à 0022.
 
 const CR = CURRENCY.short;
 const STARTING_TEXT = `500 ${CURRENCY.name} offerts. Avant chaque match tu paries, après tu votes pour le joueur du match. Aucun argent réel.`;
@@ -39,6 +40,7 @@ const EXPLAIN: Record<MarketId, ReactNode> = {
     juste après le match. Le favori rapporte peu, l’outsider rapporte gros.</>,
 };
 const ODDS_HINT = 'La cote, c’est ce que rapporte chaque crédit misé : plus elle est haute, plus c’est risqué… et plus ça paie.';
+const PHASES = ['Paris', 'Match', 'Vote', 'Résultats'] as const;
 
 const seenKey = (fixtureId: number) => `bets.seen.${fixtureId}`;
 const wasSeen = (fixtureId: number) => { try { return localStorage.getItem(seenKey(fixtureId)) === '1'; } catch { return true; } };
@@ -46,6 +48,7 @@ const markSeen = (fixtureId: number) => { try { localStorage.setItem(seenKey(fix
 
 const byOrder = (a: Market, b: Market) => MARKET_ORDER.indexOf(a.id) - MARKET_ORDER.indexOf(b.id);
 const score = (m: BetMatch) => `FoodBall ${m.goalsFor}–${m.goalsAgainst} ${m.opponent}`;
+const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
 
 /** La bonne réponse d'un pari réglé. */
 function answer(market: Market, match: BetMatch | null, crack: string[] | null): string | null {
@@ -69,13 +72,23 @@ function Close() {
   </button>;
 }
 
-/** Un écran : barres d'étapes, marque, solde, croix ; le panneau admin remplace le panneau du bas. */
-function Screen({ tone, step = 0, sheet, children }: { tone: 'blue' | 'night' | 'ice'; step?: number; sheet?: ReactNode; children: ReactNode }) {
+/** Les quatre phases de la soirée, et où on en est. `phase` 0 : avant la soirée. */
+function Phases({ phase, status, live = false }: { phase: number; status: ReactNode; live?: boolean }) {
+  return <>
+    <ol className="fb-phases" aria-label={phase ? `Phase ${phase} sur 4 : ${PHASES[phase - 1]}` : 'Avant la soirée'}>
+      {PHASES.map((label, i) => <li key={label} className={i + 1 < phase ? 'is-done' : i + 1 === phase ? 'is-on' : undefined}
+        aria-current={i + 1 === phase ? 'step' : undefined}><i />{i + 1 < phase ? '✓' : i + 1} {label}</li>)}
+    </ol>
+    <p className="fb-now"><span>{phase ? `Phase ${phase} sur 4` : 'Avant la soirée'}</span><b className={live ? 'is-live' : undefined}>{status}</b></p>
+  </>;
+}
+
+/** Un écran : marque, solde, croix, les phases ; en bas, le panneau du moment (mise, admin). */
+function Screen({ tone, phase, status, live, sheet, children }: {
+  tone: 'blue' | 'night' | 'ice'; phase?: number; status?: ReactNode; live?: boolean; sheet?: ReactNode; children: ReactNode;
+}) {
   const { state, preview, adminOpen, setAdminOpen } = useContext(FoodBetCtx);
   return <section className={`fb-screen fb-screen--${tone}`}>
-    <div className="fb-bars" aria-label={step ? `Étape ${step} sur 4` : undefined} aria-hidden={step ? undefined : true}>
-      {[1, 2, 3, 4].map((i) => <i key={i} className={i <= step ? 'is-done' : undefined} />)}
-    </div>
     <div className="fb-top">
       <span className="fb-mark">Food<span>Bet</span></span>
       {state?.isAdmin && <button type="button" className="fb-admin" aria-expanded={adminOpen} onClick={() => setAdminOpen(!adminOpen)}>Admin</button>}
@@ -83,6 +96,7 @@ function Screen({ tone, step = 0, sheet, children }: { tone: 'blue' | 'night' | 
         {fmt(state.wallet.balance)} <small>{CR}</small>{state.wallet.bankrupt && <small> · prêt</small>}</span>}
       <Close />
     </div>
+    {phase !== undefined && <Phases phase={phase} status={status} live={live} />}
     {preview && <p className="fb-demo" role="note">Aperçu admin : seuls les admins voient FoodBet pour l’instant.</p>}
     <div className="fb-main">{children}</div>
     {adminOpen && state ? <AdminSheet state={state} /> : sheet}
@@ -97,21 +111,119 @@ function Bailout() {
     À sec ? Prêt <b>+100 {CR}</b></button>;
 }
 
-// ---------------------------------------------------------------- 1 · Parier
+// ---------------------------------------------------------------- La salle d'attente
 
-function Entry({ markets, reason, onStart }: { markets: Market[]; reason: string | null; onStart: () => void }) {
-  return <Screen tone="night">
-    <span className="fb-big" style={{ marginTop: 32, fontSize: 'clamp(76px, 24vw, 96px)' }}>Food<br /><em style={{ color: '#FFB547' }}>Bet</em></span>
-    <p className="fb-kick" style={{ color: 'var(--fc-glacier)' }}>Ce soir : {markets.map((m) => MARKET_COPY[m.id].title).join(' + ')}</p>
-    <p className="fb-note fb-note--lg">Le jeu de pronos du club, avec des <b>crédits virtuels</b> (aucun argent réel). <b>Avant le match</b>, tu paries.
-      <b> Après</b>, tu votes pour le joueur du match. Puis on découvre qui avait vu juste.</p>
-    {reason && <p className="fb-note">Les cotes tiennent compte de notre forme : {reason.charAt(0).toLowerCase() + reason.slice(1)}.</p>}
-    <div className="fb-push" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <button type="button" className="fb-btn fb-btn--amber" onClick={onStart}>Je joue <b>10 s</b></button>
-      <p className="fb-tap">Les paris ferment au coup d’envoi</p>
+interface Who { name: string; me: boolean; done: boolean }
+
+/**
+ * Salle d'attente : rien à faire pour le joueur. Elle dit ce qui se passe maintenant, ce qui
+ * vient ensuite (et ce qui le déclenche), et qui est là. L'admin y trouve la phase suivante.
+ */
+function Room({ phase, status, live, explain, now, next, who, whoTitle, doneLabel, todoLabel, children }: {
+  phase: number; status: ReactNode; live?: boolean; explain: ReactNode; now: ReactNode; next: ReactNode;
+  who: Who[]; whoTitle: string; doneLabel: string; todoLabel?: string; children?: ReactNode;
+}) {
+  const { state } = useContext(FoodBetCtx);
+  return <Screen tone="night" phase={phase} status={status} live={live} sheet={state?.isAdmin ? <AdminNext state={state} /> : undefined}>
+    <h2 className="fb-big fb-big--md">Salle<br />d’attente</h2>
+    <p className="fb-note">{explain}</p>
+    <div className="fb-room">
+      <p><b>Maintenant</b><span>{now}</span></p>
+      <p><b>Ensuite</b><span>{next}</span></p>
     </div>
+    {who.length > 0 && <div>
+      <p className="fb-kick">{whoTitle}</p>
+      <div className="fb-rows">
+        {who.map((w) => <p key={w.name} className="fb-who"><span>{w.me ? 'Toi' : w.name}</span>
+          <em className={w.done ? 'is-done' : undefined}>{w.done ? doneLabel : todoLabel}</em></p>)}
+      </div>
+    </div>}
+    {children}
+    {!state?.isAdmin && <p className="fb-tap fb-push">L’écran passe tout seul à la phase suivante</p>}
   </Screen>;
 }
+
+/** Phase 0 : la soirée n'a pas commencé. */
+function RoomBefore({ onBoard }: { onBoard: () => void }) {
+  const { state } = useContext(FoodBetCtx);
+  const last = state!.history.find((h) => h.status === 'settled');
+  const net = last ? last.mySlips.reduce((sum, s) => sum + (s.payout ?? 0) - s.stake, 0) : 0;
+  const here = state!.room.filter((r) => r.here || r.me).map((r) => ({ name: r.name, me: r.me, done: true }));
+  return <Room phase={0} status="Salle d’attente"
+    explain={<>Les paris ne sont pas encore ouverts. <b>L’admin les ouvre dans le lobby</b>, juste avant le coup d’envoi : reste ici, l’écran
+      passe tout seul à la phase 1.</>}
+    now="On attend que tout le monde arrive dans le lobby." next="Phase 1 : tu fais tes pronos (10 secondes)."
+    who={here} whoTitle={`Dans la salle · ${here.length}`} doneLabel="là">
+    {last?.match && <p className="fb-note">Dernier FoodBet : {score(last.match)}{last.mySlips.length > 0
+      && <> · <b className="fb-gain">{net > 0 ? '+' : ''}{fmt(net)} {CR}</b></>}</p>}
+    <Bailout />
+    <button type="button" className="fb-link" onClick={onBoard}>Voir le classement</button>
+  </Room>;
+}
+
+/** Phase 1, pronos faits : on attend les autres et le coup d'envoi. */
+function RoomPlayed({ onEdit }: { onEdit: () => void }) {
+  const { state } = useContext(FoodBetCtx);
+  const fixture = state!.fixture!;
+  const who = state!.room.filter((r) => r.here || r.played || r.me).map((r) => ({ name: r.name, me: r.me, done: r.played }));
+  const mine = [...fixture.mySlips].sort((a, b) => MARKET_ORDER.indexOf(a.market) - MARKET_ORDER.indexOf(b.market))
+    .map((s) => `${MARKET_COPY[s.market].title} : ${optionLabel(fixture.markets, s)} (${fmt(s.stake)} → ${fmt(payout(s.stake, s.odds))} ${CR})`);
+  return <Room phase={1} status="Tu as joué"
+    explain={<>Tes pronos sont validés : <b>{mine.join(' · ')}</b>. Tu peux encore les changer jusqu’au coup d’envoi.</>}
+    now="Les autres font leurs pronos." next="Phase 2 : l’admin lance le match, les paris ferment."
+    who={who} whoTitle={`Pronos · ${who.filter((w) => w.done).length} sur ${who.length}`} doneLabel="✓ a joué" todoLabel="pas encore">
+    <p className="fb-note">Ce que chacun a joué reste secret jusqu’au vote.</p>
+    <button type="button" className="fb-link" onClick={onEdit}>Changer mon pari</button>
+  </Room>;
+}
+
+/** Phase 2 : le match se joue, rien à faire. */
+function RoomMatch() {
+  const { state } = useContext(FoodBetCtx);
+  const fixture = state!.fixture!;
+  const mine = [...fixture.mySlips].sort((a, b) => MARKET_ORDER.indexOf(a.market) - MARKET_ORDER.indexOf(b.market))
+    .map((s) => optionLabel(fixture.markets, s));
+  const who = state!.room.filter((r) => r.played).map((r) => ({ name: r.name, me: r.me, done: true }));
+  return <Room phase={2} status="● En direct" live
+    explain={mine.length > 0 ? <>Les paris sont fermés. <b>Rien à faire pendant le match</b> : joue, on s’occupe du reste.</>
+      : <>Les paris ont fermé au coup d’envoi : <b>tu n’as pas parié ce soir</b>. Tu pourras quand même voter pour le joueur du match.</>}
+    now={mine.length > 0 ? `FoodBall joue. Tes pronos : ${mine.join(' · ')}.` : 'FoodBall joue.'}
+    next="Phase 3 : dès qu’EA publie le score (quelques minutes après le coup de sifflet), tu votes pour le joueur du match."
+    who={who} whoTitle={`Ont joué ce soir · ${who.length}`} doneLabel="✓ a joué" />;
+}
+
+/** Phase 3, vote donné : on attend les autres votes ; les pronos du club se dévoilent. */
+function RoomVoted({ vote, onChange }: { vote: BetsState['votes'][number]; onChange: () => void }) {
+  const { state } = useContext(FoodBetCtx);
+  const picks = vote.picks ?? [];
+  const leader = Object.entries(vote.tally.crack).sort((a, b) => b[1] - a[1])[0];
+  const leaderName = leader && vote.candidates.find((c) => String(c.memberId) === leader[0])?.gamertag;
+  const who = state!.room.filter((r) => r.here || r.voted || r.played || r.me).map((r) => ({ name: r.name, me: r.me, done: r.voted }));
+  const voted = `${plural(who.filter((w) => w.done).length, 'vote')} sur ${who.length}`;
+  return <Room phase={3} status="Tu as voté"
+    explain={<>Ton vote est pris en compte. Tu vois maintenant <b>ce que chacun avait parié</b>.</>}
+    now={`Les autres votent : ${voted}.${leaderName ? ` En tête : ${leaderName}.` : ''}`}
+    next="Phase 4 : l’admin clôt le vote, le Crack est désigné et les gains tombent."
+    who={who} whoTitle={`Votes · ${voted}`} doneLabel="✓ a voté" todoLabel="pas encore">
+    <div>
+      <p className="fb-kick">Ce que le club a joué</p>
+      {picks.length === 0 && <p className="fb-note">Personne n’a parié sur ce match.</p>}
+      {[...vote.markets].sort(byOrder).map((m) => {
+        const groups = m.options.map((o) => ({ o, names: picks.filter((p) => p.market === m.id && p.option === o.id).map((p) => (p.me ? 'Toi' : p.name)) }))
+          .filter((g) => g.names.length > 0);
+        if (groups.length === 0) return null;
+        const right = m.id === 'crack' ? null : answer(m, vote.match, null);
+        return <div key={m.id}>
+          <p className="fb-note" style={{ marginTop: 6 }}>{MARKET_COPY[m.id].title} · {right ? <>réglé, c’était <b>{right}</b></> : 'en attente du vote'}</p>
+          <div className="fb-rows">{groups.map((g) => <div key={g.o.id} className="fb-pick"><b>{g.o.label} · {g.names.length}</b><span>{g.names.join(', ')}</span></div>)}</div>
+        </div>;
+      })}
+    </div>
+    <button type="button" className="fb-link" onClick={onChange}>Changer mon vote</button>
+  </Room>;
+}
+
+// ---------------------------------------------------------------- Phase 1 · Parier
 
 function Trend({ value }: { value?: number }) {
   if (!value || Math.abs(value) < 0.05) return null;
@@ -158,13 +270,13 @@ function Choose({ market, index, total, onPlaced, onSkip }: {
   const kicker = total > 1 ? `Pari ${index + 1} sur ${total} · ${MARKET_COPY[market.id].title}` : `Le pari du soir · ${MARKET_COPY[market.id].title}`;
 
   if (option) {
-    return <Screen tone="blue" step={1} sheet={<StakeSheet market={market} option={option} onPlaced={() => { setPick(null); onPlaced(); }} />}>
+    return <Screen tone="blue" phase={1} status="À toi de jouer" sheet={<StakeSheet market={market} option={option} onPlaced={() => { setPick(null); onPlaced(); }} />}>
       <p className="fb-kick">Ton choix · {MARKET_COPY[market.id].title}</p>
       <h2 className="fb-big fb-big--md">{option.label}<br /><em>×{frNum(option.odds, 2)}</em></h2>
       <button type="button" className="fb-link fb-link--start" onClick={() => setPick(null)}>Changer de réponse</button>
     </Screen>;
   }
-  return <Screen tone="blue" step={1}>
+  return <Screen tone="blue" phase={1} status="À toi de jouer">
     <p className="fb-kick">{kicker}</p>
     <h2 className="fb-big">{ASK[market.id]}</h2>
     <p className="fb-note">{EXPLAIN[market.id]}{players ? '' : ` ${ODDS_HINT}`}</p>
@@ -186,27 +298,7 @@ function Choose({ market, index, total, onPlaced, onSkip }: {
       </div>
     )}
     {onSkip ? <button type="button" className="fb-link" onClick={onSkip}>Garder mon choix</button>
-      : <p className="fb-tap">{players ? 'Touche un joueur · puis ta mise' : 'Touche ta réponse'}</p>}
-  </Screen>;
-}
-
-function Placed({ onEdit }: { onEdit: () => void }) {
-  const { state } = useContext(FoodBetCtx);
-  const fixture = state!.fixture!;
-  return <Screen tone="blue" step={1}>
-    <svg className="fb-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" /></svg>
-    <h2 className="fb-big">C’est<br />joué</h2>
-    <p className="fb-note">Tes pronos sont enregistrés. Tu peux les <b>changer jusqu’au coup d’envoi</b>. Ceux des autres restent secrets
-      jusqu’à ce que tu votes, après le match.</p>
-    <div className="fb-rows">
-      {[...fixture.mySlips].sort((a, b) => MARKET_ORDER.indexOf(a.market) - MARKET_ORDER.indexOf(b.market)).map((s) =>
-        <div key={s.id} className="fb-slip"><span>{optionLabel(fixture.markets, s)} ×{frNum(s.odds, 2)} · {fmt(s.stake)} {CR}</span>
-          <b className="fb-gain">{fmt(payout(s.stake, s.odds))} {CR}</b></div>)}
-    </div>
-    <div className="fb-push" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p className="fb-note">{fixture.bettors} joueur{fixture.bettors > 1 ? 's ont' : ' a'} joué ce soir.</p>
-      <button type="button" className="fb-link" onClick={onEdit}>Changer mon pari</button>
-    </div>
+      : <p className="fb-tap">{players ? 'Touche un joueur · puis ta mise' : 'Touche ta réponse · les paris ferment au coup d’envoi'}</p>}
   </Screen>;
 }
 
@@ -214,55 +306,20 @@ function OpenFlow({ state }: { state: BetsState }) {
   const fixture = state.fixture!;
   const markets = [...fixture.markets].sort(byOrder);
   const has = (m: Market) => fixture.mySlips.some((s) => s.market === m.id);
-  const [started, setStarted] = useState(fixture.mySlips.length > 0);
   const [editing, setEditing] = useState(false);
   const [index, setIndex] = useState(() => Math.max(0, markets.findIndex((m) => !has(m))));
-  const reason = fixture.context?.reason ?? null;
 
-  if (!started) return <Entry markets={markets} reason={reason} onStart={() => setStarted(true)} />;
   const next = () => {
     const after = markets.findIndex((m, i) => i > index && (editing || !has(m)));
     if (after < 0) setEditing(false); else setIndex(after);
   };
-  if (markets.every(has) && !editing) return <Placed onEdit={() => { setEditing(true); setIndex(0); }} />;
+  if (markets.every(has) && !editing) return <RoomPlayed onEdit={() => { setEditing(true); setIndex(0); }} />;
   const market = markets[index] ?? markets[0];
   return <Choose key={market.id} market={market} index={markets.indexOf(market)} total={markets.length}
     onPlaced={next} onSkip={editing && has(market) ? next : null} />;
 }
 
-// ---------------------------------------------------------------- 2 · Le match
-
-function Live() {
-  const { state } = useContext(FoodBetCtx);
-  const fixture = state!.fixture!;
-  const slips = [...fixture.mySlips].sort((a, b) => MARKET_ORDER.indexOf(a.market) - MARKET_ORDER.indexOf(b.market));
-  return <Screen tone="night" step={2}>
-    <p className="fb-kick fb-kick--live">● Match en cours · paris fermés</p>
-    <h2 className="fb-big">Tu as dit<br /><em>{optionLabel(fixture.markets, slips[0])}</em></h2>
-    <p className="fb-note">Les paris sont fermés le temps du match. <b>Rien à faire</b> : le score arrive tout seul depuis EA quelques minutes
-      après le coup de sifflet, et les paris d’équipe se règlent automatiquement.</p>
-    <div className="fb-rows">
-      {slips.map((s) => <div key={s.id} className="fb-slip"><span>{MARKET_COPY[s.market].title} · {fmt(s.stake)} {CR}</span>
-        <b className="fb-gain">{fmt(payout(s.stake, s.odds))} {CR}</b></div>)}
-    </div>
-    <p className="fb-note fb-push">Le Crack, lui, attend le vote du club après le match.</p>
-    <p className="fb-tap">On te rappelle pour le vote</p>
-  </Screen>;
-}
-
-function TooLate() {
-  const { state } = useContext(FoodBetCtx);
-  return <Screen tone="night" step={2}>
-    <p className="fb-kick fb-kick--live">● Match en cours · paris fermés</p>
-    <h2 className="fb-big">Trop<br />tard</h2>
-    <p className="fb-note fb-note--lg">Les paris ferment au <b>coup d’envoi</b> : tu ne peux plus parier sur ce match. Mais tu pourras quand même
-      <b> voter pour le joueur du match</b> dès la fin de la rencontre.</p>
-    <p className="fb-note fb-push">{state!.fixture!.bettors} joueur{state!.fixture!.bettors > 1 ? 's ont' : ' a'} joué ce soir. Leurs pronos se dévoilent après ton vote.</p>
-    <p className="fb-tap">On te rappelle pour le vote</p>
-  </Screen>;
-}
-
-// ---------------------------------------------------------------- 3 · Le vote
+// ---------------------------------------------------------------- Phase 3 · Le vote
 
 function VoteScreen({ vote, onVoted }: { vote: BetsState['votes'][number]; onVoted: () => void }) {
   const { state } = useContext(FoodBetCtx);
@@ -270,7 +327,7 @@ function VoteScreen({ vote, onVoted }: { vote: BetsState['votes'][number]; onVot
   const sheet = useMatchDetail(vote.match.id);
   const stats = new Map((sheet.data?.players ?? []).map((p) => [p.gamertag, p]));
   const crackSlip = vote.mySlips.find((s) => s.market === 'crack');
-  return <Screen tone="ice" step={3}>
+  return <Screen tone="ice" phase={3} status="À toi de voter">
     <p className="fb-kick">{score(vote.match)} · fin du match</p>
     <h2 className="fb-big">Ton<br />crack ?</h2>
     <p className="fb-note">Élis le <b>joueur du match</b> : celui qui a le plus pesé ce soir. Un seul vote, <b>pas pour toi-même</b>. Le joueur qui
@@ -280,7 +337,7 @@ function VoteScreen({ vote, onVoted }: { vote: BetsState['votes'][number]; onVot
       {vote.candidates.map((c) => {
         const p = stats.get(c.gamertag);
         const self = c.memberId === state!.myMemberId;
-        const line = p ? [p.goals && `${p.goals} but${p.goals > 1 ? 's' : ''}`, p.assists && `${p.assists} passe${p.assists > 1 ? 's' : ''} D`].filter(Boolean).join(' · ') : '';
+        const line = p ? [p.goals && plural(p.goals, 'but'), p.assists && `${plural(p.assists, 'passe')} D`].filter(Boolean).join(' · ') : '';
         return <button key={c.memberId} type="button" role="radio" aria-checked={vote.myVotes.crack === c.memberId}
           className={`fb-player${vote.myVotes.crack === c.memberId ? ' is-on' : ''}`} disabled={self || play.isPending}
           onClick={() => play.mutate({ action: 'vote', fixtureId: vote.id, category: 'crack', memberId: c.memberId }, { onSuccess: onVoted })}>
@@ -289,45 +346,17 @@ function VoteScreen({ vote, onVoted }: { vote: BetsState['votes'][number]; onVot
       })}
     </div>
     {play.isError && <p className="fb-error" role="alert">{play.error.message}</p>}
-    <p className="fb-tap">{vote.voters} vote{vote.voters > 1 ? 's' : ''} · touche un joueur</p>
-  </Screen>;
-}
-
-/** Après son vote : les pronos du club se dévoilent, en attendant la clôture. */
-function Revealed({ vote, onChange }: { vote: BetsState['votes'][number]; onChange: () => void }) {
-  const picks = vote.picks ?? [];
-  const leader = Object.entries(vote.tally.crack).sort((a, b) => b[1] - a[1])[0];
-  const leaderName = leader && vote.candidates.find((c) => String(c.memberId) === leader[0])?.gamertag;
-  return <Screen tone="night" step={3}>
-    <p className="fb-kick">{score(vote.match)}</p>
-    <h2 className="fb-big fb-big--md">Le club<br />a joué</h2>
-    <p className="fb-note">Ton vote est pris en compte. Tu vois maintenant <b>ce que chacun avait parié</b>. Le Crack devient officiel quand
-      l’admin clôt le vote : les gains tombent à ce moment-là.</p>
-    {picks.length === 0 && <p className="fb-note">Personne n’a parié sur ce match.</p>}
-    {[...vote.markets].sort(byOrder).map((m) => {
-      const groups = m.options.map((o) => ({ o, names: picks.filter((p) => p.market === m.id && p.option === o.id).map((p) => (p.me ? 'Toi' : p.name)) }))
-        .filter((g) => g.names.length > 0);
-      if (groups.length === 0) return null;
-      const right = m.id === 'crack' ? null : answer(m, vote.match, null);
-      return <div key={m.id}>
-        <p className="fb-kick">{MARKET_COPY[m.id].title} · {right ? `réglé, c’était ${right}` : 'en attente du vote'}</p>
-        <div className="fb-rows">{groups.map((g) => <div key={g.o.id} className="fb-pick"><b>{g.o.label} · {g.names.length}</b><span>{g.names.join(', ')}</span></div>)}</div>
-      </div>;
-    })}
-    <div className="fb-push" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {leaderName && <p className="fb-note">Crack en tête du vote : <b>{leaderName}</b> ({leader[1]} vote{leader[1] > 1 ? 's' : ''} sur {vote.voters})</p>}
-      <button type="button" className="fb-link" onClick={onChange}>Changer mon vote</button>
-    </div>
+    <p className="fb-tap">{plural(vote.voters, 'vote')} · touche un joueur</p>
   </Screen>;
 }
 
 function VoteFlow({ vote }: { vote: BetsState['votes'][number] }) {
   const [changing, setChanging] = useState(false);
   if (vote.myVotes.crack === null || changing) return <VoteScreen vote={vote} onVoted={() => setChanging(false)} />;
-  return <Revealed vote={vote} onChange={() => setChanging(true)} />;
+  return <RoomVoted vote={vote} onChange={() => setChanging(true)} />;
 }
 
-// ---------------------------------------------------------------- 4 · Les gagnants
+// ---------------------------------------------------------------- Phase 4 · Les résultats
 
 /** Gains et pertes par joueur sur une rencontre : chacun une ligne, le meilleur en haut. */
 function standings(results: BetPick[]) {
@@ -346,7 +375,7 @@ function Winners({ item, onDone, onBoard }: { item: BetsState['history'][number]
   const { winners, losers } = standings(item.results);
   const mine = item.mySlips.reduce((sum, s) => sum + (s.payout ?? 0) - s.stake, 0);
   const answers = [...item.markets].sort(byOrder).map((m) => [MARKET_COPY[m.id].title, answer(m, item.match, item.crack)] as const).filter(([, a]) => a);
-  return <Screen tone="blue" step={4}>
+  return <Screen tone="blue" phase={4} status="Soirée terminée">
     {item.match && <p className="fb-kick">{score(item.match)}</p>}
     <h2 className="fb-big">{winners.length > 0 ? <>Ils ont<br />vu juste</> : <>Personne<br />n’a vu juste</>}</h2>
     <p className="fb-note">{winners.length > 0 ? <>Tout est réglé. Voici ceux qui ont gagné et ce qu’ils ont empoché (<b>mise × cote</b>). Les crédits sont
@@ -358,13 +387,11 @@ function Winners({ item, onDone, onBoard }: { item: BetsState['history'][number]
       {answers.map(([title, a]) => <p key={title} className="fb-note">{title} : <b>{a}</b></p>)}
       {losers.length > 0 && <p className="fb-note">Raté : {losers.map((l) => `${l.me ? 'toi' : l.name} (${fmt(l.net)})`).join(', ')}</p>}
       {item.mySlips.length > 0 && <p className="fb-note fb-note--lg">Ton bilan : <b className="fb-gain">{mine > 0 ? '+' : ''}{fmt(mine)} {CR}</b></p>}
-      <button type="button" className="fb-btn fb-btn--solid fb-btn--center" onClick={onDone}>Continuer</button>
-      <button type="button" className="fb-link" onClick={() => { onDone(); onBoard(); }}>Voir le classement</button>
+      <button type="button" className="fb-btn fb-btn--solid fb-btn--center" onClick={() => { onDone(); onBoard(); }}>Voir le classement</button>
+      <button type="button" className="fb-link" onClick={onDone}>Retour à la salle d’attente</button>
     </div>
   </Screen>;
 }
-
-// ---------------------------------------------------------------- Classement, attente, admin
 
 function Board({ onBack }: { onBack: () => void }) {
   const { state } = useContext(FoodBetCtx);
@@ -383,53 +410,65 @@ function Board({ onBack }: { onBack: () => void }) {
   </Screen>;
 }
 
-function Idle({ onBoard }: { onBoard: () => void }) {
-  const { state } = useContext(FoodBetCtx);
-  const last = state!.history.find((h) => h.status === 'settled');
-  const net = last ? last.mySlips.reduce((sum, s) => sum + (s.payout ?? 0) - s.stake, 0) : 0;
-  return <Screen tone="night">
-    <h2 className="fb-big" style={{ marginTop: 24 }}>Pas de<br />match<br /><em>en vue</em></h2>
-    <p className="fb-note fb-note--lg">Aucun pari en cours. Le prochain FoodBet s’ouvre <b>dans le lobby, juste avant le coup d’envoi</b> :
-      un bandeau te prévient sur l’accueil de l’app.</p>
-    <div className="fb-push" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {last?.match && <>
-        <p className="fb-kick">Dernier FoodBet</p>
-        <p className="fb-note fb-note--lg">{score(last.match)}{last.mySlips.length > 0 && <> · <b className="fb-gain">{net > 0 ? '+' : ''}{fmt(net)} {CR}</b></>}</p>
-      </>}
-      <Bailout />
-      <button type="button" className="fb-btn fb-btn--solid fb-btn--center" onClick={onBoard}>Voir le classement</button>
-    </div>
-  </Screen>;
+// ---------------------------------------------------------------- Admin
+
+/** Ce que l'admin fait ensuite : une seule commande, celle qui fait passer à la phase suivante. */
+function nextStep(state: BetsState): { action: BetsAdminAction; label: string; hint: string } | null {
+  const fixture = state.fixture;
+  const vote = state.votes[0];
+  if (fixture?.status === 'open') return { action: { action: 'lock' }, label: 'Coup d’envoi', hint: 'passe en phase 2, ferme les paris' };
+  if (fixture) return null;
+  if (vote) return { action: { action: 'close-vote', fixtureId: vote.id }, label: 'Clore le vote et payer', hint: `phase 4 : désigne le Crack, verse les gains · ${plural(vote.voters, 'vote')}` };
+  return { action: { action: 'open' }, label: 'Ouvrir les paris', hint: 'passe en phase 1, tire les paris du match' };
 }
 
+function AdminNext({ state }: { state: BetsState }) {
+  const admin = useBetsAdmin();
+  const step = nextStep(state);
+  const target = state.fixture ?? state.votes[0];
+  const cancel = () => target && window.confirm('Annuler cette soirée ? Toutes les mises seront remboursées.')
+    && admin.mutate({ action: 'cancel', fixtureId: target.id });
+  return <div className="fb-adm">
+    <span className="fb-adm-tag">Admin · phase suivante</span>
+    {step ? <button type="button" className="fb-btn fb-btn--sm fb-admin-go" style={{ background: 'var(--fc-abysse)', color: 'var(--fc-craie)' }}
+      disabled={admin.isPending} onClick={() => admin.mutate(step.action)}>{step.label} <small>{step.hint}</small></button>
+      : <p className="fb-note" style={{ opacity: 1 }}>Rien à faire : le match se relie tout seul dès qu’EA publie le score, et le vote s’ouvre (phase 3).</p>}
+    {admin.isError && <p className="fb-error" role="alert">{admin.error.message}</p>}
+    {target && <button type="button" className="fb-link" onClick={cancel} disabled={admin.isPending}>Annuler la soirée · rembourse tout</button>}
+  </div>;
+}
+
+/** Toutes les commandes, depuis n'importe quel écran (bouton « Admin » en haut). */
 function AdminSheet({ state }: { state: BetsState }) {
   const admin = useBetsAdmin();
   const { setAdminOpen } = useContext(FoodBetCtx);
   const fixture = state.fixture;
   const vote = state.votes[0];
   const target = fixture ?? vote;
-  const run = (action: Parameters<typeof admin.mutate>[0]) => admin.mutate(action, { onSuccess: () => setAdminOpen(false) });
-  const cancel = () => target && window.confirm('Annuler cette rencontre ? Toutes les mises seront remboursées.') && run({ action: 'cancel', fixtureId: target.id });
+  const run = (action: BetsAdminAction) => admin.mutate(action, { onSuccess: () => setAdminOpen(false) });
+  const cancel = () => target && window.confirm('Annuler cette soirée ? Toutes les mises seront remboursées.') && run({ action: 'cancel', fixtureId: target.id });
   return <div className="fb-sheet">
     <span className="fb-sheet-title">Commandes admin</span>
     <p className="fb-note" style={{ color: 'var(--fc-ardoise)', opacity: 1, fontSize: 14 }}>Visible des admins seulement. Les autres joueurs ne voient jamais ce panneau.</p>
     {!fixture && <button type="button" className="fb-btn fb-btn--sm fb-admin-go" style={{ background: 'var(--fc-abysse)', color: 'var(--fc-craie)' }}
-      disabled={admin.isPending} onClick={() => run({ action: 'open' })}>Ouvrir le prochain <small>{vote ? 'clôt le vote en cours et tire les paris' : 'tire les paris du match suivant'}</small></button>}
+      disabled={admin.isPending} onClick={() => run({ action: 'open' })}>Ouvrir les paris <small>{vote ? 'clôt le vote en cours, passe en phase 1' : 'passe en phase 1'}</small></button>}
     {fixture?.status === 'open' && <button type="button" className="fb-btn fb-btn--sm fb-admin-go" style={{ background: 'var(--fc-abysse)', color: 'var(--fc-craie)' }}
-      disabled={admin.isPending} onClick={() => run({ action: 'lock' })}>Coup d’envoi <small>ferme les paris au lancement</small></button>}
-    {fixture?.status === 'locked' && <p className="fb-tap">Paris fermés. Le match se relie tout seul dès qu’EA le publie.</p>}
+      disabled={admin.isPending} onClick={() => run({ action: 'lock' })}>Coup d’envoi <small>passe en phase 2, ferme les paris</small></button>}
+    {fixture?.status === 'locked' && <p className="fb-tap">Phase 2 : le match se relie tout seul dès qu’EA le publie.</p>}
     {vote && !fixture && <button type="button" className="fb-btn fb-btn--sm fb-btn--light fb-admin-go" disabled={admin.isPending}
-      onClick={() => run({ action: 'close-vote', fixtureId: vote.id })}>Clore le vote et payer <small>désigne le Crack, verse les gains · {vote.voters} vote{vote.voters > 1 ? 's' : ''}</small></button>}
+      onClick={() => run({ action: 'close-vote', fixtureId: vote.id })}>Clore le vote et payer <small>passe en phase 4 · {plural(vote.voters, 'vote')}</small></button>}
     {target && <button type="button" className="fb-btn fb-btn--sm fb-btn--danger fb-admin-go" disabled={admin.isPending} onClick={cancel}>
-      Annuler la rencontre <small>rembourse toutes les mises</small></button>}
+      Annuler la soirée <small>rembourse toutes les mises</small></button>}
     {admin.isError && <p className="fb-error" role="alert">{admin.error.message}</p>}
     <button type="button" className="fb-link" onClick={() => setAdminOpen(false)}>Fermer</button>
   </div>;
 }
 
+// ---------------------------------------------------------------- La soirée
+
 function Evening({ state }: { state: BetsState }) {
   const [board, setBoard] = useState(false);
-  // Ne sert qu'à redessiner après « Continuer » : le « déjà vu » vit dans localStorage.
+  // Ne sert qu'à redessiner après les résultats : le « déjà vu » vit dans localStorage.
   const [, setSeen] = useState(0);
   const reveal = state.history.find((h) => h.status === 'settled' && Date.now() - new Date(h.settledAt).getTime() < 48 * 3_600_000
     && !wasSeen(h.id) && (h.mySlips.length > 0 || h.myVote !== null));
@@ -439,9 +478,9 @@ function Evening({ state }: { state: BetsState }) {
   if (board) return <Board onBack={() => setBoard(false)} />;
   if (reveal) return <Winners key={`w${reveal.id}`} item={reveal} onBoard={() => setBoard(true)} onDone={() => { markSeen(reveal.id); setSeen((n) => n + 1); }} />;
   if (fixture?.status === 'open') return <OpenFlow key={`o${fixture.id}`} state={state} />;
-  if (fixture?.status === 'locked') return fixture.mySlips.length > 0 ? <Live /> : <TooLate />;
+  if (fixture?.status === 'locked') return <RoomMatch />;
   if (vote) return <VoteFlow key={`v${vote.id}`} vote={vote} />;
-  return <Idle onBoard={() => setBoard(true)} />;
+  return <RoomBefore onBoard={() => setBoard(true)} />;
 }
 
 function Message({ title, text, children }: { title: ReactNode; text: string; children?: ReactNode }) {

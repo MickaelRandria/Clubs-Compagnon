@@ -1,7 +1,7 @@
 # FoodBall Club — compagnon Pro Clubs (EA FC 27)
 
 PWA mobile-first du club (ex-Dommage BJ FC) : stats synchronisées depuis EA, fiches joueurs et matchs,
-paris virtuels (Vestiaire Bets), Coach IA. Tout en français : interface, commentaires, messages de commit.
+paris virtuels (FoodBet), Coach IA. Tout en français : interface, commentaires, messages de commit.
 
 ## Stack et commandes
 
@@ -12,7 +12,7 @@ Node ≥ 20.12. Vite est volontairement en v7.
 - `npm run test:fc27` : toute la suite (PGlite en mémoire, migrations réelles, aucun réseau). Doit rester verte.
 - `npm run dev` : app + `/api` sur :5173. Exige `DATABASE_URL` dans `.env.local` (absent en session cloud).
 - `npm run demo` : la vraie app sur :5175 avec `demo/fixtures/` (photo de l'API publique de prod), sans base ni
-  réseau. `npm run demo -- --connecte` : compte démo, Vestiaire ouvert avec de vraies cotes. Les écritures sont refusées.
+  réseau. `npm run demo -- --connecte` : compte démo, FoodBet ouvert avec de vraies cotes ; étape FoodBet via `/paris?scene=vote` (`&admin` pour la vue admin). Les écritures sont refusées.
 - `npm run captures` : captures 390 px des pages principales dans `captures/` (ignoré par git), signale tout
   débordement horizontal. Pages au choix : `npm run captures -- /matchs/211 /club`. Sans Chrome :
   `npx playwright-core install chromium`. `npm run demo:snapshot` rafraîchit les fixtures (demande le réseau).
@@ -48,7 +48,7 @@ Node ≥ 20.12. Vite est volontairement en v7.
 - **Vérifier qu'un nom de classe n'existe pas déjà** avant d'en créer un : `.fc-streak` et `.fc-duel` existaient
   et ont cassé des tuiles (grep dans `src/styles`).
 - Navigation : Accueil `/`, Matchs `/matchs` (fiche `/matchs/:id`), Effectif `/joueurs` (fiche `/joueurs/:id`),
-  Club `/club` (`/stats` y redirige ; `/playoffs` = page de la Nuit Inhouse 1), Vestiaire `/paris`.
+  Club `/club` (`/stats` y redirige ; `/playoffs` = page de la Nuit Inhouse 1), FoodBet `/paris` (plein écran, 4 phases + salle d’attente).
 - Contenu éditorial des nuits Inhouse : `src/content/playoffs.ts` (`NEXT_NIGHT` = Nuit Inhouse 2, 30/10/2026).
 
 ## Maquettes et captures (session cloud)

@@ -25,7 +25,7 @@ export interface FormPlayer { memberId: number; gamertag: string; avgRating: num
 /** Option de pari : `trend` = écart de cote dû au dernier match (positif = la cote monte). */
 export interface DrawnOption extends MarketOption { trend: number }
 export interface DrawnMarket { id: MarketId; options: DrawnOption[] }
-export interface Opening { markets: [DrawnMarket]; context: { reason: string | null } }
+export interface Opening { markets: DrawnMarket[]; context: { reason: string | null } }
 
 const MARGIN = 1.08;
 export const ODDS_MIN = 1.15;
@@ -108,8 +108,10 @@ export function priceMarket(id: MarketId, history: FormMatch[], players: FormPla
   return { id, options: FIXED[id].map((o) => ({ ...o, odds: now[o.id], trend: Math.round((now[o.id] - prev[o.id]) * 100) / 100 })) };
 }
 
-/** Tirage pondéré : les paris d'équipe sortent plus souvent ; jamais deux fois le même d'affilée. */
-const POOL: [MarketId, number][] = [['verdict', 3], ['goals', 3], ['crack', 2], ['flop', 2], ['cleansheet', 2], ['red', 1], ['ragequit', 1]];
+/** Paris d'équipe qui accompagnent parfois le Crack. Tirage pondéré, jamais deux fois le même d'affilée. */
+const POOL: [MarketId, number][] = [['verdict', 3], ['goals', 3], ['cleansheet', 2], ['red', 1], ['ragequit', 1]];
+/** Une rencontre sur deux, un pari d'équipe s'ajoute au Crack. */
+export const EXTRA_CHANCE = 0.5;
 
 /** Matchs à l'issue connue qu'il faut avant de coter un abandon : en dessous, la cote serait du hasard. */
 export const RAGEQUIT_MIN_KNOWN = 10;
@@ -122,10 +124,17 @@ export function drawMarket(previous: MarketId | null, random: () => number = Mat
   return pool[pool.length - 1][0];
 }
 
-export function openMatchBet(previous: MarketId | null, history: FormMatch[], players: FormPlayer[], random?: () => number): Opening {
+/**
+ * FoodBet : le Crack du match à chaque rencontre (tranché par le vote du club), précédé une
+ * fois sur deux d'un pari d'équipe tiré au sort. `previous` : le pari d'équipe de la rencontre d'avant.
+ */
+export function openMatchBet(previous: MarketId | null, history: FormMatch[], players: FormPlayer[], random: () => number = Math.random): Opening {
   const known = history.filter((m) => m.opponentQuit != null).length;
-  const id = drawMarket(previous, random, known >= RAGEQUIT_MIN_KNOWN ? [] : ['ragequit']);
-  return { markets: [priceMarket(id, history, players)], context: { reason: formReason(history[0]) } };
+  const markets = [priceMarket('crack', history, players)];
+  if (random() < EXTRA_CHANCE) {
+    markets.unshift(priceMarket(drawMarket(previous, random, known >= RAGEQUIT_MIN_KNOWN ? [] : ['ragequit']), history, players));
+  }
+  return { markets, context: { reason: formReason(history[0]) } };
 }
 
 export type { Market };

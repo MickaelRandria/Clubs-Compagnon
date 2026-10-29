@@ -1,0 +1,137 @@
+/*
+  FoodBet : plein écran façon stories. Un écran par étape (parier, match, vote, verdict),
+  une couleur pleine par étape, un seul geste à faire. Monté hors de l'app (portail) :
+  ni en-tête ni barre d'onglets, la croix ramène au club.
+*/
+
+.fb { position: fixed; inset: 0; z-index: 1000; display: flex; justify-content: center; background: #03070F;
+  font-family: var(--fc-text); color: var(--fc-craie); }
+.fb-screen { position: relative; width: 100%; max-width: 480px; height: 100%; display: flex; flex-direction: column; overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box;
+  animation: fb-in .28s ease-out both; }
+@keyframes fb-in { from { opacity: 0; transform: translateY(10px); } }
+@media (prefers-reduced-motion: reduce) { .fb-screen { animation: none; } }
+
+/* Les quatre couleurs des étapes. */
+.fb-screen--blue { background: var(--fc-blue); color: var(--fc-craie); }
+.fb-screen--night { background: var(--fc-abysse); color: var(--fc-craie); }
+.fb-screen--ice { background: var(--fc-glacier); color: var(--fc-abysse); }
+
+.fb-bars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 14px 14px 0; }
+.fb-bars i { display: block; height: 4px; background: rgba(242,244,248,.28); }
+.fb-bars i.is-done { background: var(--fc-craie); }
+.fb-screen--ice .fb-bars i { background: rgba(6,12,31,.2); }
+.fb-screen--ice .fb-bars i.is-done { background: var(--fc-abysse); }
+
+.fb-top { display: flex; align-items: center; gap: 10px; padding: 8px 8px 0 14px; }
+.fb-mark { font: italic 800 24px/1 var(--fc-display); text-transform: uppercase; white-space: nowrap; }
+.fb-mark span { color: #FFB547; }
+.fb-screen--ice .fb-mark span { color: var(--fc-blue); }
+.fb-wallet { margin-left: auto; font: 800 18px/1 var(--fc-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fb-wallet small { font-size: 13px; opacity: .75; }
+.fb-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: transparent;
+  color: inherit; cursor: pointer; flex: none; }
+.fb-admin { min-height: 32px; padding: 0 10px; border: 1px solid currentColor; background: transparent; color: inherit;
+  font: 800 12px/1 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; opacity: .8; }
+
+.fb-main { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 12px 22px 24px; }
+.fb-kick { margin: 0; font: 700 14px/1.25 var(--fc-display); letter-spacing: .16em; text-transform: uppercase; opacity: .85; }
+.fb-kick--live { color: var(--fc-rouge); opacity: 1; }
+.fb-big { margin: 0; font: italic 800 clamp(56px, 18vw, 76px)/.86 var(--fc-display); text-transform: uppercase; letter-spacing: -.01em;
+  overflow-wrap: anywhere; }
+.fb-big--md { font-size: clamp(48px, 15vw, 64px); }
+.fb-big em { font-style: inherit; color: var(--fc-glacier); }
+.fb-screen--blue .fb-big em { color: #FFB547; }
+.fb-note { margin: 0; font: 500 16px/1.4 var(--fc-text); opacity: .9; }
+.fb-note b { font-weight: 700; }
+.fb-note--lg { font-size: 19px; }
+.fb-gain { color: #FFB547; }
+.fb-screen--ice .fb-gain { color: var(--fc-blue); }
+.fb-push { margin-top: auto; }
+.fb-tap { margin: 0; text-align: center; font: 700 13px/1.2 var(--fc-display); letter-spacing: .16em; text-transform: uppercase; opacity: .75; }
+.fb-error { margin: 0; padding: 10px 12px; background: var(--fc-rouge); color: var(--fc-abysse); font: 700 15px/1.3 var(--fc-text); }
+.fb-demo { margin: 0 14px; padding: 6px 10px; background: rgba(6,12,31,.35); font: 600 13px/1.3 var(--fc-text); }
+
+/* Boutons pleins : le choix, la validation. */
+.fb-btn { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 62px; padding: 0 20px;
+  border: 0; box-sizing: border-box; font: 800 26px/1 var(--fc-display); text-transform: uppercase; text-align: left; cursor: pointer;
+  text-decoration: none; }
+.fb-btn b { font-size: 22px; white-space: nowrap; }
+.fb-btn:disabled { opacity: .5; cursor: default; }
+.fb-btn--solid { background: var(--fc-craie); color: var(--fc-abysse); }
+.fb-btn--ghost { background: rgba(6,12,31,.3); color: var(--fc-craie); }
+.fb-btn--amber { background: #FFB547; color: var(--fc-abysse); }
+.fb-btn--blue { background: var(--fc-blue); color: var(--fc-craie); }
+.fb-btn--center { justify-content: center; }
+.fb-btn--sm { min-height: 54px; font-size: 21px; }
+.fb-choices { display: flex; flex-direction: column; gap: 8px; }
+.fb-trend { margin-left: 6px; font: 700 13px/1 var(--fc-display); opacity: .75; }
+.fb-link { align-self: center; min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: inherit;
+  font: 700 15px/1 var(--fc-text); text-decoration: underline; cursor: pointer; }
+.fb-link--start { align-self: flex-start; padding: 0; }
+
+/* Grille de joueurs : Crack (cotes) et vote (note EA du match). */
+.fb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.fb-player { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 6px; min-height: 96px;
+  padding: 12px; border: 0; background: rgba(6,12,31,.3); color: var(--fc-craie); text-align: left; cursor: pointer; min-width: 0; }
+.fb-player strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 800 19px/1 var(--fc-display); text-transform: uppercase; }
+.fb-player b { font: 800 30px/1 var(--fc-display); white-space: nowrap; }
+.fb-player small { font: 600 12px/1.2 var(--fc-text); opacity: .75; }
+.fb-player.is-on { background: var(--fc-craie); color: var(--fc-abysse); }
+.fb-player:disabled { opacity: .35; cursor: default; }
+.fb-screen--blue .fb-player b { color: #FFB547; }
+.fb-screen--blue .fb-player.is-on b { color: var(--fc-blue); }
+.fb-screen--ice .fb-player { background: rgba(6,12,31,.08); color: var(--fc-abysse); }
+.fb-screen--ice .fb-player.is-on { background: var(--fc-abysse); color: var(--fc-craie); }
+
+/* Panneau de mise, remonté du bas. */
+.fb-sheet { display: flex; flex-direction: column; gap: 14px; padding: 20px 22px 24px; background: var(--fc-craie); color: var(--fc-abysse);
+  animation: fb-sheet .22s ease-out both; }
+@keyframes fb-sheet { from { transform: translateY(40px); opacity: 0; } }
+.fb-sheet-title { font: 800 26px/1 var(--fc-display); text-transform: uppercase; }
+.fb-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.fb-chip { min-height: 52px; border: 0; background: #DCE1EC; color: var(--fc-marine); font: 800 20px/1 var(--fc-display); cursor: pointer;
+  white-space: nowrap; }
+.fb-chip[aria-pressed="true"] { background: var(--fc-abysse); color: var(--fc-craie); }
+.fb-chip:disabled { opacity: .4; cursor: default; }
+.fb-sheet-gain { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font: 700 16px/1 var(--fc-text); color: var(--fc-ardoise); }
+.fb-sheet-gain b { font: 800 34px/1 var(--fc-display); color: var(--fc-abysse); white-space: nowrap; }
+.fb-sheet .fb-tap { color: var(--fc-ardoise); opacity: 1; }
+.fb-sheet .fb-btn { justify-content: center; gap: 10px; }
+.fb-sheet .fb-admin-go { justify-content: space-between; }
+.fb-sheet .fb-admin-go small { font: 600 13px/1.2 var(--fc-text); text-transform: none; opacity: .8; }
+.fb-btn--light { background: #DCE1EC; color: var(--fc-abysse); }
+.fb-btn--danger { background: transparent; color: #C42433; box-shadow: inset 0 0 0 2px #C42433; }
+
+/* Listes : pronos du club, gagnants, classement. */
+.fb-rows { display: flex; flex-direction: column; }
+.fb-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 0;
+  box-shadow: inset 0 -1px 0 rgba(242,244,248,.2); }
+.fb-row strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 27px/1 var(--fc-display); text-transform: uppercase; }
+.fb-row b { font: 800 27px/1 var(--fc-display); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fb-row.is-me { margin: 0 -12px; padding: 11px 12px; background: var(--fc-craie); color: var(--fc-abysse); box-shadow: none; }
+.fb-pick { display: grid; grid-template-columns: minmax(84px, auto) minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 10px 0;
+  box-shadow: inset 0 -1px 0 rgba(242,244,248,.14); }
+.fb-pick b { font: 800 18px/1.1 var(--fc-display); text-transform: uppercase; color: var(--fc-glacier); }
+.fb-pick span { font: 600 15px/1.35 var(--fc-text); color: var(--fc-brume); }
+.fb-split { display: flex; gap: 3px; height: 14px; }
+.fb-split i { display: block; min-width: 3px; background: var(--fc-acier); }
+.fb-split i:first-child { background: var(--fc-glacier); }
+.fb-rank { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 50px;
+  box-shadow: inset 0 -1px 0 rgba(242,244,248,.1); }
+.fb-rank i { font: 800 18px/1 var(--fc-display); font-style: normal; color: var(--fc-acier); }
+.fb-rank strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 22px/1 var(--fc-display); text-transform: uppercase; }
+.fb-rank b { font: 800 22px/1 var(--fc-display); white-space: nowrap; color: #FFB547; font-variant-numeric: tabular-nums; }
+.fb-rank.is-me { margin: 0 -12px; padding: 0 12px; background: var(--fc-blue); box-shadow: none; }
+.fb-rank.is-me i, .fb-rank.is-me b { color: var(--fc-craie); }
+.fb-faces { display: flex; flex-wrap: wrap; gap: 6px; }
+.fb-faces span { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: rgba(6,12,31,.3);
+  font: 800 14px/1 var(--fc-display); }
+.fb-check { width: 88px; height: 88px; margin-top: 20px; color: #FFB547; }
+.fb-slip { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; box-shadow: inset 0 -1px 0 rgba(242,244,248,.2);
+  font: 700 17px/1.2 var(--fc-text); }
+.fb-slip b { font: 800 20px/1 var(--fc-display); white-space: nowrap; }
+
+/* Le Coach et les bandeaux de l'app restent sous le plein écran. */
+body.fb-open { overflow: hidden; }

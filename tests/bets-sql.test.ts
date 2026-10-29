@@ -102,7 +102,13 @@ test('cycle complet : mises, changement d’avis, coup d’envoi, règlement EA,
   await call('vote', alex, { fixtureId: vote.id, category: 'crack', memberId: chef });
   await call('vote', sam, { fixtureId: vote.id, category: 'crack', memberId: rina });
   await call('vote', sam, { fixtureId: vote.id, category: 'crack', memberId: chef });
+  // Les pronos du club ne se dévoilent qu'à ceux qui ont voté.
+  assert.equal((await call('state', fan)).votes[0].picks, null);
+  const picks = (await call('state', alex)).votes[0].picks!;
+  assert.deepEqual(new Set(picks.map((p) => p.name)), new Set(['Rina', 'sam']), 'le pseudo du joueur lié, sinon le compte Discord');
+  assert.ok(picks.filter((p) => p.name === 'Rina').every((p) => p.me));
   await call('vote', fan, { fixtureId: vote.id, category: 'flop', memberId: rina });
+  assert.equal((await call('state', fan)).votes[0].voters, 3);
   assert.deepEqual((await call('state', fan)).votes[0].tally.crack, { [chef]: 2 });
   await call('close-vote', admin, { fixtureId: vote.id }, true);
 
@@ -113,6 +119,11 @@ test('cycle complet : mises, changement d’avis, coup d’envoi, règlement EA,
   const sams = (await call('state', sam)).history[0].mySlips;
   assert.equal(status(sams, 'flop'), 'lost', 'la Casserole élue est Rina');
   assert.equal((await call('state', sam)).wallet.balance, 500 - 100 - 60, 'victoire perdue, Casserole perdue, Crack remboursé');
+  // Tout le club voit les gagnants de la rencontre, même sans y avoir parié.
+  const results = (await call('state', fan)).history[0].results;
+  assert.deepEqual(results.filter((p) => p.status === 'won').map((p) => [p.name, p.market, p.payout]),
+    [['Rina', 'crack', 125], ['Rina', 'verdict', 100]]);
+  assert.ok(results.every((p) => !p.me));
 });
 
 test('coup d’envoi oublié : les mises faites pendant le match sont remboursées', async () => {

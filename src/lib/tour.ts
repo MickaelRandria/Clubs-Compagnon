@@ -64,7 +64,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: '.fc-coach-nav-trigger',
     placement: 'bottom',
     title: 'Cinq onglets et un Coach',
-    body: 'Accueil, Matchs, Effectif, Club et Vestiaire, où se jouent les paris quand ils sont ouverts. Une question ? Le Coach IA répond depuis cet éclair.',
+    body: 'Accueil, Matchs, Effectif, Club et FoodBet, où se jouent les paris quand ils sont ouverts. Une question ? Le Coach IA répond depuis cet éclair.',
   },
   {
     id: 'matches',
@@ -100,7 +100,7 @@ export const TOUR_STEPS: TourStep[] = [
     placement: 'bottom',
     optional: true,
     title: 'Relie ton joueur du club',
-    body: 'Connecte-toi avec Discord et rattache ton pseudo Club Pro. Un administrateur valide la correspondance, puis tu peux parier au Vestiaire.',
+    body: 'Connecte-toi avec Discord et rattache ton pseudo Club Pro. Un administrateur valide la correspondance, puis tu peux jouer à FoodBet.',
   },
   {
     id: 'install',

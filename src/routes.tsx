@@ -20,7 +20,7 @@ export const router = createBrowserRouter([
       { path: '/matchs/:id', lazy: async () => ({ Component: (await import('./views/MatchDetailView')).MatchDetailView }) },
       { path: '/playoffs', lazy: async () => ({ Component: (await import('./views/PlayoffsView')).PlayoffsView }) },
       { path: '/fc27', lazy: async () => ({ Component: (await import('./views/FC27View')).FC27View }) },
-      { path: '/paris', lazy: async () => ({ Component: (await import('./views/BetsView')).BetsView }) },
+      { path: '/paris', lazy: async () => ({ Component: (await import('./views/FoodBetView')).FoodBetView }) },
       { path: '*', element: <NotFoundView /> },
     ],
   },

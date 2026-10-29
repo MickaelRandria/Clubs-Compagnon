@@ -26,8 +26,8 @@ export function BottomNav() {
   const preparation = useFC27();
   const showFC27 = preparation.data?.campaign.status !== 'archived';
   const bets = useBetsStatus().status;
-  // Le Vestiaire (paris et votes) n'apparaît qu'une fois les paris ouverts au visiteur.
-  const items: NavItem[] = bets.access === 'locked' ? ITEMS : [...ITEMS, { to: '/paris', label: 'Vestiaire', glyph: 'coin' }];
+  // FoodBet (paris et votes) n'apparaît qu'une fois les paris ouverts au visiteur.
+  const items: NavItem[] = bets.access === 'locked' ? ITEMS : [...ITEMS, { to: '/paris', label: 'FoodBet', glyph: 'coin' }];
 
   const handleItemClick = (to: string) => {
     if (location.pathname === to) {

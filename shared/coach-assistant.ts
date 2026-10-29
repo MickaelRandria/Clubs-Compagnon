@@ -52,7 +52,7 @@ CARTOGRAPHIE COMPLÈTE DE L'APPLICATION :
 - **/matchs** : Historique des matchs de championnat et playoffs. En cliquant sur un match (/matchs/:id) : duel nous / eux (tirs, passes, tacles, notes), feuilles de match des deux équipes, analyse "L'œil du Coach" et notes de vestiaire.
 - **/joueurs** (Effectif) : classements (buteurs, passeurs, OVR) et filtres par poste. Chaque joueur a sa fiche (/joueurs/:id) : son Pro EA, hommes du match, % de victoires, de tirs, de tacles et de passes, forme sur ses 10 derniers matchs.
 - **/club** : classement EA de la saison, division, montées et descentes, palmarès (nuits Inhouse et playoffs EA), bilan complet (victoires, buts, courbe) et identité (stade, maillots). La rétrospective de la Nuit Inhouse 1 est sur /playoffs.
-- **/paris** (Vestiaire) : Vestiaire Bets. Chaque compte Discord reçoit 500 crédits (monnaie virtuelle, aucun argent réel) et parie avant le match sur le pari tiré au sort (Verdict, Buts, Crack, Casserole, Le Mur, Carton rouge, Rage-quit). Le score EA règle les paris tout seul, puis on vote le Crack et la Casserole.
+- **/paris** (FoodBet) : les paris du club, en plein écran. Chaque compte Discord reçoit 500 crédits (monnaie virtuelle, aucun argent réel). Avant chaque match : le Crack du match (qui sera élu meilleur joueur), parfois accompagné d'un pari d'équipe tiré au sort (Verdict, Buts, Le Mur, Carton rouge, Rage-quit). Le score EA règle les paris d'équipe tout seul ; après le match, chacun vote pour le Crack, puis découvre les pronos du club et les gagnants.
 - **/profil** : Page personnelle. Permet de se connecter avec son compte Discord, de lier son profil joueur parmi l'effectif du club et de consulter son statut d'administration.
 - La préparation FC 27 (fiches, vote du nom) est terminée : le club s'appelle FoodBall Club.
 
@@ -152,7 +152,7 @@ export function getDeterministicCoachFallback(question: string, club: Club | nul
   }
 
   return {
-    reply: "Je suis là pour t'accompagner sur l'app de FoodBall Club ! Tu peux naviguer entre l'**Accueil**, les **Matchs**, l'**Effectif**, le **Club** et le **Vestiaire**.",
+    reply: "Je suis là pour t'accompagner sur l'app de FoodBall Club ! Tu peux naviguer entre l'**Accueil**, les **Matchs**, l'**Effectif**, le **Club** et **FoodBet**.",
     action: { label: 'Voir l’accueil', to: '/' },
     suggestedQuestions: ['Comment lier mon profil Discord ?', 'Qui est notre meilleur buteur ?', 'Quel est notre classement ?'],
   };

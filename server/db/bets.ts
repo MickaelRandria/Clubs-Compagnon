@@ -55,8 +55,8 @@ async function dispatch(action: string, accountId: number, input: object, admin:
 interface StatsRow { gamertag?: string; rating?: number; redCards?: number }
 
 /**
- * Le pari du match, tiré au sort, et ses cotes calculées sur les 20 derniers matchs EA.
- * Les candidats Crack / Casserole sont les joueurs vus sur les 10 derniers matchs
+ * Les paris du match (le Crack, parfois un pari d'équipe tiré au sort) et leurs cotes,
+ * calculées sur les 20 derniers matchs EA. Les candidats au Crack sont les joueurs vus sur les 10 derniers matchs
  * (à défaut, tout l'effectif actif).
  */
 export async function buildOpening() {
@@ -65,7 +65,8 @@ export async function buildOpening() {
     db.execute(sql`select opponent_name, result, goals_for, goals_against, player_stats, opponent_quit from matches
       where club_id = (select min(id) from clubs) order by played_at desc limit 20`),
     db.execute(sql`select id, gamertag, avg_rating from members where club_id = (select min(id) from clubs) and is_active order by gamertag`),
-    db.execute(sql`select markets->0->>'id' as market from bet_fixtures where markets is not null order by id desc limit 1`),
+    db.execute(sql`select (select m->>'id' from jsonb_array_elements(markets) m where m->>'id' <> 'crack' limit 1) as market
+      from bet_fixtures where markets is not null order by id desc limit 1`),
   ]);
   const byTag = new Map(memberRows.rows.map((r) => [String(r.gamertag), Number(r.id)]));
   const history: FormMatch[] = matchRows.rows.map((r) => {

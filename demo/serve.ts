@@ -1,13 +1,14 @@
 // Mode démo : la vraie app, servie avec les données de demo/fixtures/ (photo de la prod).
 // Aucune base, aucun appel EA, aucun secret : marche hors ligne et en session cloud.
-// `npm run demo` (visiteur non connecté) ou `npm run demo -- --connecte` (compte démo, Vestiaire ouvert).
+// `npm run demo` (visiteur non connecté) ou `npm run demo -- --connecte` (compte démo, FoodBet ouvert).
+// FoodBet : l'étape se choisit dans l'URL, `/paris?scene=vote` (voir SCENES).
 //
 // Pour maquetter une donnée que l'API ne renvoie pas encore, l'ajouter à la main dans les
 // fixtures : le front l'affiche comme si le serveur la renvoyait déjà.
 import { existsSync, readFileSync } from 'node:fs';
 import react from '@vitejs/plugin-react';
 import { createServer, type Plugin } from 'vite';
-import type { MarketId, BetsState, BetsStatus } from '../shared/bets.js';
+import type { BetsState, BetsStatus } from '../shared/bets.js';
 import { formReason, priceMarket, type FormMatch } from '../shared/bets-odds.js';
 import type { Match, MatchDetail, Member } from '../shared/types.js';
 
@@ -20,8 +21,12 @@ const members = read<Member[]>('members');
 const matches = read<Match[]>('matches');
 const me = members[0];
 
-/** Une soirée Vestiaire en cours, cotée par le vrai calcul à partir des matchs de la photo. */
-function betsState(): BetsState {
+/** Étapes de FoodBet visibles en démo, choisies par `?scene=` dans l'URL de la page. */
+const SCENES = ['parier', 'joue', 'match', 'tard', 'vote', 'vote-fait', 'gagnants', 'rien'] as const;
+type Scene = typeof SCENES[number];
+
+/** Une soirée FoodBet à l'étape demandée, cotée par le vrai calcul à partir des matchs de la photo. */
+function betsState(scene: Scene): BetsState {
   const history: FormMatch[] = matches.map((m) => {
     const detail = existsSync(fixture(`matches/${m.id}`)) ? read<MatchDetail>(`matches/${m.id}`) : null;
     return { opponent: m.opponent, result: m.result, goalsFor: m.goalsFor, goalsAgainst: m.goalsAgainst, opponentQuit: m.opponentQuit,
@@ -32,28 +37,54 @@ function betsState(): BetsState {
       })) };
   });
   const players = members.map((m) => ({ memberId: m.id, gamertag: m.gamertag, avgRating: m.avgRating }));
-  const ids: MarketId[] = ['verdict', 'goals', 'crack', 'flop', 'cleansheet', 'red', 'ragequit'];
-  const markets = ids.map((id) => priceMarket(id, history, players));
-  const last = matches[0];
+  const markets = [priceMarket('goals', history, players), priceMarket('crack', history, players)];
+  const odds = (market: number, option: string) => markets[market].options.find((o) => o.id === option)!.odds;
+  // Le match de la démo : la victoire 3-0 contre LaEsquina, crack élu Chef695046.
+  const played = matches.find((m) => m.opponent === 'LaEsquina') ?? matches[0];
+  const match = { id: played.id, opponent: played.opponent, goalsFor: played.goalsFor, goalsAgainst: played.goalsAgainst, result: played.result, playedAt: played.playedAt };
+  const crack = members.find((m) => m.gamertag === 'Chef695046') ?? members[1];
+  const others = members.filter((m) => m.id !== me.id).slice(0, 4);
+  const settled = scene === 'gagnants';
+  const pick = (name: string, mine: boolean, market: 0 | 1, option: string, stake: number) => {
+    const won = settled && (market === 0 ? option === '2-3' : option === String(crack.id));
+    return { name, me: mine, market: markets[market].id, option, stake, odds: odds(market, option),
+      status: settled ? (won ? 'won' : 'lost') : market === 0 ? (option === '2-3' ? 'won' : 'lost') : 'pending',
+      payout: won || (!settled && market === 0 && option === '2-3') ? Math.floor(stake * odds(market, option)) : null } as const;
+  };
+  const picks = [
+    pick(me.gamertag, true, 0, '2-3', 100), pick(me.gamertag, true, 1, String(crack.id), 50),
+    pick(others[0].gamertag, false, 0, '2-3', 250), pick(others[0].gamertag, false, 1, String(others[0].id === crack.id ? others[1].id : crack.id), 100),
+    pick(others[1].gamertag, false, 0, '4+', 100), pick(others[1].gamertag, false, 1, String(others[2].id), 50),
+    pick(others[2].gamertag, false, 0, '2-3', 50),
+    pick(others[3].gamertag, false, 0, '0-1', 100),
+  ];
+  const mine = picks.filter((p) => p.me).map((p, i) => ({ id: i + 1, fixtureId: 1, market: p.market, option: p.option, stake: p.stake,
+    odds: p.odds, status: scene === 'parier' || scene === 'joue' || scene === 'match' ? 'pending' as const : p.status, payout: p.payout }));
+  const before = scene === 'parier' || scene === 'joue' || scene === 'match' || scene === 'tard';
+  const fixtureSlips = scene === 'parier' || scene === 'tard' ? [] : mine;
   return {
     isAdmin: false,
     myMemberId: me.id,
-    wallet: { balance: 1250, canBailout: false, bankrupt: false },
-    fixture: { id: 1, status: 'open', openedAt: new Date().toISOString(), lockedAt: null, context: { reason: formReason(history[0]) },
-      markets, bettors: 4, mySlips: [] },
-    votes: [],
-    history: last ? [{ id: 0, status: 'settled', settledAt: last.playedAt, crack: [me.gamertag], flop: null, markets: [markets[0]],
-      match: { id: last.id, opponent: last.opponent, goalsFor: last.goalsFor, goalsAgainst: last.goalsAgainst, result: last.result, playedAt: last.playedAt },
-      mySlips: [{ id: 1, fixtureId: 0, market: 'verdict', option: last.result, stake: 100, odds: 2.1, status: 'won', payout: 210 }] }] : [],
+    wallet: { balance: settled ? 1345 : 1100, canBailout: false, bankrupt: false },
+    fixture: before ? { id: 1, status: scene === 'match' || scene === 'tard' ? 'locked' : 'open', openedAt: new Date().toISOString(),
+      lockedAt: null, context: { reason: formReason(history[0]) }, markets, bettors: 5, mySlips: fixtureSlips } : null,
+    votes: scene === 'vote' || scene === 'vote-fait' ? [{ id: 1, openedAt: match.playedAt, match, markets, mySlips: mine,
+      candidates: [...others, me].map((m) => ({ memberId: m.id, gamertag: m.gamertag })).sort((x, y) => x.gamertag.localeCompare(y.gamertag)),
+      tally: { crack: { [crack.id]: 3, [others[0].id]: 1 }, flop: {} },
+      myVotes: { crack: scene === 'vote-fait' ? crack.id : null, flop: null }, voters: scene === 'vote-fait' ? 4 : 3,
+      picks: scene === 'vote-fait' ? picks : null }] : [],
+    history: settled ? [{ id: 1, status: 'settled', settledAt: new Date().toISOString(), match, crack: [crack.gamertag], flop: null, markets,
+      mySlips: mine, results: picks, myVote: crack.id }] : [],
     leaderboard: [
-      { accountId: 1, name: me.gamertag, balance: 1250, me: true },
-      ...members.slice(1, 5).map((m, i) => ({ accountId: i + 2, name: m.gamertag, balance: 1100 - i * 180, me: false })),
+      { accountId: 2, name: others[0].gamertag, balance: 1820, me: false },
+      { accountId: 1, name: me.gamertag, balance: settled ? 1345 : 1100, me: true },
+      ...others.slice(1).map((m, i) => ({ accountId: i + 3, name: m.gamertag, balance: 1020 - i * 230, me: false })),
     ],
   };
 }
 
 /** Réponse de chaque route GET de /api. `undefined` : route inconnue en démo. */
-function answer(path: string): [number, unknown] | undefined {
+function answer(path: string, scene: Scene): [number, unknown] | undefined {
   if (path === '/api/club') return [200, read('club')];
   if (path === '/api/members') return [200, members];
   if (path === '/api/matches') return [200, matches];
@@ -68,8 +99,11 @@ function answer(path: string): [number, unknown] | undefined {
       : { signedIn: false, canSignIn: true }];
   }
   if (path === '/api/profile') return [signedIn ? 404 : 401, { error: signedIn ? 'Profil indisponible en mode démo.' : 'Connecte-toi avec Discord pour retrouver ton joueur.' }];
-  if (path === '/api/bets/status') return [200, { mode: 'on', access: signedIn ? 'open' : 'locked', canConfigure: false, live: 'open' } satisfies BetsStatus];
-  if (path === '/api/bets/state') return signedIn ? [200, betsState()] : [401, { error: 'Connecte-toi pour parier.' }];
+  if (path === '/api/bets/status') {
+    const live = scene === 'match' || scene === 'tard' ? 'locked' : scene.startsWith('vote') ? 'voting' : scene === 'parier' || scene === 'joue' ? 'open' : null;
+    return [200, { mode: 'on', access: signedIn ? 'open' : 'locked', canConfigure: false, live } satisfies BetsStatus];
+  }
+  if (path === '/api/bets/state') return signedIn ? [200, betsState(scene)] : [401, { error: 'Connecte-toi pour parier.' }];
   return undefined;
 }
 
@@ -79,8 +113,12 @@ const demoApi: Plugin = {
     vite.middlewares.use((req, res, next) => {
       if (!req.url?.startsWith('/api/')) return next();
       const path = new URL(req.url, 'http://localhost').pathname;
+      // L'étape FoodBet suit l'URL de la page qui appelle l'API (`/paris?scene=vote`).
+      let asked: string | null = null;
+      try { asked = new URL(req.headers.referer ?? '').searchParams.get('scene'); } catch { /* pas de page d'origine */ }
+      const scene: Scene = SCENES.find((s) => s === asked) ?? 'parier';
       const [status, body] = req.method === 'GET'
-        ? answer(path) ?? [404, { error: `Route absente du mode démo : ${path}` }]
+        ? answer(path, scene) ?? [404, { error: `Route absente du mode démo : ${path}` }]
         : [409, { error: 'Mode démo : rien n’est enregistré.' }];
       res.statusCode = status;
       res.setHeader('Content-Type', 'application/json');

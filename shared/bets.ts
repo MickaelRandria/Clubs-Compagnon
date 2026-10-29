@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Vestiaire Bets — paris et votes des sessions Clubs Pro.
+// FoodBet — paris et votes des sessions Clubs Pro.
 //
 // Règles pures, partagées par le serveur et l'écran : le prototype de la phase 1 les
 // affiche avec des données fictives, la phase 2 les appliquera aux vraies mises.
@@ -44,8 +44,8 @@ export const betsModeSchema = z.object({ mode: z.enum(BETS_MODES) });
 export const STARTING_BALANCE = 500;
 export const PRESENCE_BONUS = 50;
 export const BAILOUT = 100;
-export const STAKES = [25, 50, 100] as const;
-export const DEFAULT_STAKE = 50;
+export const STAKES = [50, 100, 250] as const;
+export const DEFAULT_STAKE = 100;
 export const HERO_VOTE_MINUTES = 10;
 
 /** Gain total rendu au joueur (mise comprise). La cote est celle figée au moment de la mise. */
@@ -123,6 +123,8 @@ export const MARKET_ORDER: MarketId[] = ['verdict', 'goals', 'crack', 'flop', 'c
 export interface MarketOption { id: string; label: string; odds: number; trend?: number }
 export interface Market { id: MarketId; options: MarketOption[] }
 export interface Slip { id: number; fixtureId: number; market: MarketId; option: string; stake: number; odds: number; status: SlipStatus; payout: number | null }
+/** Le prono d'un joueur du club, tel que tout le monde le voit une fois dévoilé. */
+export interface BetPick { name: string; market: MarketId; option: string; stake: number; odds: number; status: SlipStatus; payout: number | null; me: boolean }
 export interface BetMatch { id: number; opponent: string; goalsFor: number; goalsAgainst: number; result: 'win' | 'draw' | 'loss'; playedAt?: string }
 
 export interface BetsState {
@@ -132,15 +134,20 @@ export interface BetsState {
   /** Rencontre à parier (ouverte) ou en cours de jeu (verrouillée). */
   fixture: { id: number; status: 'open' | 'locked'; openedAt: string; lockedAt: string | null; context: { reason: string | null } | null;
     markets: Market[]; bettors: number; mySlips: Slip[] } | null;
-  /** Matchs joués dont le vote Crack / Casserole est ouvert. */
+  /** Matchs joués dont le vote du Crack est ouvert. */
   votes: {
     id: number; openedAt: string; match: BetMatch; markets: Market[]; mySlips: Slip[];
     candidates: { memberId: number; gamertag: string }[];
     tally: { crack: Record<string, number>; flop: Record<string, number> };
     myVotes: { crack: number | null; flop: number | null };
+    /** Comptes qui ont voté. */
+    voters: number;
+    /** Les pronos du club, dévoilés une fois mon vote donné (null avant). */
+    picks: BetPick[] | null;
   }[];
-  /** Mes dernières rencontres réglées. */
-  history: { id: number; status: 'settled' | 'cancelled'; settledAt: string; match: BetMatch | null; crack: string[] | null; flop: string[] | null; markets: Market[]; mySlips: Slip[] }[];
+  /** Les 5 dernières rencontres réglées du club, avec tous les pronos (`results`) pour afficher les gagnants. */
+  history: { id: number; status: 'settled' | 'cancelled'; settledAt: string; match: BetMatch | null; crack: string[] | null; flop: string[] | null;
+    markets: Market[]; mySlips: Slip[]; results: BetPick[]; myVote: number | null }[];
   leaderboard: { accountId: number; name: string; balance: number; me: boolean }[];
 }
 

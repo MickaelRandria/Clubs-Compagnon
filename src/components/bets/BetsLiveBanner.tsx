@@ -9,7 +9,7 @@ export function BetsLiveBanner() {
   const open = status.live === 'open';
   return <Link to="/paris" className={`bets-live-banner${open ? '' : ' bets-live-banner--vote'}`}>
     <i className="bets-coin" aria-hidden="true" />
-    <span><b>{open ? 'Paris ouverts' : 'Place au vote'}</b> {open ? 'Parie avant le coup d’envoi, ça prend 10 secondes.' : 'Élis le Crack et la Casserole du match.'}</span>
+    <span><b>{open ? 'FoodBet ouvert' : 'Place au vote'}</b> {open ? 'Parie avant le coup d’envoi, ça prend 10 secondes.' : 'Élis le crack du match et découvre les pronos du club.'}</span>
     <em>{open ? 'Parier' : 'Voter'} →</em>
   </Link>;
 }

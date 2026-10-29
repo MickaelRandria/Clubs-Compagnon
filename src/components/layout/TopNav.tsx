@@ -75,7 +75,7 @@ export function TopNav() {
         )}
         {bets.access !== 'locked' && (
           <NavLink to="/paris" className="fc-tab fc-tab--bets">
-            Vestiaire{bets.live === 'open' && <span className="fc-tab-live">Ouverts</span>}
+            FoodBet{bets.live === 'open' && <span className="fc-tab-live">Ouverts</span>}
           </NavLink>
         )}
       </nav>

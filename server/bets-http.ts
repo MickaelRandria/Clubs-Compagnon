@@ -11,6 +11,8 @@ export interface BetsSettings {
   setMode: (mode: BetsMode, accountId: number) => Promise<void>;
   /** Paris ouverts, match en cours ou vote ouvert. */
   live?: () => Promise<BetsLive>;
+  /** Le score EA du match en cours est arrivé (pour prévenir l'admin). */
+  scoreIn?: () => Promise<boolean>;
 }
 
 /** Jeu réel : bets_dispatch côté base. `null` dans les tests qui n'exercent que l'interrupteur. */
@@ -36,7 +38,8 @@ export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: nu
     const [mode, admin] = await Promise.all([settings.mode(), accountId === null ? false : isAdmin(accountId)]);
     const access = betsAccess(mode, admin);
     const live = access === 'locked' || !settings.live ? null : await settings.live();
-    return { mode, access, canConfigure: admin, live };
+    const scoreIn = admin && live === 'locked' && settings.scoreIn ? await settings.scoreIn() : false;
+    return scoreIn ? { mode, access, canConfigure: admin, live, scoreIn } : { mode, access, canConfigure: admin, live };
   };
 
   /** Compte connecté et autorisé par l'interrupteur, sinon la route n'existe pas pour lui. */

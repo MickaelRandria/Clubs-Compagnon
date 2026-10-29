@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
 import {
@@ -188,7 +188,7 @@ function RoomMatch() {
     explain={mine.length > 0 ? <>Les paris sont fermés. <b>Rien à faire pendant le match</b> : joue, on s’occupe du reste.</>
       : <>Les paris ont fermé au coup d’envoi : <b>tu n’as pas parié ce soir</b>. Tu pourras quand même voter pour le joueur du match.</>}
     now={mine.length > 0 ? `FoodBall joue. Tes pronos : ${mine.join(' · ')}.` : 'FoodBall joue.'}
-    next="Phase 3 : dès qu’EA publie le score (quelques minutes après le coup de sifflet), tu votes pour le joueur du match."
+    next="Phase 3 : après le coup de sifflet, l’admin ouvre le vote pour le joueur du match."
     who={who} whoTitle={`Ont joué ce soir · ${who.length}`} doneLabel="✓ a joué" />;
 }
 
@@ -214,7 +214,7 @@ function RoomVoted({ vote, onChange }: { vote: BetsState['votes'][number]; onCha
         if (groups.length === 0) return null;
         const right = m.id === 'crack' ? null : answer(m, vote.match, null);
         return <div key={m.id}>
-          <p className="fb-note" style={{ marginTop: 6 }}>{MARKET_COPY[m.id].title} · {right ? <>réglé, c’était <b>{right}</b></> : 'en attente du vote'}</p>
+          <p className="fb-note" style={{ marginTop: 6 }}>{MARKET_COPY[m.id].title} · {right ? <>réglé, c’était <b>{right}</b></> : m.id === 'crack' ? 'en attente du vote' : 'en attente du score EA'}</p>
           <div className="fb-rows">{groups.map((g) => <div key={g.o.id} className="fb-pick"><b>{g.o.label} · {g.names.length}</b><span>{g.names.join(', ')}</span></div>)}</div>
         </div>;
       })}
@@ -324,11 +324,11 @@ function OpenFlow({ state }: { state: BetsState }) {
 function VoteScreen({ vote, onVoted }: { vote: BetsState['votes'][number]; onVoted: () => void }) {
   const { state } = useContext(FoodBetCtx);
   const play = useBetsPlay();
-  const sheet = useMatchDetail(vote.match.id);
+  const sheet = useMatchDetail(vote.match?.id ?? 0);
   const stats = new Map((sheet.data?.players ?? []).map((p) => [p.gamertag, p]));
   const crackSlip = vote.mySlips.find((s) => s.market === 'crack');
   return <Screen tone="ice" phase={3} status="À toi de voter">
-    <p className="fb-kick">{score(vote.match)} · fin du match</p>
+    <p className="fb-kick">{vote.match ? `${score(vote.match)} · fin du match` : 'Fin du match · score EA en attente'}</p>
     <h2 className="fb-big">Ton<br />crack ?</h2>
     <p className="fb-note">Élis le <b>joueur du match</b> : celui qui a le plus pesé ce soir. Un seul vote, <b>pas pour toi-même</b>. Le joueur qui
       récolte le plus de voix devient le Crack, et c’est lui qui règle les paris « Qui va rouler ? ».</p>
@@ -412,14 +412,27 @@ function Board({ onBack }: { onBack: () => void }) {
 
 // ---------------------------------------------------------------- Admin
 
-/** Ce que l'admin fait ensuite : une seule commande, celle qui fait passer à la phase suivante. */
-function nextStep(state: BetsState): { action: BetsAdminAction; label: string; hint: string } | null {
+/** Ce que l'admin fait ensuite : une seule commande, celle qui fait passer à la phase suivante. Il mène chaque phase. */
+function nextStep(state: BetsState): { action: BetsAdminAction; label: string; hint: string } {
   const fixture = state.fixture;
   const vote = state.votes[0];
   if (fixture?.status === 'open') return { action: { action: 'lock' }, label: 'Coup d’envoi', hint: 'passe en phase 2, ferme les paris' };
-  if (fixture) return null;
-  if (vote) return { action: { action: 'close-vote', fixtureId: vote.id }, label: 'Clore le vote et payer', hint: `phase 4 : désigne le Crack, verse les gains · ${plural(vote.voters, 'vote')}` };
+  if (fixture) return { action: { action: 'start-vote' }, label: 'Ouvrir le vote', hint: fixture.match ? 'passe en phase 3, score EA reçu'
+    : 'passe en phase 3 sans attendre EA : le score se reliera dès qu’il arrive' };
+  if (vote) return { action: { action: 'close-vote', fixtureId: vote.id }, label: 'Clore le vote et payer', hint: `phase 4 : désigne le Crack, verse les gains · ${plural(vote.voters, 'vote')}`
+    + (vote.match ? '' : ' · sans score EA, le pari d’équipe est remboursé') };
   return { action: { action: 'open' }, label: 'Ouvrir les paris', hint: 'passe en phase 1, tire les paris du match' };
+}
+
+/** Phase 2 côté admin : le score EA est-il arrivé ? Le téléphone vibre quand il tombe. */
+function ScoreNotice({ match }: { match: BetMatch | null }) {
+  const had = useRef(match !== null);
+  useEffect(() => {
+    if (match && !had.current) navigator.vibrate?.([120, 60, 120]);
+    had.current = match !== null;
+  }, [match]);
+  return match ? <p className="fb-adm-score is-in" role="status"><b>✓ Score EA reçu</b><span>{score(match)} · tu peux ouvrir le vote</span></p>
+    : <p className="fb-adm-score" role="status"><b>Score EA en attente</b><span>Vérifié toutes les 5 min, et dès que tu ouvres le vote. Tu n’es pas obligé d’attendre.</span></p>;
 }
 
 function AdminNext({ state }: { state: BetsState }) {
@@ -430,9 +443,9 @@ function AdminNext({ state }: { state: BetsState }) {
     && admin.mutate({ action: 'cancel', fixtureId: target.id });
   return <div className="fb-adm">
     <span className="fb-adm-tag">Admin · phase suivante</span>
-    {step ? <button type="button" className="fb-btn fb-btn--sm fb-admin-go" style={{ background: 'var(--fc-abysse)', color: 'var(--fc-craie)' }}
-      disabled={admin.isPending} onClick={() => admin.mutate(step.action)}>{step.label} <small>{step.hint}</small></button>
-      : <p className="fb-note" style={{ opacity: 1 }}>Rien à faire : le match se relie tout seul dès qu’EA publie le score, et le vote s’ouvre (phase 3).</p>}
+    {state.fixture?.status === 'locked' && <ScoreNotice match={state.fixture.match} />}
+    <button type="button" className="fb-btn fb-btn--sm fb-admin-go" style={{ background: 'var(--fc-abysse)', color: 'var(--fc-craie)' }}
+      disabled={admin.isPending} onClick={() => admin.mutate(step.action)}>{admin.isPending ? 'Un instant…' : <>{step.label} <small>{step.hint}</small></>}</button>
     {admin.isError && <p className="fb-error" role="alert">{admin.error.message}</p>}
     {target && <button type="button" className="fb-link" onClick={cancel} disabled={admin.isPending}>Annuler la soirée · rembourse tout</button>}
   </div>;
@@ -454,7 +467,8 @@ function AdminSheet({ state }: { state: BetsState }) {
       disabled={admin.isPending} onClick={() => run({ action: 'open' })}>Ouvrir les paris <small>{vote ? 'clôt le vote en cours, passe en phase 1' : 'passe en phase 1'}</small></button>}
     {fixture?.status === 'open' && <button type="button" className="fb-btn fb-btn--sm fb-admin-go" style={{ background: 'var(--fc-abysse)', color: 'var(--fc-craie)' }}
       disabled={admin.isPending} onClick={() => run({ action: 'lock' })}>Coup d’envoi <small>passe en phase 2, ferme les paris</small></button>}
-    {fixture?.status === 'locked' && <p className="fb-tap">Phase 2 : le match se relie tout seul dès qu’EA le publie.</p>}
+    {fixture?.status === 'locked' && <button type="button" className="fb-btn fb-btn--sm fb-admin-go" style={{ background: 'var(--fc-abysse)', color: 'var(--fc-craie)' }}
+      disabled={admin.isPending} onClick={() => run({ action: 'start-vote' })}>Ouvrir le vote <small>{fixture.match ? `passe en phase 3 · ${score(fixture.match)}` : 'passe en phase 3 · score EA pas encore reçu'}</small></button>}
     {vote && !fixture && <button type="button" className="fb-btn fb-btn--sm fb-btn--light fb-admin-go" disabled={admin.isPending}
       onClick={() => run({ action: 'close-vote', fixtureId: vote.id })}>Clore le vote et payer <small>passe en phase 4 · {plural(vote.voters, 'vote')}</small></button>}
     {target && <button type="button" className="fb-btn fb-btn--sm fb-btn--danger fb-admin-go" disabled={admin.isPending} onClick={cancel}>

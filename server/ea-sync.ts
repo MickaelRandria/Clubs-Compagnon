@@ -37,14 +37,14 @@ const int = (value: unknown, fallback = 0) => {
 const between = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /** Réserve la synchro si la dernière date de plus de 5 minutes. null : rien à faire. */
-async function claimSync() {
+async function claimSync(force = false) {
   const [claimed] = await getDb()
     .update(clubs)
     .set({ eaSyncedAt: sql`now()` })
     .where(and(
       eq(clubs.id, sql`(select min(id) from clubs)`),
       sql`${clubs.eaClubId} is not null`,
-      sql`(${clubs.eaSyncedAt} is null or ${clubs.eaSyncedAt} < now() - interval '${sql.raw(SYNC_INTERVAL)}')`,
+      force ? undefined : sql`(${clubs.eaSyncedAt} is null or ${clubs.eaSyncedAt} < now() - interval '${sql.raw(SYNC_INTERVAL)}')`,
     ))
     .returning({ id: clubs.id, eaClubId: clubs.eaClubId, platform: clubs.platform });
   return claimed?.eaClubId ? { id: claimed.id, eaClubId: claimed.eaClubId, platform: (claimed.platform ?? 'common-gen5') as Platform } : null;
@@ -236,11 +236,12 @@ export async function rateOpponents(ea: Pick<ProClubsClient, 'clubs'>, clubId: n
  * Synchronise le club si besoin. Une panne EA ne bloque jamais la lecture :
  * on journalise et on sert ce qui est en base.
  */
-export async function syncFromEa() {
+/** `force` : sans attendre l'intervalle de 5 minutes (l'admin ouvre le vote). */
+export async function syncFromEa({ force = false } = {}) {
   // Sans base (tests, aperçu), la lecture renverra elle-même l'erreur explicite.
   if (!process.env.DATABASE_URL) return;
   try {
-    const target = await claimSync();
+    const target = await claimSync(force);
     if (target) await syncClub(target);
   } catch (error) {
     console.error('[ea-sync] synchro EA impossible :', error);

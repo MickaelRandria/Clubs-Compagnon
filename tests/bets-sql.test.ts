@@ -49,6 +49,7 @@ test('chaque compte Discord reçoit 500 crédits à sa première visite, une seu
 test('seul l’admin ouvre, verrouille ou annule', async () => {
   assert.equal((await call('open', alex, { playerOdds: playerOdds() })).status, 403);
   assert.equal((await call('lock', alex)).status, 403);
+  assert.equal((await call('start-vote', alex)).status, 403);
 });
 
 test('cycle complet : mises, changement d’avis, coup d’envoi, règlement EA, vote, clôture', async () => {
@@ -80,14 +81,21 @@ test('cycle complet : mises, changement d’avis, coup d’envoi, règlement EA,
   await call('lock', admin, {}, true);
   assert.equal((await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'verdict', option: 'win', stake: 50 }] })).status, 409);
 
-  // Le match EA arrive : défaite 1-3. Verdict et buts sont réglés, le vote s'ouvre.
+  // Le match EA arrive : défaite 1-3. Verdict et buts sont réglés, l'admin voit le score ;
+  // le vote ne s'ouvre que quand il le décide.
   await backdate(30);
   await playedMatch(5, 1, 3);
   state = await call('state', alex);
+  assert.equal(state.fixture?.status, 'locked');
+  assert.deepEqual([state.fixture?.match?.goalsFor, state.fixture?.match?.goalsAgainst], [1, 3]);
+  assert.equal(state.fixture?.mySlips.find((s) => s.market === 'verdict')?.status, 'won');
+  assert.equal(state.votes.length, 0);
+  state = await call('start-vote', admin, {}, true);
   assert.equal(state.fixture, null);
+  state = await call('state', alex);
   assert.equal(state.votes.length, 1);
   const vote = state.votes[0];
-  assert.deepEqual([vote.match.goalsFor, vote.match.goalsAgainst], [1, 3]);
+  assert.deepEqual([vote.match?.goalsFor, vote.match?.goalsAgainst], [1, 3]);
   assert.deepEqual(vote.candidates.map((c) => c.gamertag), ['Chef', 'Rina'], 'seuls les joueurs du match sont candidats');
   const status = (slips: typeof vote.mySlips, market: string) => slips.find((s) => s.market === market)?.status;
   assert.equal(status(vote.mySlips, 'verdict'), 'won');
@@ -139,10 +147,12 @@ test('coup d’envoi oublié : les mises faites pendant le match sont remboursé
   await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'goals', option: '4+', stake: 50 }] });
   await playedMatch(2, 5, 0);
   const state = await call('state', fan);
-  const slips = state.votes[0].mySlips;
+  assert.equal(state.fixture?.status, 'locked', 'verrouillé d’office, le score attend l’admin');
+  const slips = state.fixture!.mySlips;
   assert.equal(slips.find((s) => s.market === 'verdict')?.status, 'won');
   assert.equal(slips.find((s) => s.market === 'goals')?.status, 'refunded');
   assert.equal(state.wallet.balance, 500 - 50 + 100);
+  await call('start-vote', admin, {}, true);
 });
 
 test('ouvrir le match suivant clôt le vote précédent ; sans vote, Crack et Casserole sont remboursés', async () => {
@@ -207,4 +217,35 @@ test('rage-quit : réglé par l’abandon EA, remboursé si l’abandon est inco
   assert.equal((await play(null)).status, 'refunded');
   assert.equal((await play(false)).status, 'lost');
   assert.equal((await call('state', fan)).wallet.balance, before + 200 - 50 - 50, 'abandon à 4.00 : 50 → 200');
+});
+
+test('l’admin ouvre le vote sans attendre EA : le score se relie ensuite, sinon le pari d’équipe est remboursé', async () => {
+  const play = async () => {
+    const fixture = (await call('open', admin, { playerOdds: playerOdds() }, true)).fixture!;
+    await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'verdict', option: 'win', stake: 50 }] });
+    await call('lock', admin, {}, true);
+    assert.equal((await call('start-vote', admin, {}, true)).votes.length, 1);
+    await backdate(30);
+  };
+  const balance = async () => (await call('state', fan)).wallet.balance;
+  const start = await balance();
+
+  await play();
+  let vote = (await call('state', fan)).votes[0];
+  assert.equal(vote.match, null);
+  assert.deepEqual(vote.candidates.map((c) => c.gamertag), ['Absent', 'Chef', 'Rina'], 'sans feuille de match : tout l’effectif actif');
+  await playedMatch(5, 2, 0);
+  vote = (await call('state', fan)).votes[0];
+  assert.equal(vote.match?.goalsFor, 2, 'le score arrive pendant le vote');
+  assert.equal(vote.mySlips[0].status, 'won');
+  await call('close-vote', admin, { fixtureId: vote.id }, true);
+  assert.equal(await balance(), start - 50 + 100);
+
+  await play();
+  vote = (await call('state', fan)).votes[0];
+  await call('close-vote', admin, { fixtureId: vote.id }, true);
+  const last = (await call('state', fan)).history[0];
+  assert.equal(last.mySlips[0].status, 'refunded', 'vote clos sans score : remboursé');
+  assert.equal(await balance(), start - 50 + 100);
+  assert.equal((await call('start-vote', admin, {}, true)).status, 409, 'rien à faire passer au vote');
 });

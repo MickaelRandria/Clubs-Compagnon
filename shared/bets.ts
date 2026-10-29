@@ -26,6 +26,8 @@ export interface BetsStatus {
   canConfigure: boolean;
   /** null tant que l'accès est fermé au visiteur. */
   live: BetsLive;
+  /** Admins seulement : le score EA du match en cours est arrivé, le vote peut s'ouvrir. */
+  scoreIn?: true;
 }
 
 export function betsAccess(mode: BetsMode, isAdmin: boolean): BetsAccess {
@@ -131,12 +133,12 @@ export interface BetsState {
   isAdmin: boolean;
   myMemberId: number | null;
   wallet: { balance: number; canBailout: boolean; bankrupt: boolean };
-  /** Rencontre à parier (ouverte) ou en cours de jeu (verrouillée). */
+  /** Rencontre à parier (ouverte) ou en cours de jeu (verrouillée). `match` : le score EA, dès qu'il est arrivé. */
   fixture: { id: number; status: 'open' | 'locked'; openedAt: string; lockedAt: string | null; context: { reason: string | null } | null;
-    markets: Market[]; bettors: number; mySlips: Slip[] } | null;
-  /** Matchs joués dont le vote du Crack est ouvert. */
+    match: BetMatch | null; markets: Market[]; bettors: number; mySlips: Slip[] } | null;
+  /** Matchs joués dont le vote du Crack est ouvert. `match` null : l'admin a ouvert le vote avant le score EA. */
   votes: {
-    id: number; openedAt: string; match: BetMatch; markets: Market[]; mySlips: Slip[];
+    id: number; openedAt: string; match: BetMatch | null; markets: Market[]; mySlips: Slip[];
     candidates: { memberId: number; gamertag: string }[];
     tally: { crack: Record<string, number>; flop: Record<string, number> };
     myVotes: { crack: number | null; flop: number | null };
@@ -169,6 +171,7 @@ export type BetsPlayAction = z.infer<typeof betsPlayActionSchema>;
 export const betsAdminActionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('open') }),
   z.object({ action: z.literal('lock') }),
+  z.object({ action: z.literal('start-vote') }),
   z.object({ action: z.literal('close-vote'), fixtureId: id }),
   z.object({ action: z.literal('cancel'), fixtureId: id }),
 ]);

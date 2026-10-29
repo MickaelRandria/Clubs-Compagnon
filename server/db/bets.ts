@@ -38,6 +38,10 @@ export const betsSettings: BetsSettings = {
       throw err;
     }
   },
+  scoreIn: async () => {
+    const result = await getDb().execute(sql`select 1 from bet_fixtures where status = 'locked' and match_id is not null limit 1`);
+    return result.rows.length > 0;
+  },
   setMode: async (mode, accountId) => {
     await getDb().execute(sql`
       insert into app_settings(key, value, updated_by) values ('bets_mode', ${JSON.stringify(mode)}::jsonb, ${accountId})
@@ -90,6 +94,9 @@ export const betsGame: BetsGame = {
   // La synchro EA d'abord : c'est elle qui fait arriver le match qui règle les paris.
   state: async (accountId, admin) => { await syncFromEa(); return dispatch('state', accountId, {}, admin); },
   play: (accountId, action) => dispatch(action.action, accountId, action, false),
-  admin: async (accountId, action) => dispatch(action.action, accountId,
-    action.action === 'open' ? await buildOpening() : action, true),
+  admin: async (accountId, action) => {
+    // Ouvrir le vote : on va chercher le score chez EA tout de suite, sans attendre les 5 minutes.
+    if (action.action === 'start-vote') await syncFromEa({ force: true });
+    return dispatch(action.action, accountId, action.action === 'open' ? await buildOpening() : action, true);
+  },
 };

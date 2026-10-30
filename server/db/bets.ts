@@ -58,10 +58,10 @@ async function dispatch(action: string, accountId: number, input: object, admin:
   return data;
 }
 
-interface StatsRow { gamertag?: string; rating?: number; redCards?: number }
+interface StatsRow { gamertag?: string; rating?: number; goals?: number; redCards?: number }
 
 /**
- * Les paris du match (le Crack, parfois un pari d'équipe tiré au sort) et leurs cotes,
+ * Les paris du match (deux paris d'équipe tirés au sort, le Crack, le Buteur) et leurs cotes,
  * calculées sur les 20 derniers matchs EA. Les candidats au Crack sont les joueurs vus sur les 10 derniers matchs
  * (à défaut, tout l'effectif actif).
  */
@@ -71,23 +71,30 @@ export async function buildOpening() {
     db.execute(sql`select opponent_name, result, goals_for, goals_against, player_stats, opponent_quit from matches
       where club_id = (select min(id) from clubs) order by played_at desc limit 20`),
     db.execute(sql`select id, gamertag, avg_rating from members where club_id = (select min(id) from clubs) and is_active order by gamertag`),
-    db.execute(sql`select (select m->>'id' from jsonb_array_elements(markets) m where m->>'id' <> 'crack' limit 1) as market
+    db.execute(sql`select coalesce((select jsonb_agg(m->>'id') from jsonb_array_elements(markets) m
+      where m->>'id' not in ('crack', 'flop', 'scorer')), '[]'::jsonb) as markets
       from bet_fixtures where markets is not null order by id desc limit 1`),
   ]);
   const byTag = new Map(memberRows.rows.map((r) => [String(r.gamertag), Number(r.id)]));
   const history: FormMatch[] = matchRows.rows.map((r) => {
     const stats = (r.player_stats ?? null) as StatsRow[] | null;
     const ratings: Record<number, number> = {};
-    for (const p of stats ?? []) { const id = byTag.get(String(p.gamertag)); if (id !== undefined && p.rating) ratings[id] = Number(p.rating); }
+    const scorers: number[] = [];
+    for (const p of stats ?? []) {
+      const id = byTag.get(String(p.gamertag));
+      if (id === undefined) continue;
+      if (p.rating) ratings[id] = Number(p.rating);
+      if (Number(p.goals) > 0) scorers.push(id);
+    }
     return { opponent: String(r.opponent_name), result: r.result as FormMatch['result'], goalsFor: Number(r.goals_for),
       goalsAgainst: Number(r.goals_against), redCard: stats && stats.length ? stats.some((p) => Number(p.redCards) > 0) : null,
-      opponentQuit: r.opponent_quit === null ? null : Boolean(r.opponent_quit), ratings };
+      opponentQuit: r.opponent_quit === null ? null : Boolean(r.opponent_quit), ratings, ...(stats && stats.length ? { scorers } : {}) };
   });
   const recent = new Set(history.slice(0, 10).flatMap((m) => Object.keys(m.ratings).map(Number)));
   const players: FormPlayer[] = memberRows.rows
     .map((r) => ({ memberId: Number(r.id), gamertag: String(r.gamertag), avgRating: r.avg_rating === null ? null : Number(r.avg_rating) }))
     .filter((p, _, all) => recent.size === 0 || recent.has(p.memberId) || all.every((q) => !recent.has(q.memberId)));
-  return openMatchBet((previousRows.rows[0]?.market ?? null) as MarketId | null, history, players);
+  return openMatchBet((previousRows.rows[0]?.markets ?? []) as MarketId[], history, players);
 }
 
 export const betsGame: BetsGame = {
@@ -95,8 +102,10 @@ export const betsGame: BetsGame = {
   state: async (accountId, admin) => { await syncFromEa(); return dispatch('state', accountId, {}, admin); },
   play: (accountId, action) => dispatch(action.action, accountId, action, false),
   admin: async (accountId, action) => {
-    // Ouvrir le vote : on va chercher le score chez EA tout de suite, sans attendre les 5 minutes.
-    if (action.action === 'start-vote') await syncFromEa({ force: true });
+    // Ouvrir le vote ou guetter la fin du match : on va chercher le score chez EA tout de suite,
+    // sans attendre les 5 minutes. `check` ne fait que ça, puis relit l'état.
+    if (action.action === 'start-vote' || action.action === 'check') await syncFromEa({ force: true });
+    if (action.action === 'check') return dispatch('state', accountId, {}, true);
     return dispatch(action.action, accountId, action.action === 'open' ? await buildOpening() : action, true);
   },
 };

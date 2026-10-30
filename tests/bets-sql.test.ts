@@ -19,7 +19,8 @@ const playerOdds = () => [rina, chef, absent].map((memberId, i) => ({
 }));
 const playedMatch = async (minutesAgo: number, goalsFor: number, goalsAgainst: number, red = 0, opponentQuit: boolean | null = null) => {
   const result = goalsFor > goalsAgainst ? 'win' : goalsFor < goalsAgainst ? 'loss' : 'draw';
-  const stats = JSON.stringify([{ gamertag: 'Rina', redCards: red }, { gamertag: 'Chef', redCards: 0 }]);
+  // Rina marque tous les buts du club.
+  const stats = JSON.stringify([{ gamertag: 'Rina', redCards: red, goals: goalsFor }, { gamertag: 'Chef', redCards: 0, goals: 0 }]);
   return (await one<{ id: number }>(`insert into matches(club_id, ea_match_id, played_at, match_type, opponent_name, goals_for, goals_against, result, player_stats, opponent_quit)
     values (1, $1, now() - $2::interval, 'league', 'Adversaire', $3, $4, $5, $6::jsonb, $7) returning id`,
   [`ea-${Math.random()}`, `${minutesAgo} minutes`, goalsFor, goalsAgainst, result, stats, opponentQuit])).id;
@@ -248,4 +249,47 @@ test('l’admin ouvre le vote sans attendre EA : le score se relie ensuite, sino
   assert.equal(last.mySlips[0].status, 'refunded', 'vote clos sans score : remboursé');
   assert.equal(await balance(), start - 50 + 100);
   assert.equal((await call('start-vote', admin, {}, true)).status, 409, 'rien à faire passer au vote');
+});
+
+test('nouveaux paris : Buteur et buts encaissés réglés par EA ; jamais sur soi ; le Crack élu récupère sa mise', async () => {
+  const markets = [
+    { id: 'against', options: [{ id: '0', label: 'Aucun', odds: 3 }, { id: '1-2', label: '1 ou 2', odds: 2 }, { id: '3+', label: '3 et plus', odds: 4 }] },
+    { id: 'crack', options: [rina, chef, absent].map((id, i) => ({ id: String(id), label: ['Rina', 'Chef', 'Absent'][i], odds: 2 })) },
+    { id: 'scorer', options: [rina, chef, absent].map((id, i) => ({ id: String(id), label: ['Rina', 'Chef', 'Absent'][i], odds: 3 })) },
+  ];
+  await db.query('update credit_wallets set balance = 500 where account_id = $1', [sam]);
+  const fixture = (await call('open', admin, { markets, context: { reason: null } }, true)).fixture!;
+  // Alex est Rina : ni Crack ni Buteur sur lui-même.
+  assert.equal((await call('place', alex, { fixtureId: fixture.id, bets: [{ market: 'scorer', option: String(rina), stake: 10 }] })).status, 403);
+  assert.equal((await call('place', alex, { fixtureId: fixture.id, bets: [{ market: 'crack', option: String(rina), stake: 10 }] })).status, 403);
+  const alexStart = (await call('state', alex)).wallet.balance;
+  await call('place', alex, { fixtureId: fixture.id, bets: [{ market: 'crack', option: String(chef), stake: 40 }, { market: 'against', option: '1-2', stake: 20 }] });
+  const fanStart = (await call('state', fan)).wallet.balance;
+  await call('place', fan, { fixtureId: fixture.id, bets: [
+    { market: 'scorer', option: String(rina), stake: 10 }, { market: 'scorer', option: String(chef), stake: 10 },
+  ] }).then((r) => assert.equal(r.status, undefined));
+  await call('place', sam, { fixtureId: fixture.id, bets: [{ market: 'scorer', option: String(absent), stake: 10 }] });
+  await call('lock', admin, {}, true);
+  await backdate(30);
+  await playedMatch(5, 2, 1);
+  const fan1 = (await call('state', fan)).fixture!.mySlips;
+  assert.equal(fan1.length, 1, 'un seul Buteur par joueur : le second remplace le premier');
+  assert.equal(fan1[0].status, 'lost', 'Chef n’a pas marqué');
+  assert.equal((await call('state', sam)).fixture!.mySlips[0].status, 'refunded', 'Buteur absent du match : remboursé');
+  const alex1 = (await call('state', alex)).fixture!.mySlips;
+  assert.equal(alex1.find((s) => s.market === 'against')?.status, 'won');
+
+  // Le club élit Rina (Alex) : son pari Crack sur Chef lui est rendu.
+  const vote = (await call('start-vote', admin, {}, true), (await call('state', fan)).votes[0]);
+  await call('vote', fan, { fixtureId: vote.id, category: 'crack', memberId: rina });
+  await call('vote', sam, { fixtureId: vote.id, category: 'crack', memberId: rina });
+  await call('vote', alex, { fixtureId: vote.id, category: 'crack', memberId: chef });
+  await call('close-vote', admin, { fixtureId: vote.id }, true);
+  const alexEnd = await call('state', alex);
+  assert.equal(alexEnd.history[0].mySlips.find((s) => s.market === 'crack')?.status, 'refunded');
+  assert.equal(alexEnd.wallet.balance, alexStart - 20 + 40);
+  assert.equal((await call('state', fan)).wallet.balance, fanStart - 10);
+  // Phase 4 : qui a voté pour qui, pour tout le club.
+  const ballots = (await call('state', fan)).history[0].ballots;
+  assert.deepEqual(ballots.map((b) => [b.gamertag, b.voter, b.me]), [['Chef', 'Rina', false], ['Rina', 'fan', true], ['Rina', 'sam', false]]);
 });

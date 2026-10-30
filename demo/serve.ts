@@ -34,10 +34,12 @@ function betsState(scene: Scene, admin: boolean): BetsState {
       ratings: Object.fromEntries((detail?.players ?? []).flatMap((p) => {
         const member = members.find((x) => x.gamertag === p.gamertag);
         return member ? [[member.id, p.rating]] : [];
-      })) };
+      })),
+      ...(detail ? { scorers: detail.players.filter((p) => p.goals > 0).flatMap((p) => members.find((x) => x.gamertag === p.gamertag)?.id ?? []) } : {}) };
   });
   const players = members.map((m) => ({ memberId: m.id, gamertag: m.gamertag, avgRating: m.avgRating }));
-  const markets = [priceMarket('goals', history, players), priceMarket('crack', history, players)];
+  const markets = [priceMarket('goals', history, players), priceMarket('crack', history, players),
+    priceMarket('against', history, players), priceMarket('scorer', history, players)];
   const odds = (market: number, option: string) => markets[market].options.find((o) => o.id === option)!.odds;
   // Le match de la démo : la victoire 3-0 contre LaEsquina, crack élu Chef695046.
   const played = matches.find((m) => m.opponent === 'LaEsquina') ?? matches[0];
@@ -74,7 +76,11 @@ function betsState(scene: Scene, admin: boolean): BetsState {
       myVotes: { crack: scene === 'vote-fait' ? crack.id : null, flop: null }, voters: scene === 'vote-fait' ? 4 : 3,
       picks: scene === 'vote-fait' ? picks : null }] : [],
     history: settled ? [{ id: 1, status: 'settled', settledAt: new Date().toISOString(), match, crack: [crack.gamertag], flop: null, markets,
-      mySlips: mine, results: picks, myVote: crack.id }] : [],
+      mySlips: mine, results: picks, myVote: crack.id,
+      ballots: [me, ...others].filter((m) => m.id !== crack.id).map((m, i) => {
+        const pickFor = i === 3 ? others[0] : crack;
+        return { voter: m.gamertag, me: m.id === me.id, memberId: pickFor.id, gamertag: pickFor.gamertag };
+      }) }] : [],
     leaderboard: [
       { accountId: 2, name: others[0].gamertag, balance: 1820, me: false },
       { accountId: 1, name: me.gamertag, balance: settled ? 1345 : 1100, me: true },

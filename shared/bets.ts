@@ -105,7 +105,7 @@ export function tally(targets: number[]): Tally {
 
 export const CURRENCY = { name: 'crédits', short: 'CR' } as const;
 
-export type MarketId = 'crack' | 'flop' | 'verdict' | 'goals' | 'cleansheet' | 'red' | 'ragequit';
+export type MarketId = 'crack' | 'flop' | 'scorer' | 'verdict' | 'goals' | 'against' | 'cleansheet' | 'red' | 'ragequit';
 export type SlipStatus = 'pending' | 'won' | 'lost' | 'refunded';
 
 /** Textes des paris. Les options et leurs cotes viennent du serveur, seule source des cotes. */
@@ -113,13 +113,15 @@ export const MARKET_COPY: Record<MarketId, { title: string; question: string; em
   verdict: { title: 'Le Verdict', question: 'Le résultat du match ?', emoji: '⚖️' },
   crack: { title: 'Le Crack', question: 'Qui va rouler sur le match ?', emoji: '🔥' },
   goals: { title: 'Les Buts', question: 'Combien de buts pour FoodBall ?', emoji: '⚽' },
+  against: { title: 'Buts encaissés', question: 'Combien de buts encaissés ?', emoji: '🥅' },
+  scorer: { title: 'Le Buteur', question: 'Qui va marquer ?', emoji: '🎯' },
   flop: { title: 'La Casserole', question: 'Qui va tenter la roulette de trop ?', emoji: '🍳' },
   cleansheet: { title: 'Le Mur', question: 'Zéro but encaissé ?', emoji: '🧱' },
   red: { title: 'Carton rouge', question: 'Un des nôtres prend un rouge ?', emoji: '🟥' },
   ragequit: { title: 'Le Rage-quit', question: 'L’adversaire quitte avant la fin ?', emoji: '🏃' },
 };
 /** Ordre d'affichage : les paris d'équipe d'abord, les plus simples à comprendre. */
-export const MARKET_ORDER: MarketId[] = ['verdict', 'goals', 'crack', 'flop', 'cleansheet', 'red', 'ragequit'];
+export const MARKET_ORDER: MarketId[] = ['verdict', 'goals', 'against', 'cleansheet', 'red', 'ragequit', 'crack', 'scorer', 'flop'];
 
 /** `trend` : effet du dernier match sur la cote (positif = elle monte). Absent sur les anciennes rencontres. */
 export interface MarketOption { id: string; label: string; odds: number; trend?: number }
@@ -149,13 +151,15 @@ export interface BetsState {
   }[];
   /** Les 5 dernières rencontres réglées du club, avec tous les pronos (`results`) pour afficher les gagnants. */
   history: { id: number; status: 'settled' | 'cancelled'; settledAt: string; match: BetMatch | null; crack: string[] | null; flop: string[] | null;
-    markets: Market[]; mySlips: Slip[]; results: BetPick[]; myVote: number | null }[];
+    markets: Market[]; mySlips: Slip[]; results: BetPick[]; myVote: number | null;
+    /** Qui a voté pour qui au Crack, dévoilé une fois le vote clos. */
+    ballots: { voter: string; me: boolean; memberId: number; gamertag: string }[] }[];
   leaderboard: { accountId: number; name: string; balance: number; me: boolean }[];
   /** Salle d'attente : présents (FoodBet ouvert ces 2 dernières minutes) et engagés dans la soirée, sans leurs choix. */
   room: { name: string; me: boolean; here: boolean; played: boolean; voted: boolean }[];
 }
 
-const market = z.enum(['crack', 'flop', 'verdict', 'goals', 'cleansheet', 'red', 'ragequit']);
+const market = z.enum(['crack', 'flop', 'scorer', 'verdict', 'goals', 'against', 'cleansheet', 'red', 'ragequit']);
 const id = z.number().int().positive();
 
 /** Actions d'un parieur. Les cotes ne sont jamais acceptées du client. */
@@ -172,6 +176,8 @@ export const betsAdminActionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('open') }),
   z.object({ action: z.literal('lock') }),
   z.object({ action: z.literal('start-vote') }),
+  // Guetter la fin du match : relance la synchro EA (l'écran admin l'appelle toutes les 20 s).
+  z.object({ action: z.literal('check') }),
   z.object({ action: z.literal('close-vote'), fixtureId: id }),
   z.object({ action: z.literal('cancel'), fixtureId: id }),
 ]);

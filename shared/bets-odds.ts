@@ -1,11 +1,11 @@
-import type { Market, MarketId, MarketOption } from './bets.js';
+import { BONUS_MARKETS, type Market, type MarketId, type MarketOption } from './bets.js';
 
-// Les paris d'une soirée : deux paris d'équipe tirés au sort, le Crack et le Buteur, les mêmes pour tout le monde.
+// Les paris d'une session : six fixes (Bilan, Attaque, Buteur, Maladroit, Crack, Skill Rating)
+// et un bonus tiré au sort, les mêmes pour tout le monde.
 //
-// Les cotes viennent de l'historique du club (fréquences sur les 20 derniers matchs) et
-// bougent avec la forme : le dernier match pèse le plus lourd. La flèche affichée à côté
-// de chaque cote compare avec les cotes calculées sans ce dernier match — c'est l'effet
-// du résultat précédent, et la phrase de contexte le dit en clair.
+// On ne sait pas combien de matchs la soirée comptera : les cotes viennent d'une simulation de
+// soirées de 4 à 8 matchs, tirés dans les 20 derniers matchs du club (le dernier pèse le plus).
+// Le Crack, élu au vote, reste coté sur la forme (notes EA).
 
 export interface FormMatch {
   opponent: string;
@@ -20,11 +20,13 @@ export interface FormMatch {
   ratings: Record<number, number>;
   /** Joueurs présents qui ont marqué. Absent : inconnu. */
   scorers?: number[];
+  /** Buts et tirs ratés de chaque joueur présent, par id de membre. Absent : feuille de match inconnue. */
+  players?: Record<number, { goals: number; missed: number }>;
 }
 
 export interface FormPlayer { memberId: number; gamertag: string; avgRating: number | null }
 
-/** Option de pari : `trend` = écart de cote dû au dernier match (positif = la cote monte). */
+/** Option de pari : `trend` = écart de cote dû au dernier match (0 pour les paris de session). */
 export interface DrawnOption extends MarketOption { trend: number }
 export interface DrawnMarket { id: MarketId; options: DrawnOption[] }
 export interface Opening { markets: DrawnMarket[]; context: { reason: string | null } }
@@ -35,47 +37,87 @@ export const ODDS_MAX = 9.5;
 const DECAY = 0.85;
 const LAST_BOOST = 2;
 const DEFAULT_RATING = 6.5;
+/** Soirées simulées : de 4 à 8 matchs. */
+export const SESSION_MIN = 4;
+export const SESSION_MAX = 8;
+const RUNS = 3000;
+/** Matchs à l'issue connue qu'il faut avant de coter un abandon : en dessous, la cote serait du hasard. */
+export const RAGEQUIT_MIN_KNOWN = 10;
 
 export const toOdds = (p: number) => Math.round(Math.min(ODDS_MAX, Math.max(ODDS_MIN, 1 / (Math.max(p, 0.001) * MARGIN))) * 20) / 20;
 
 /** Poids de chaque match, du plus récent au plus ancien : le dernier compte double. */
 const weights = (n: number) => Array.from({ length: n }, (_, i) => DECAY ** i * (i === 0 ? LAST_BOOST : 1));
 
-/** Probabilités lissées (une observation fictive par issue) à partir des issues pondérées. */
-function probabilities<T extends string>(outcomes: T[], history: T[]): Record<T, number> {
-  const w = weights(history.length);
-  const score = Object.fromEntries(outcomes.map((o) => [o, 1])) as Record<T, number>;
-  history.forEach((o, i) => { score[o] += w[i]; });
-  const total = outcomes.reduce((sum, o) => sum + score[o], 0);
-  return Object.fromEntries(outcomes.map((o) => [o, score[o] / total])) as Record<T, number>;
-}
-
-const goalsBucket = (goals: number) => (goals <= 1 ? '0-1' : goals <= 3 ? '2-3' : '4+');
-
-const againstBucket = (goals: number) => (goals === 0 ? '0' : goals <= 2 ? '1-2' : '3+');
-
-type Labeled = { id: string; label: string };
-const FIXED: Record<'verdict' | 'goals' | 'against' | 'cleansheet' | 'red' | 'ragequit', Labeled[]> = {
-  verdict: [{ id: 'win', label: 'Victoire' }, { id: 'draw', label: 'Nul' }, { id: 'loss', label: 'Défaite' }],
-  goals: [{ id: '0-1', label: '0 ou 1' }, { id: '2-3', label: '2 ou 3' }, { id: '4+', label: '4 et plus' }],
-  against: [{ id: '0', label: 'Aucun' }, { id: '1-2', label: '1 ou 2' }, { id: '3+', label: '3 et plus' }],
-  cleansheet: [{ id: 'oui', label: 'Oui' }, { id: 'non', label: 'Non' }],
-  red: [{ id: 'oui', label: 'Oui' }, { id: 'non', label: 'Non' }],
-  ragequit: [{ id: 'oui', label: 'Oui' }, { id: 'non', label: 'Non' }],
+const YES_NO = [{ id: 'oui', label: 'Oui' }, { id: 'non', label: 'Non' }];
+const TEAM: Partial<Record<MarketId, { id: string; label: string }[]>> = {
+  bilan: [{ id: 'win', label: 'Plus de V' }, { id: 'even', label: 'Autant' }, { id: 'loss', label: 'Plus de D' }],
+  attack: [{ id: 'lt2', label: 'Moins de 2' }, { id: '2-3', label: '2 à 3' }, { id: 'gt3', label: 'Plus de 3' }],
+  sr: [{ id: 'up', label: 'En hausse' }, { id: 'down', label: 'En baisse' }],
+  cleansheet: YES_NO, red: YES_NO, ragequit: YES_NO, streak: YES_NO,
 };
 
-const yesNo = (value: boolean) => (value ? 'oui' : 'non');
+/** Réponse d'un pari d'équipe pour une soirée (mêmes règles que bets_end_session, drizzle/0025). */
+export function sessionAnswer(id: MarketId, s: { wins: number; losses: number; matches: number; goalsFor: number;
+  cleanSheets: number; reds: number; ragequits: number; bestStreak: number }): string | null {
+  if (s.matches === 0) return null;
+  const average = s.goalsFor / s.matches;
+  switch (id) {
+    case 'bilan': return s.wins > s.losses ? 'win' : s.wins < s.losses ? 'loss' : 'even';
+    case 'attack': return average < 2 ? 'lt2' : average <= 3 ? '2-3' : 'gt3';
+    case 'cleansheet': return s.cleanSheets > 0 ? 'oui' : 'non';
+    case 'red': return s.reds > 0 ? 'oui' : 'non';
+    case 'ragequit': return s.ragequits > 0 ? 'oui' : 'non';
+    case 'streak': return s.bestStreak >= 3 ? 'oui' : 'non';
+    default: return null;
+  }
+}
 
-function teamOdds(id: keyof typeof FIXED, history: FormMatch[]): Record<string, number> {
-  const ids = FIXED[id].map((o) => o.id);
-  const seen = id === 'verdict' ? history.map((m) => m.result)
-    : id === 'goals' ? history.map((m) => goalsBucket(m.goalsFor))
-    : id === 'against' ? history.map((m) => againstBucket(m.goalsAgainst))
-    : id === 'cleansheet' ? history.map((m) => yesNo(m.goalsAgainst === 0))
-    : id === 'red' ? history.flatMap((m) => (m.redCard === null ? [] : [yesNo(m.redCard)]))
-    : history.flatMap((m) => (m.opponentQuit == null ? [] : [yesNo(m.opponentQuit)]));
-  const p = probabilities(ids, seen);
-  return Object.fromEntries(ids.map((o) => [o, toOdds(p[o])]));
+/** Meilleurs d'une soirée (ex æquo compris) ; personne si le meilleur total est 0. */
+function leaders(totals: Map<number, number>): number[] {
+  const best = Math.max(0, ...totals.values());
+  return best === 0 ? [] : [...totals].filter(([, n]) => n === best).map(([id]) => id);
+}
+
+/** Fréquence de chaque issue sur des soirées simulées. */
+function simulate(history: FormMatch[], players: FormPlayer[], random: () => number) {
+  // Sans historique : toutes les issues à égalité.
+  if (history.length === 0) return (_key: string, outcomes: number) => 1 / outcomes;
+  const counts = new Map<string, number>();
+  const add = (key: string, n = 1) => counts.set(key, (counts.get(key) ?? 0) + n);
+  const w = weights(history.length);
+  const total = w.reduce((a, b) => a + b, 0);
+  const pick = () => {
+    let roll = random() * total;
+    for (let i = 0; i < history.length; i++) { roll -= w[i]; if (roll < 0) return history[i]; }
+    return history[history.length - 1];
+  };
+  for (let run = 0; run < RUNS; run++) {
+    const n = SESSION_MIN + Math.floor(random() * (SESSION_MAX - SESSION_MIN + 1));
+    const s = { matches: n, wins: 0, losses: 0, goalsFor: 0, cleanSheets: 0, reds: 0, ragequits: 0, bestStreak: 0 };
+    const goals = new Map(players.map((p) => [p.memberId, 0]));
+    const missed = new Map(players.map((p) => [p.memberId, 0]));
+    let streak = 0;
+    for (let i = 0; i < n; i++) {
+      const m = pick();
+      if (m.result === 'win') { s.wins++; streak++; s.bestStreak = Math.max(s.bestStreak, streak); } else streak = 0;
+      if (m.result === 'loss') s.losses++;
+      s.goalsFor += m.goalsFor;
+      if (m.goalsAgainst === 0) s.cleanSheets++;
+      if (m.redCard) s.reds++;
+      if (m.opponentQuit) s.ragequits++;
+      for (const [id, stat] of Object.entries(m.players ?? {})) {
+        const key = Number(id);
+        if (goals.has(key)) { goals.set(key, goals.get(key)! + stat.goals); missed.set(key, missed.get(key)! + stat.missed); }
+      }
+    }
+    for (const id of ['bilan', 'attack', 'cleansheet', 'red', 'ragequit', 'streak'] as const) add(`${id}:${sessionAnswer(id, s)}`);
+    // Le skill rating suit le bilan ; à égalité, une chance sur deux.
+    if (s.wins === s.losses) { add('sr:up', 0.5); add('sr:down', 0.5); } else add(`sr:${s.wins > s.losses ? 'up' : 'down'}`);
+    for (const id of leaders(goals)) add(`scorer:${id}`);
+    for (const id of leaders(missed)) add(`clumsy:${id}`);
+  }
+  return (key: string, _outcomes: number) => ((counts.get(key) ?? 0) + 0.5) / (RUNS + 1);
 }
 
 /** Crack : forme récente (moyenne saison et dernière note EA). Casserole : l'inverse. */
@@ -91,73 +133,51 @@ function playerOddsFrom(kind: 'crack' | 'flop', players: FormPlayer[], last: For
   return Object.fromEntries(players.map((p, i) => [String(p.memberId), toOdds(form[i] / total)]));
 }
 
-/** Buteur : part pondérée des matchs joués où le joueur a marqué. Plusieurs joueurs peuvent gagner. */
-function scorerOdds(players: FormPlayer[], history: FormMatch[]): Record<string, number> {
-  const w = weights(history.length);
-  return Object.fromEntries(players.map((p) => {
-    let played = 0, scored = 0;
-    history.forEach((m, i) => {
-      if (m.scorers === undefined || m.ratings[p.memberId] === undefined) return;
-      played += w[i];
-      if (m.scorers.includes(p.memberId)) scored += w[i];
-    });
-    return [String(p.memberId), toOdds((scored + 0.5) / (played + 1.5))];
-  }));
-}
-
 const VERDICT_WORD = { win: 'la victoire', draw: 'le nul', loss: 'la défaite' } as const;
 
-/** « Après la victoire 5-2 contre Team March » : ce qui fait bouger les cotes. */
+/** « Après la victoire 5-2 contre Team March » : le dernier match, en contexte. */
 export function formReason(last: FormMatch | undefined) {
   return last ? `Après ${VERDICT_WORD[last.result]} ${last.goalsFor}-${last.goalsAgainst} contre ${last.opponent}` : null;
 }
 
-/** Cotes d'un pari, avec l'effet du dernier match (`trend`). `history` : du plus récent au plus ancien. */
-export function priceMarket(id: MarketId, history: FormMatch[], players: FormPlayer[]): DrawnMarket {
-  const recent = history.slice(0, 20);
-  const before = recent.slice(1);
-  if (id === 'crack' || id === 'flop' || id === 'scorer') {
-    const now = id === 'scorer' ? scorerOdds(players, recent) : playerOddsFrom(id, players, recent[0]);
-    const prev = id === 'scorer' ? scorerOdds(players, before) : playerOddsFrom(id, players, undefined);
-    const options = players.map((p) => ({ id: String(p.memberId), label: p.gamertag, odds: now[String(p.memberId)],
-      trend: Math.round((now[String(p.memberId)] - prev[String(p.memberId)]) * 100) / 100 }));
-    return { id, options: options.sort((a, b) => a.odds - b.odds) };
-  }
-  const now = teamOdds(id, recent);
-  const prev = teamOdds(id, before);
-  return { id, options: FIXED[id].map((o) => ({ ...o, odds: now[o.id], trend: Math.round((now[o.id] - prev[o.id]) * 100) / 100 })) };
-}
+/** Bonus : tirage pondéré, en évitant celui de la session d'avant. */
+const BONUS_WEIGHT: Partial<Record<MarketId, number>> = { cleansheet: 2, streak: 2, red: 1, ragequit: 1 };
 
-/** Paris d'équipe tirés au sort à chaque rencontre. Tirage pondéré, en évitant ceux de la rencontre d'avant. */
-const POOL: [MarketId, number][] = [['verdict', 3], ['goals', 3], ['against', 2], ['cleansheet', 2], ['red', 1], ['ragequit', 1]];
-/** Paris d'équipe par rencontre, en plus du Crack et du Buteur. */
-export const TEAM_BETS = 2;
-
-/** Matchs à l'issue connue qu'il faut avant de coter un abandon : en dessous, la cote serait du hasard. */
-export const RAGEQUIT_MIN_KNOWN = 10;
-
-/** `avoid` : à éviter si possible (la rencontre d'avant) ; `excluded` : jamais (déjà tirés, pas cotables). */
-export function drawMarket(avoid: MarketId[], random: () => number = Math.random, excluded: MarketId[] = []): MarketId {
-  const allowed = POOL.filter(([id]) => !excluded.includes(id));
-  const fresh = allowed.filter(([id]) => !avoid.includes(id));
+export function drawBonus(avoid: MarketId[], random: () => number = Math.random, excluded: MarketId[] = []): MarketId {
+  const allowed = BONUS_MARKETS.filter((id) => !excluded.includes(id));
+  const fresh = allowed.filter((id) => !avoid.includes(id));
   const pool = fresh.length > 0 ? fresh : allowed;
-  const total = pool.reduce((sum, [, w]) => sum + w, 0);
+  const total = pool.reduce((sum, id) => sum + (BONUS_WEIGHT[id] ?? 1), 0);
   let roll = random() * total;
-  for (const [id, w] of pool) { roll -= w; if (roll < 0) return id; }
-  return pool[pool.length - 1][0];
+  for (const id of pool) { roll -= BONUS_WEIGHT[id] ?? 1; if (roll < 0) return id; }
+  return pool[pool.length - 1];
 }
 
 /**
- * FoodBet : deux paris d'équipe tirés au sort, le Crack du match (tranché par le vote du club)
- * et le Buteur (réglé par la feuille de match). `previous` : les paris d'équipe de la rencontre d'avant.
+ * Le ticket de la soirée : Bilan, Attaque, Buteur, Maladroit, Crack, Skill Rating et un bonus.
+ * `previous` : les paris de la session d'avant (pour varier le bonus). `history` : du plus récent au plus ancien.
  */
-export function openMatchBet(previous: MarketId[], history: FormMatch[], players: FormPlayer[], random: () => number = Math.random): Opening {
-  const known = history.filter((m) => m.opponentQuit != null).length;
-  const never: MarketId[] = known >= RAGEQUIT_MIN_KNOWN ? [] : ['ragequit'];
-  const team: MarketId[] = [];
-  for (let i = 0; i < TEAM_BETS; i++) team.push(drawMarket(previous, random, [...never, ...team]));
-  const markets = ([...team, 'crack', 'scorer'] as MarketId[]).map((id) => priceMarket(id, history, players));
-  return { markets, context: { reason: formReason(history[0]) } };
+export function openSession(previous: MarketId[], history: FormMatch[], players: FormPlayer[], random: () => number = Math.random): Opening {
+  const recent = history.slice(0, 20);
+  const known = recent.filter((m) => m.opponentQuit != null).length;
+  const bonus = drawBonus(previous, random, known >= RAGEQUIT_MIN_KNOWN ? [] : ['ragequit']);
+  const p = simulate(recent, players, random);
+  const team = (id: MarketId): DrawnMarket => {
+    const options = TEAM[id]!;
+    return { id, options: options.map((o) => ({ ...o, odds: toOdds(p(`${id}:${o.id}`, options.length)), trend: 0 })) };
+  };
+  const byPlayer = (id: 'scorer' | 'clumsy'): DrawnMarket => ({
+    id,
+    options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag, odds: toOdds(p(`${id}:${pl.memberId}`, players.length)), trend: 0 }))
+      .sort((a, b) => a.odds - b.odds),
+  });
+  const crackOdds = playerOddsFrom('crack', players, recent[0]);
+  const crack: DrawnMarket = { id: 'crack', options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag,
+    odds: crackOdds[String(pl.memberId)], trend: 0 })).sort((a, b) => a.odds - b.odds) };
+  return {
+    markets: [team('bilan'), team('attack'), byPlayer('scorer'), byPlayer('clumsy'), crack, team('sr'), team(bonus)],
+    context: { reason: formReason(history[0]) },
+  };
 }
 
 export type { Market };

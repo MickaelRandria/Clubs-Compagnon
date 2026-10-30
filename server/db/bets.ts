@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { isBetsMode, type BetsState, type MarketId } from '../../shared/bets.js';
-import { openMatchBet, type FormMatch, type FormPlayer } from '../../shared/bets-odds.js';
+import { openSession, type FormMatch, type FormPlayer } from '../../shared/bets-odds.js';
 import type { BetsGame, BetsSettings } from '../bets-http.js';
 import { syncFromEa } from '../ea-sync.js';
 import { HttpError } from '../http.js';
@@ -38,10 +38,6 @@ export const betsSettings: BetsSettings = {
       throw err;
     }
   },
-  scoreIn: async () => {
-    const result = await getDb().execute(sql`select 1 from bet_fixtures where status = 'locked' and match_id is not null limit 1`);
-    return result.rows.length > 0;
-  },
   setMode: async (mode, accountId) => {
     await getDb().execute(sql`
       insert into app_settings(key, value, updated_by) values ('bets_mode', ${JSON.stringify(mode)}::jsonb, ${accountId})
@@ -58,10 +54,10 @@ async function dispatch(action: string, accountId: number, input: object, admin:
   return data;
 }
 
-interface StatsRow { gamertag?: string; rating?: number; goals?: number; redCards?: number }
+interface StatsRow { gamertag?: string; rating?: number; goals?: number; shots?: number; redCards?: number }
 
 /**
- * Les paris du match (deux paris d'équipe tirés au sort, le Crack, le Buteur) et leurs cotes,
+ * Les paris de la session (six fixes et un bonus tiré au sort) et leurs cotes, simulées
  * calculées sur les 20 derniers matchs EA. Les candidats au Crack sont les joueurs vus sur les 10 derniers matchs
  * (à défaut, tout l'effectif actif).
  */
@@ -71,8 +67,7 @@ export async function buildOpening() {
     db.execute(sql`select opponent_name, result, goals_for, goals_against, player_stats, opponent_quit from matches
       where club_id = (select min(id) from clubs) order by played_at desc limit 20`),
     db.execute(sql`select id, gamertag, avg_rating from members where club_id = (select min(id) from clubs) and is_active order by gamertag`),
-    db.execute(sql`select coalesce((select jsonb_agg(m->>'id') from jsonb_array_elements(markets) m
-      where m->>'id' not in ('crack', 'flop', 'scorer')), '[]'::jsonb) as markets
+    db.execute(sql`select coalesce((select jsonb_agg(m->>'id') from jsonb_array_elements(markets) m), '[]'::jsonb) as markets
       from bet_fixtures where markets is not null order by id desc limit 1`),
   ]);
   const byTag = new Map(memberRows.rows.map((r) => [String(r.gamertag), Number(r.id)]));
@@ -80,21 +75,24 @@ export async function buildOpening() {
     const stats = (r.player_stats ?? null) as StatsRow[] | null;
     const ratings: Record<number, number> = {};
     const scorers: number[] = [];
+    const byPlayer: Record<number, { goals: number; missed: number }> = {};
     for (const p of stats ?? []) {
       const id = byTag.get(String(p.gamertag));
       if (id === undefined) continue;
       if (p.rating) ratings[id] = Number(p.rating);
-      if (Number(p.goals) > 0) scorers.push(id);
+      const goals = Number(p.goals) || 0;
+      if (goals > 0) scorers.push(id);
+      byPlayer[id] = { goals, missed: Math.max(0, (Number(p.shots) || 0) - goals) };
     }
     return { opponent: String(r.opponent_name), result: r.result as FormMatch['result'], goalsFor: Number(r.goals_for),
       goalsAgainst: Number(r.goals_against), redCard: stats && stats.length ? stats.some((p) => Number(p.redCards) > 0) : null,
-      opponentQuit: r.opponent_quit === null ? null : Boolean(r.opponent_quit), ratings, ...(stats && stats.length ? { scorers } : {}) };
+      opponentQuit: r.opponent_quit === null ? null : Boolean(r.opponent_quit), ratings, ...(stats && stats.length ? { scorers, players: byPlayer } : {}) };
   });
   const recent = new Set(history.slice(0, 10).flatMap((m) => Object.keys(m.ratings).map(Number)));
   const players: FormPlayer[] = memberRows.rows
     .map((r) => ({ memberId: Number(r.id), gamertag: String(r.gamertag), avgRating: r.avg_rating === null ? null : Number(r.avg_rating) }))
     .filter((p, _, all) => recent.size === 0 || recent.has(p.memberId) || all.every((q) => !recent.has(q.memberId)));
-  return openMatchBet((previousRows.rows[0]?.markets ?? []) as MarketId[], history, players);
+  return openSession((previousRows.rows[0]?.markets ?? []) as MarketId[], history, players);
 }
 
 export const betsGame: BetsGame = {
@@ -102,9 +100,9 @@ export const betsGame: BetsGame = {
   state: async (accountId, admin) => { await syncFromEa(); return dispatch('state', accountId, {}, admin); },
   play: (accountId, action) => dispatch(action.action, accountId, action, false),
   admin: async (accountId, action) => {
-    // Ouvrir le vote ou guetter la fin du match : on va chercher le score chez EA tout de suite,
-    // sans attendre les 5 minutes. `check` ne fait que ça, puis relit l'état.
-    if (action.action === 'start-vote' || action.action === 'check') await syncFromEa({ force: true });
+    // Fin de session ou suivi : on va chercher les derniers matchs chez EA tout de suite, sans
+    // attendre les 5 minutes. `check` ne fait que ça, puis relit l'état.
+    if (action.action === 'end-session' || action.action === 'check') await syncFromEa({ force: true });
     if (action.action === 'check') return dispatch('state', accountId, {}, true);
     return dispatch(action.action, accountId, action.action === 'open' ? await buildOpening() : action, true);
   },

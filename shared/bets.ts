@@ -26,8 +26,6 @@ export interface BetsStatus {
   canConfigure: boolean;
   /** null tant que l'accès est fermé au visiteur. */
   live: BetsLive;
-  /** Admins seulement : le score EA du match en cours est arrivé, le vote peut s'ouvrir. */
-  scoreIn?: true;
 }
 
 export function betsAccess(mode: BetsMode, isAdmin: boolean): BetsAccess {
@@ -105,23 +103,34 @@ export function tally(targets: number[]): Tally {
 
 export const CURRENCY = { name: 'crédits', short: 'CR' } as const;
 
-export type MarketId = 'crack' | 'flop' | 'scorer' | 'verdict' | 'goals' | 'against' | 'cleansheet' | 'red' | 'ragequit';
+/** Paris de la session : bilan, attack, scorer, clumsy, crack, sr et un bonus (cleansheet, red, ragequit, streak).
+ * verdict, goals, against, flop : anciens paris par match, encore dans l'historique. */
+export type MarketId = 'bilan' | 'attack' | 'scorer' | 'clumsy' | 'crack' | 'sr' | 'cleansheet' | 'red' | 'ragequit' | 'streak'
+  | 'flop' | 'verdict' | 'goals' | 'against';
 export type SlipStatus = 'pending' | 'won' | 'lost' | 'refunded';
 
 /** Textes des paris. Les options et leurs cotes viennent du serveur, seule source des cotes. */
 export const MARKET_COPY: Record<MarketId, { title: string; question: string; emoji: string }> = {
+  bilan: { title: 'Le Bilan', question: 'Plus de victoires que de défaites ?', emoji: '⚖️' },
+  attack: { title: 'L’Attaque', question: 'Buts marqués par match, en moyenne ?', emoji: '⚽' },
+  scorer: { title: 'Le Buteur', question: 'Qui marque le plus ce soir ?', emoji: '🎯' },
+  clumsy: { title: 'Le Maladroit', question: 'Qui rate le plus devant le but ?', emoji: '🙈' },
+  crack: { title: 'Le Crack', question: 'Qui sera élu joueur de la soirée ?', emoji: '🔥' },
+  sr: { title: 'Le Skill Rating', question: 'La soirée finit en hausse ?', emoji: '📈' },
+  cleansheet: { title: 'Le Mur', question: 'Au moins un match sans encaisser ?', emoji: '🧱' },
+  red: { title: 'Carton rouge', question: 'Un des nôtres prend un rouge ce soir ?', emoji: '🟥' },
+  ragequit: { title: 'Le Rage-quit', question: 'Un adversaire quitte avant la fin ?', emoji: '🏃' },
+  streak: { title: 'La Série', question: '3 victoires d’affilée ce soir ?', emoji: '🔗' },
   verdict: { title: 'Le Verdict', question: 'Le résultat du match ?', emoji: '⚖️' },
-  crack: { title: 'Le Crack', question: 'Qui va rouler sur le match ?', emoji: '🔥' },
   goals: { title: 'Les Buts', question: 'Combien de buts pour FoodBall ?', emoji: '⚽' },
   against: { title: 'Buts encaissés', question: 'Combien de buts encaissés ?', emoji: '🥅' },
-  scorer: { title: 'Le Buteur', question: 'Qui va marquer ?', emoji: '🎯' },
   flop: { title: 'La Casserole', question: 'Qui va tenter la roulette de trop ?', emoji: '🍳' },
-  cleansheet: { title: 'Le Mur', question: 'Zéro but encaissé ?', emoji: '🧱' },
-  red: { title: 'Carton rouge', question: 'Un des nôtres prend un rouge ?', emoji: '🟥' },
-  ragequit: { title: 'Le Rage-quit', question: 'L’adversaire quitte avant la fin ?', emoji: '🏃' },
 };
-/** Ordre d'affichage : les paris d'équipe d'abord, les plus simples à comprendre. */
-export const MARKET_ORDER: MarketId[] = ['verdict', 'goals', 'against', 'cleansheet', 'red', 'ragequit', 'crack', 'scorer', 'flop'];
+/** Ordre du ticket : les paris d'équipe, les joueurs, puis le bonus. */
+export const MARKET_ORDER: MarketId[] = ['bilan', 'attack', 'scorer', 'clumsy', 'crack', 'sr', 'cleansheet', 'red', 'ragequit', 'streak',
+  'verdict', 'goals', 'against', 'flop'];
+/** Le pari bonus, tiré au sort à chaque session. */
+export const BONUS_MARKETS: MarketId[] = ['cleansheet', 'red', 'ragequit', 'streak'];
 
 /** `trend` : effet du dernier match sur la cote (positif = elle monte). Absent sur les anciennes rencontres. */
 export interface MarketOption { id: string; label: string; odds: number; trend?: number }
@@ -130,17 +139,27 @@ export interface Slip { id: number; fixtureId: number; market: MarketId; option:
 /** Le prono d'un joueur du club, tel que tout le monde le voit une fois dévoilé. */
 export interface BetPick { name: string; market: MarketId; option: string; stake: number; odds: number; status: SlipStatus; payout: number | null; me: boolean }
 export interface BetMatch { id: number; opponent: string; goalsFor: number; goalsAgainst: number; result: 'win' | 'draw' | 'loss'; playedAt?: string }
+/** La session jusqu'ici (bets_session, drizzle/0025) : tous les matchs depuis le coup d'envoi. */
+export interface BetSession {
+  startedAt: string | null; endedAt: string | null;
+  matches: number; wins: number; draws: number; losses: number; goalsFor: number; goalsAgainst: number;
+  cleanSheets: number; withStats: number; reds: number; ragequits: number; quitKnown: number; bestStreak: number;
+  srStart: number | null; srNow: number | null;
+  last: BetMatch | null;
+  /** Joueurs de la soirée : buts, passes, tirs ratés, note EA moyenne, matchs joués. Meilleur buteur en premier. */
+  players: { memberId: number; gamertag: string; goals: number; assists: number; missed: number; rating: number | null; played: number }[];
+}
 
 export interface BetsState {
   isAdmin: boolean;
   myMemberId: number | null;
   wallet: { balance: number; canBailout: boolean; bankrupt: boolean };
-  /** Rencontre à parier (ouverte) ou en cours de jeu (verrouillée). `match` : le score EA, dès qu'il est arrivé. */
+  /** Session à parier (ouverte) ou en cours (verrouillée, `session` = les matchs déjà joués). */
   fixture: { id: number; status: 'open' | 'locked'; openedAt: string; lockedAt: string | null; context: { reason: string | null } | null;
-    match: BetMatch | null; markets: Market[]; bettors: number; mySlips: Slip[] } | null;
-  /** Matchs joués dont le vote du Crack est ouvert. `match` null : l'admin a ouvert le vote avant le score EA. */
+    session: BetSession | null; markets: Market[]; bettors: number; mySlips: Slip[] } | null;
+  /** Sessions finies dont le vote du Crack est ouvert. */
   votes: {
-    id: number; openedAt: string; match: BetMatch | null; markets: Market[]; mySlips: Slip[];
+    id: number; openedAt: string; session: BetSession; markets: Market[]; mySlips: Slip[];
     candidates: { memberId: number; gamertag: string }[];
     tally: { crack: Record<string, number>; flop: Record<string, number> };
     myVotes: { crack: number | null; flop: number | null };
@@ -150,7 +169,9 @@ export interface BetsState {
     picks: BetPick[] | null;
   }[];
   /** Les 5 dernières rencontres réglées du club, avec tous les pronos (`results`) pour afficher les gagnants. */
-  history: { id: number; status: 'settled' | 'cancelled'; settledAt: string; match: BetMatch | null; crack: string[] | null; flop: string[] | null;
+  /** `session` : rencontres au format session ; `match` : anciennes rencontres d'un seul match. */
+  history: { id: number; status: 'settled' | 'cancelled'; settledAt: string; match: BetMatch | null; session: BetSession | null;
+    crack: string[] | null; flop: string[] | null;
     markets: Market[]; mySlips: Slip[]; results: BetPick[]; myVote: number | null;
     /** Qui a voté pour qui au Crack, dévoilé une fois le vote clos. */
     ballots: { voter: string; me: boolean; memberId: number; gamertag: string }[] }[];
@@ -159,7 +180,7 @@ export interface BetsState {
   room: { name: string; me: boolean; here: boolean; played: boolean; voted: boolean }[];
 }
 
-const market = z.enum(['crack', 'flop', 'scorer', 'verdict', 'goals', 'against', 'cleansheet', 'red', 'ragequit']);
+const market = z.enum(['bilan', 'attack', 'scorer', 'clumsy', 'crack', 'sr', 'cleansheet', 'red', 'ragequit', 'streak', 'flop', 'verdict', 'goals', 'against']);
 const id = z.number().int().positive();
 
 /** Actions d'un parieur. Les cotes ne sont jamais acceptées du client. */
@@ -175,8 +196,9 @@ export type BetsPlayAction = z.infer<typeof betsPlayActionSchema>;
 export const betsAdminActionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('open') }),
   z.object({ action: z.literal('lock') }),
-  z.object({ action: z.literal('start-vote') }),
-  // Guetter la fin du match : relance la synchro EA (l'écran admin l'appelle toutes les 20 s).
+  // Fin de session : synchro EA forcée, puis tout est réglé et le vote du Crack s'ouvre.
+  z.object({ action: z.literal('end-session') }),
+  // Suivre la session : relance la synchro EA (l'écran admin l'appelle toutes les 20 s).
   z.object({ action: z.literal('check') }),
   z.object({ action: z.literal('close-vote'), fixtureId: id }),
   z.object({ action: z.literal('cancel'), fixtureId: id }),

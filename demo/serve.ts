@@ -8,8 +8,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import react from '@vitejs/plugin-react';
 import { createServer, type Plugin } from 'vite';
-import type { BetsState, BetsStatus } from '../shared/bets.js';
-import { formReason, priceMarket, type FormMatch } from '../shared/bets-odds.js';
+import type { BetSession, BetsState, BetsStatus, MarketId } from '../shared/bets.js';
+import { openSession, type FormMatch } from '../shared/bets-odds.js';
 import type { Match, MatchDetail, Member } from '../shared/types.js';
 
 const PORT = Number(process.env.DEMO_PORT ?? 5175);
@@ -22,63 +22,96 @@ const matches = read<Match[]>('matches');
 const me = members[0];
 
 /** Étapes de FoodBet visibles en démo, choisies par `?scene=` dans l'URL de la page. */
-const SCENES = ['parier', 'joue', 'match', 'score', 'tard', 'vote', 'vote-fait', 'gagnants', 'rien'] as const;
+const SCENES = ['parier', 'joue', 'session', 'vote', 'vote-fait', 'gagnants', 'rien'] as const;
 type Scene = typeof SCENES[number];
+
+const detailOf = (id: number) => (existsSync(fixture(`matches/${id}`)) ? read<MatchDetail>(`matches/${id}`) : null);
+const memberId = (gamertag: string) => members.find((x) => x.gamertag === gamertag)?.id;
+
+/** La session de la démo : les 4 derniers matchs de la photo, comme s'ils avaient été joués ce soir. */
+function demoSession(): BetSession {
+  const played = matches.slice(0, 4).reverse();
+  const totals = new Map<number, BetSession['players'][number] & { ratings: number[] }>();
+  let streak = 0, bestStreak = 0;
+  for (const m of played) {
+    streak = m.result === 'win' ? streak + 1 : 0; bestStreak = Math.max(bestStreak, streak);
+    for (const p of detailOf(m.id)?.players ?? []) {
+      const id = memberId(p.gamertag);
+      if (id === undefined) continue;
+      const row = totals.get(id) ?? { memberId: id, gamertag: p.gamertag, goals: 0, assists: 0, missed: 0, rating: null, played: 0, ratings: [] };
+      row.goals += p.goals; row.assists += p.assists; row.missed += Math.max(0, p.shots - p.goals); row.played++; row.ratings.push(p.rating);
+      totals.set(id, row);
+    }
+  }
+  const last = played[played.length - 1];
+  return {
+    startedAt: new Date(Date.now() - 2 * 3_600_000).toISOString(), endedAt: null,
+    matches: played.length, wins: played.filter((m) => m.result === 'win').length, draws: played.filter((m) => m.result === 'draw').length,
+    losses: played.filter((m) => m.result === 'loss').length, goalsFor: played.reduce((a, m) => a + m.goalsFor, 0),
+    goalsAgainst: played.reduce((a, m) => a + m.goalsAgainst, 0), cleanSheets: played.filter((m) => m.goalsAgainst === 0).length,
+    withStats: played.length, reds: 0, ragequits: 0, quitKnown: played.length, bestStreak, srStart: 1640, srNow: 1663,
+    last: { id: last.id, opponent: last.opponent, goalsFor: last.goalsFor, goalsAgainst: last.goalsAgainst, result: last.result, playedAt: last.playedAt },
+    players: [...totals.values()].map(({ ratings, ...row }) => ({ ...row, rating: Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length * 10) / 10 }))
+      .sort((a, b) => b.goals - a.goals || (b.rating ?? 0) - (a.rating ?? 0)),
+  };
+}
 
 /** Une soirée FoodBet à l'étape demandée, cotée par le vrai calcul à partir des matchs de la photo. */
 function betsState(scene: Scene, admin: boolean): BetsState {
   const history: FormMatch[] = matches.map((m) => {
-    const detail = existsSync(fixture(`matches/${m.id}`)) ? read<MatchDetail>(`matches/${m.id}`) : null;
+    const detail = detailOf(m.id);
+    const stats = Object.fromEntries((detail?.players ?? []).flatMap((p) => {
+      const id = memberId(p.gamertag);
+      return id === undefined ? [] : [[id, { goals: p.goals, missed: Math.max(0, p.shots - p.goals) }]];
+    }));
     return { opponent: m.opponent, result: m.result, goalsFor: m.goalsFor, goalsAgainst: m.goalsAgainst, opponentQuit: m.opponentQuit,
       redCard: detail ? detail.players.some((p) => p.redCards > 0) : null,
-      ratings: Object.fromEntries((detail?.players ?? []).flatMap((p) => {
-        const member = members.find((x) => x.gamertag === p.gamertag);
-        return member ? [[member.id, p.rating]] : [];
-      })),
-      ...(detail ? { scorers: detail.players.filter((p) => p.goals > 0).flatMap((p) => members.find((x) => x.gamertag === p.gamertag)?.id ?? []) } : {}) };
+      ratings: Object.fromEntries((detail?.players ?? []).flatMap((p) => { const id = memberId(p.gamertag); return id === undefined ? [] : [[id, p.rating]]; })),
+      ...(detail ? { players: stats } : {}) };
   });
-  const players = members.map((m) => ({ memberId: m.id, gamertag: m.gamertag, avgRating: m.avgRating }));
-  const markets = [priceMarket('goals', history, players), priceMarket('crack', history, players),
-    priceMarket('against', history, players), priceMarket('scorer', history, players)];
-  const odds = (market: number, option: string) => markets[market].options.find((o) => o.id === option)!.odds;
-  // Le match de la démo : la victoire 3-0 contre LaEsquina, crack élu Chef695046.
-  const played = matches.find((m) => m.opponent === 'LaEsquina') ?? matches[0];
-  const match = { id: played.id, opponent: played.opponent, goalsFor: played.goalsFor, goalsAgainst: played.goalsAgainst, result: played.result, playedAt: played.playedAt };
-  const crack = members.find((m) => m.gamertag === 'Chef695046') ?? members[1];
-  const others = members.filter((m) => m.id !== me.id).slice(0, 4);
+  const recent = new Set(history.slice(0, 10).flatMap((m) => Object.keys(m.ratings).map(Number)));
+  const players = members.filter((m) => recent.has(m.id)).map((m) => ({ memberId: m.id, gamertag: m.gamertag, avgRating: m.avgRating }));
+  let seed = 7;
+  const opening = openSession(['red'], history, players, () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; });
+  const markets = opening.markets;
+  const session = demoSession();
+  const others = members.filter((m) => m.id !== me.id && recent.has(m.id)).slice(0, 4);
+  const top = session.players[0];
+  const crack = members.find((m) => m.id === top?.memberId && m.id !== me.id) ?? others[0];
   const settled = scene === 'gagnants';
-  const pick = (name: string, mine: boolean, market: 0 | 1, option: string, stake: number) => {
-    const won = settled && (market === 0 ? option === '2-3' : option === String(crack.id));
-    return { name, me: mine, market: markets[market].id, option, stake, odds: odds(market, option),
-      status: settled ? (won ? 'won' : 'lost') : market === 0 ? (option === '2-3' ? 'won' : 'lost') : 'pending',
-      payout: won || (!settled && market === 0 && option === '2-3') ? Math.floor(stake * odds(market, option)) : null } as const;
-  };
+  const odds = (market: string, option: string) => markets.find((m) => m.id === market)!.options.find((o) => o.id === option)?.odds ?? 2;
+  const pick = (name: string, mine: boolean, market: string, option: string, stake: number, won: boolean | null) =>
+    ({ name, me: mine, market: market as MarketId, option, stake, odds: odds(market, option),
+      status: won === null ? 'pending' as const : won ? 'won' as const : 'lost' as const,
+      payout: won ? Math.floor(stake * odds(market, option)) : won === false ? 0 : null });
+  const ended = !['parier', 'joue', 'session', 'rien'].includes(scene);
   const picks = [
-    pick(me.gamertag, true, 0, '2-3', 100), pick(me.gamertag, true, 1, String(crack.id), 50),
-    pick(others[0].gamertag, false, 0, '2-3', 250), pick(others[0].gamertag, false, 1, String(others[0].id === crack.id ? others[1].id : crack.id), 100),
-    pick(others[1].gamertag, false, 0, '4+', 100), pick(others[1].gamertag, false, 1, String(others[2].id), 50),
-    pick(others[2].gamertag, false, 0, '2-3', 50),
-    pick(others[3].gamertag, false, 0, '0-1', 100),
+    pick(me.gamertag, true, 'bilan', 'win', 100, ended ? true : null), pick(me.gamertag, true, 'attack', '2-3', 50, ended ? false : null),
+    pick(me.gamertag, true, 'scorer', String(crack.id), 50, ended ? true : null), pick(me.gamertag, true, 'crack', String(crack.id), 50, settled ? true : null),
+    pick(others[0].gamertag, false, 'bilan', 'win', 250, ended ? true : null), pick(others[0].gamertag, false, 'crack', String(others[1].id), 100, settled ? false : null),
+    pick(others[1].gamertag, false, 'bilan', 'loss', 100, ended ? false : null), pick(others[2].gamertag, false, 'sr', 'up', 50, ended ? true : null),
   ];
   const mine = picks.filter((p) => p.me).map((p, i) => ({ id: i + 1, fixtureId: 1, market: p.market, option: p.option, stake: p.stake,
-    odds: p.odds, status: scene === 'parier' || scene === 'joue' || scene === 'match' ? 'pending' as const : p.status, payout: p.payout }));
-  const before = scene === 'parier' || scene === 'joue' || scene === 'match' || scene === 'score' || scene === 'tard';
-  const fixtureSlips = scene === 'parier' || scene === 'tard' ? [] : mine;
+    odds: p.odds, status: p.status, payout: p.payout }));
+  const before = scene === 'parier' || scene === 'joue' || scene === 'session';
+  const fixtureSlips = scene === 'parier' ? [] : scene === 'joue' ? mine.slice(0, 3) : mine;
   return {
     isAdmin: admin,
     myMemberId: me.id,
     wallet: { balance: settled ? 1345 : 1100, canBailout: false, bankrupt: false },
-    fixture: before ? { id: 1, status: scene === 'match' || scene === 'score' || scene === 'tard' ? 'locked' : 'open', openedAt: new Date().toISOString(),
-      lockedAt: null, context: { reason: formReason(history[0]) }, match: scene === 'score' ? match : null, markets, bettors: 5, mySlips: fixtureSlips } : null,
-    votes: scene === 'vote' || scene === 'vote-fait' ? [{ id: 1, openedAt: match.playedAt, match, markets, mySlips: mine,
-      candidates: [...others, me].map((m) => ({ memberId: m.id, gamertag: m.gamertag })).sort((x, y) => x.gamertag.localeCompare(y.gamertag)),
-      tally: { crack: { [crack.id]: 3, [others[0].id]: 1 }, flop: {} },
+    fixture: before ? { id: 1, status: scene === 'session' ? 'locked' : 'open', openedAt: new Date().toISOString(),
+      lockedAt: scene === 'session' ? session.startedAt : null, context: opening.context, session: scene === 'session' ? session : null,
+      markets, bettors: 5, mySlips: fixtureSlips } : null,
+    votes: scene === 'vote' || scene === 'vote-fait' ? [{ id: 1, openedAt: new Date().toISOString(), session: { ...session, endedAt: new Date().toISOString() },
+      markets, mySlips: mine,
+      candidates: session.players.map((p) => ({ memberId: p.memberId, gamertag: p.gamertag })).sort((x, y) => x.gamertag.localeCompare(y.gamertag)),
+      tally: { crack: { [crack.id]: 3, [others[1].id]: 1 }, flop: {} },
       myVotes: { crack: scene === 'vote-fait' ? crack.id : null, flop: null }, voters: scene === 'vote-fait' ? 4 : 3,
       picks: scene === 'vote-fait' ? picks : null }] : [],
-    history: settled ? [{ id: 1, status: 'settled', settledAt: new Date().toISOString(), match, crack: [crack.gamertag], flop: null, markets,
-      mySlips: mine, results: picks, myVote: crack.id,
+    history: settled ? [{ id: 1, status: 'settled', settledAt: new Date().toISOString(), match: null, session: { ...session, endedAt: new Date().toISOString() },
+      crack: [crack.gamertag], flop: null, markets, mySlips: mine, results: picks, myVote: crack.id,
       ballots: [me, ...others].filter((m) => m.id !== crack.id).map((m, i) => {
-        const pickFor = i === 3 ? others[0] : crack;
+        const pickFor = i === 3 ? others[1] : crack;
         return { voter: m.gamertag, me: m.id === me.id, memberId: pickFor.id, gamertag: pickFor.gamertag };
       }) }] : [],
     leaderboard: [
@@ -89,7 +122,7 @@ function betsState(scene: Scene, admin: boolean): BetsState {
     // Salle d'attente : trois présents, deux absents ; qui a joué et voté suit l'étape.
     room: [me, ...others].map((m, i) => ({
       name: m.gamertag, me: m.id === me.id, here: i < 3,
-      played: scene !== 'parier' && scene !== 'rien' && (i === 0 ? scene !== 'tard' : i < 3),
+      played: scene !== 'parier' && scene !== 'rien' && i < 3,
       voted: scene === 'vote-fait' ? i < 3 : scene === 'vote' ? i === 1 || i === 2 : false,
     })),
   };
@@ -112,9 +145,8 @@ function answer(path: string, scene: Scene, admin: boolean): [number, unknown] |
   }
   if (path === '/api/profile') return [signedIn ? 404 : 401, { error: signedIn ? 'Profil indisponible en mode démo.' : 'Connecte-toi avec Discord pour retrouver ton joueur.' }];
   if (path === '/api/bets/status') {
-    const live = scene === 'match' || scene === 'score' || scene === 'tard' ? 'locked' : scene.startsWith('vote') ? 'voting' : scene === 'parier' || scene === 'joue' ? 'open' : null;
-    return [200, { mode: 'on', access: signedIn ? 'open' : 'locked', canConfigure: false, live,
-      ...(admin && scene === 'score' ? { scoreIn: true as const } : {}) } satisfies BetsStatus];
+    const live = scene === 'session' ? 'locked' : scene.startsWith('vote') ? 'voting' : scene === 'parier' || scene === 'joue' ? 'open' : null;
+    return [200, { mode: 'on', access: signedIn ? 'open' : 'locked', canConfigure: false, live } satisfies BetsStatus];
   }
   if (path === '/api/bets/state') return signedIn ? [200, betsState(scene, admin)] : [401, { error: 'Connecte-toi pour parier.' }];
   return undefined;

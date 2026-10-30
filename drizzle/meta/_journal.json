@@ -176,6 +176,13 @@
       "when": 1791200000000,
       "tag": "0024_foodbet_more_bets",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791300000000,
+      "tag": "0025_foodbet_session",
+      "breakpoints": true
     }
   ]
 }

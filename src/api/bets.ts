@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { BetsAdminAction, BetsMode, BetsPlayAction, BetsState, BetsStatus } from '../../shared/bets';
+import type { LobbyMusic } from '../../shared/lobby';
 import { useMe } from './auth';
 import { apiRequest } from './client';
 import { setUploadedPhotos } from '../lib/player-photos';
@@ -53,6 +54,45 @@ export function useBetsHistory(enabled: boolean) {
     queryFn: () => apiRequest<BetsState>('/api/bets/state?peek'),
     enabled,
     staleTime: 5 * 60_000,
+  });
+}
+
+/** La musique du lobby (titre Spotify en cours chez l'hôte), relue toutes les 15 s. */
+export function useLobbyMusic() {
+  const me = useMe();
+  const accountId = me.data?.signedIn ? me.data.account.id : null;
+  return useQuery({
+    queryKey: ['lobby-music', accountId],
+    queryFn: () => apiRequest<LobbyMusic>('/api/bets/lobby'),
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+    retry: false,
+  });
+}
+
+/** Admins : coller (ou effacer) le lien de la Jam de la soirée. */
+export function useSaveJam() {
+  const client = useQueryClient();
+  const me = useMe();
+  const accountId = me.data?.signedIn ? me.data.account.id : null;
+  return useMutation({
+    mutationFn: (url: string) => apiRequest<LobbyMusic>('/api/bets/jam', { method: 'POST', body: JSON.stringify({ url }) }),
+    onSuccess: async (music) => {
+      await client.cancelQueries({ queryKey: ['lobby-music'] });
+      client.setQueryData(['lobby-music', accountId], music);
+    },
+  });
+}
+
+/** Arrêter le partage du compte hôte et supprimer ses jetons conservés sur le serveur. */
+export function useDisconnectSpotify() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiRequest<LobbyMusic>('/api/bets/spotify-disconnect', { method: 'POST' }),
+    onSuccess: async (music) => {
+      await client.cancelQueries({ queryKey: ['lobby-music'] });
+      client.setQueriesData({ queryKey: ['lobby-music'] }, music);
+    },
   });
 }
 

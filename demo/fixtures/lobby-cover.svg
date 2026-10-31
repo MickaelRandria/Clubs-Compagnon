@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
+  <title>Pochette illustrative de démonstration du lobby FoodBall</title>
+  <defs>
+    <linearGradient id="fond" x2="1" y2="1">
+      <stop stop-color="#1746f5"/>
+      <stop offset="1" stop-color="#07142e"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#fond)" d="M0 0h320v320H0z"/>
+  <path fill="#1ed760" d="M222 0h98L98 320H0z"/>
+  <circle cx="228" cy="92" r="65" fill="#0b1530" stroke="#f2f4f8" stroke-width="3"/>
+  <circle cx="228" cy="92" r="42" fill="none" stroke="#788aaa" stroke-width="2"/>
+  <circle cx="228" cy="92" r="12" fill="#ffb547"/>
+  <text x="26" y="215" fill="#f2f4f8" font-family="Arial, sans-serif" font-size="41" font-weight="900" font-style="italic">FOODBALL</text>
+  <text x="26" y="258" fill="#f2f4f8" font-family="Arial, sans-serif" font-size="41" font-weight="900" font-style="italic">LOBBY MIX</text>
+  <text x="28" y="292" fill="#f2f4f8" font-family="Arial, sans-serif" font-size="13" letter-spacing="4">DÉMONSTRATION</text>
+</svg>

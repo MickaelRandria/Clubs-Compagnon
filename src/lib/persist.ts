@@ -43,7 +43,9 @@ export const persistOptions = {
       // afficherait « connecte-toi » à quelqu'un qui vient de le faire.
       && !(query.queryKey[0] === 'match-debrief' && !(query.state.data as { available?: boolean })?.available)
       // Paris : un solde ou un statut restauré du disque peut être faux (match réglé entre-temps).
-      && query.queryKey[0] !== 'bets-state' && query.queryKey[0] !== 'bets-status',
+      && query.queryKey[0] !== 'bets-state' && query.queryKey[0] !== 'bets-status'
+      // La musique est en direct : un morceau d'hier ne doit jamais revenir au lancement.
+      && query.queryKey[0] !== 'lobby-music',
   },
 };
 

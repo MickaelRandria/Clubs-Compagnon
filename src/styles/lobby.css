@@ -1,0 +1,41 @@
+/* « En ce moment dans le lobby » (src/components/home/LobbyMusic.tsx) : le titre Spotify en cours chez l'hôte. */
+.lb { position: relative; display: grid; flex-shrink: 0; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; padding: 14px; overflow: hidden;
+  background: #0B1530; color: #F2F4F8; min-width: 0; }
+.lb::before { content: ''; position: absolute; inset: 0; background: radial-gradient(80% 120% at 0% 50%, rgba(30,215,96,.22), transparent 70%); pointer-events: none; }
+.lb > * { position: relative; }
+.lb-heading { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lb-artwork { display: block; align-self: start; border-radius: 4px; }
+.lb-cover { display: block; width: 84px; height: 84px; object-fit: contain; border-radius: 4px; box-shadow: 0 8px 20px rgba(0,0,0,.45); }
+.lb-cover--empty { display: grid; place-items: center; font: italic 800 26px/1 var(--fc-display);
+  background: conic-gradient(from 210deg, #FF5F6D, #FFC371, #6FC8FF, #1846F5, #FF5F6D); color: rgba(6,12,31,.75); }
+.lb-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.lb-live { display: flex; align-items: center; gap: 6px; font: 800 11px/1.2 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; color: #1ED760; }
+.lb-track { display: flex; flex-direction: column; gap: 3px; min-width: 0; color: inherit; text-decoration: none; }
+.lb-track:hover .lb-title { text-decoration: underline; }
+.lb-spotify { flex-shrink: 0; display: inline-flex; align-items: center; width: fit-content; padding: 4px 0; }
+.lb-spotify img { width: 70px; height: auto; }
+.lb a:focus-visible { outline: 2px solid #F2F4F8; outline-offset: 3px; }
+.lb-eq { display: inline-flex; flex-shrink: 0; gap: 2px; align-items: flex-end; height: 11px; }
+.lb-eq i { width: 3px; height: 3px; background: #1ED760; animation: lbEq 1s ease-in-out infinite; }
+.lb-eq i:nth-child(2) { animation-delay: .2s; } .lb-eq i:nth-child(3) { animation-delay: .4s; }
+@keyframes lbEq { 50% { height: 11px; } }
+.lb-title { font: italic 800 22px/1 var(--fc-display); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-artist { font: 600 13px/1.2 var(--fc-text); opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-bar { height: 3px; margin-top: 6px; background: rgba(242,244,248,.18); }
+.lb-bar i { display: block; height: 100%; background: #F2F4F8; transition: width 1s linear; }
+.lb-times { display: flex; justify-content: space-between; font: 600 11px/1 var(--fc-text); opacity: .6; font-variant-numeric: tabular-nums; }
+.lb-host { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 0; font: 600 12px/1.2 var(--fc-text); opacity: .85; }
+.lb-host-av { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #FFB547; color: #060C1F; font: 800 10px/1 var(--fc-display); }
+.lb-jam { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 0 12px; background: #1ED760; color: #06120A;
+  font: 800 15px/1 var(--fc-display); text-transform: uppercase; text-decoration: none; white-space: nowrap; }
+.lb-jam small { font: 600 12px/1 var(--fc-text); text-transform: none; opacity: .8; }
+.lb-jam--wide { grid-column: 1 / -1; min-height: 46px; font-size: 18px; flex-wrap: wrap; white-space: normal; padding: 10px 12px; text-align: center; }
+.lb-jam:focus-visible { outline: 2px solid #F2F4F8; outline-offset: 2px; }
+.lb-next { grid-column: 1 / -1; margin: 0; font: 600 12px/1.3 var(--fc-text); opacity: .7; overflow-wrap: anywhere; }
+.lb-next a { color: inherit; text-decoration: none; }
+.lb-next a:hover { text-decoration: underline; }
+.lb--compact { grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; padding: 10px; }
+.lb--compact .lb-cover { width: 52px; height: 52px; font-size: 16px; }
+.lb--compact .lb-title { font-size: 18px; }
+.lb--compact .lb-jam { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { .lb-eq i { animation: none; height: 7px; } .lb-bar i { transition: none; } }

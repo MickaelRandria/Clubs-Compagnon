@@ -1,12 +1,15 @@
 import type { createAuthHandlers } from './auth-http.js';
+import type { createSpotifyHandlers } from './spotify-http.js';
 
 /** Préserve les URL OAuth et leurs méthodes en partageant une seule fonction serveur. */
-export function createAuthRouter(auth: ReturnType<typeof createAuthHandlers>) {
+export function createAuthRouter(auth: ReturnType<typeof createAuthHandlers>, spotify?: ReturnType<typeof createSpotifyHandlers>) {
   const routes = new Map([
     ['me', { method: 'GET', handler: auth.me }],
     ['discord', { method: 'GET', handler: auth.start }],
     ['callback', { method: 'GET', handler: auth.callback }],
     ['logout', { method: 'POST', handler: auth.logout }],
+    // Relier le Spotify de l'hôte (musique du lobby).
+    ...(spotify ? [['spotify', { method: 'GET', handler: spotify.start }], ['spotify-callback', { method: 'GET', handler: spotify.callback }]] as const : []),
   ]);
   const dispatch = (request: Request) => {
     const action = /^\/api\/auth\/([^/]+)\/?$/.exec(new URL(request.url).pathname)?.[1];

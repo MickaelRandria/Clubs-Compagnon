@@ -2,6 +2,7 @@ import {
   betsAccess, betsAdminActionSchema, betsModeSchema, betsPlayActionSchema,
   type BetsAdminAction, type BetsLive, type BetsMode, type BetsPlayAction, type BetsState, type BetsStatus,
 } from '../shared/bets.js';
+import { jamUrlSchema, type LobbyMusic } from '../shared/lobby.js';
 import { requestOrigin } from './discord.js';
 import { handle, HttpError } from './http.js';
 import { readSession } from './session.js';
@@ -28,6 +29,12 @@ export interface PhotoStore {
   save: (accountId: number, image: string) => Promise<void>;
 }
 
+/** La musique du lobby : le titre Spotify en cours chez l'hôte, et le lien de la Jam. */
+export interface LobbyStore {
+  now: (origin: string) => Promise<LobbyMusic>;
+  saveJam: (url: string) => Promise<void>;
+}
+
 /** Une photo envoyée : une image en data URL, 400 Ko au plus (l'app l'envoie en WebP de 420 px). */
 const PHOTO = /^data:image\/(webp|jpeg|png);base64,([A-Za-z0-9+/=]+)$/;
 
@@ -41,7 +48,7 @@ const headers = { 'Cache-Control': 'private, no-store' };
  * répondent 404 tant que le mode les ferme au visiteur, pour ne rien révéler avant le
  * lancement.
  */
-export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: number) => Promise<boolean>, game?: BetsGame, photos?: PhotoStore) {
+export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: number) => Promise<boolean>, game?: BetsGame, photos?: PhotoStore, lobby?: LobbyStore) {
   const status = async (request: Request): Promise<BetsStatus> => {
     const accountId = readSession(request);
     const [mode, admin] = await Promise.all([settings.mode(), accountId === null ? false : isAdmin(accountId)]);
@@ -85,6 +92,26 @@ export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: nu
       return Response.json(await game.admin(accountId, parsed.data), { headers });
     } }],
     ['status', { method: 'GET', run: async (request) => Response.json(await status(request), { headers }) }],
+    ['lobby', { method: 'GET', run: async (request) => {
+      if (!lobby) throw new HttpError(404, 'Route inconnue.');
+      const music = await lobby.now(requestOrigin(request));
+      // Seuls les admins ont besoin de savoir si le compte Spotify est relié.
+      const accountId = readSession(request);
+      const admin = accountId !== null && await isAdmin(accountId);
+      return Response.json({ ...music, connected: admin && music.connected }, { headers: { 'Cache-Control': 'no-store' } });
+    } }],
+    ['jam', { method: 'POST', run: async (request) => {
+      if (!lobby) throw new HttpError(404, 'Route inconnue.');
+      const accountId = readSession(request);
+      if (accountId === null) throw new HttpError(401, 'Connecte-toi avec Discord.');
+      const origin = request.headers.get('origin');
+      if (origin && origin !== requestOrigin(request)) throw new HttpError(403, 'Cette action doit être envoyée depuis le site.');
+      if (!await isAdmin(accountId)) throw new HttpError(403, 'Réservé aux admins du club.');
+      const parsed = jamUrlSchema.safeParse(await body(request));
+      if (!parsed.success) throw new HttpError(400, 'Colle le lien de partage de la Jam (spotify.link ou open.spotify.com).');
+      await lobby.saveJam(parsed.data.url);
+      return Response.json(await lobby.now(requestOrigin(request)), { headers });
+    } }],
     ['photos', { method: 'GET', run: async () => {
       if (!photos) throw new HttpError(404, 'Route inconnue.');
       return Response.json(await photos.list(), { headers: { 'Cache-Control': 'public, max-age=60' } });

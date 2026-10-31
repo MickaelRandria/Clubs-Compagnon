@@ -36,9 +36,9 @@ Branche : `lobby-spotify` (partie de `main` après le commit `0c9ba4a`).
 | Étape | Fichiers | État |
 |---|---|---|
 | 1. Migration `drizzle/0028_lobby_music.sql` + entrée `drizzle/meta/_journal.json` : table `lobby_music` (une ligne : compte hôte, jetons Spotify, expiration, lien de la Jam) | `drizzle/` | fait |
-| 2. Client Spotify serveur : URL d'autorisation, échange du code, rafraîchissement du jeton, titre en cours + suivant, cache | `server/spotify.ts`, `server/db/lobby.ts` | à faire |
-| 3. Routes de connexion `GET /api/auth/spotify` (admin connecté → Spotify) et `GET /api/auth/spotify-callback` | `server/auth-router.ts`, `api/auth/[action].ts` | à faire |
-| 4. Routes `GET /api/bets/lobby` (titre en cours, public) et `POST /api/bets/jam` (admin : lien de la Jam) | `server/bets-http.ts`, `api/bets/[action].ts` | à faire |
+| 2. Client Spotify serveur : URL d'autorisation, échange du code, rafraîchissement du jeton, titre en cours + suivant, cache | `server/spotify.ts`, `server/db/lobby.ts`, `shared/lobby.ts` | fait |
+| 3. Routes de connexion `GET /api/auth/spotify` (admin connecté → Spotify) et `GET /api/auth/spotify-callback` | `server/auth-router.ts`, `server/spotify-http.ts`, `api/auth/[action].ts` | fait |
+| 4. Routes `GET /api/bets/lobby` (titre en cours, public) et `POST /api/bets/jam` (admin : lien de la Jam) | `server/bets-http.ts`, `api/bets/[action].ts` | fait |
 | 5. Front : composant `LobbyMusic` (complet / compact), interrogé toutes les 15 s ; accueil + salle d'attente FoodBet | `src/components/home/LobbyMusic.tsx`, `src/api/bets.ts`, styles | à faire |
 | 6. Admin : sur la page Profil (admins), « Connecter Spotify » et champ « Lien de la Jam » | `src/views/ProfileView.tsx` | à faire |
 | 7. Démo : `/api/bets/lobby` simulé dans `demo/serve.ts` ; captures 390 px | `demo/` | à faire |

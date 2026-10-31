@@ -54,21 +54,33 @@ async function dispatch(action: string, accountId: number, input: object, admin:
   return data;
 }
 
-interface StatsRow { gamertag?: string; rating?: number; goals?: number; shots?: number; redCards?: number }
+interface StatsRow { gamertag?: string; rating?: number; goals?: number; shots?: number; redCards?: number; motm?: boolean }
+
+/** Une soirée de vote pèse 0,7 fois la suivante : la dernière compte le plus. */
+const VOTE_DECAY = 0.7;
+/** Présents dans le salon FoodBet : écran ouvert ces 10 dernières minutes. */
+const LOBBY = '10 minutes';
 
 /**
- * Les paris de la session (six fixes et un bonus tiré au sort) et leurs cotes, simulées
- * calculées sur les 20 derniers matchs EA. Les candidats au Crack sont les joueurs vus sur les 10 derniers matchs
- * (à défaut, tout l'effectif actif).
+ * Les paris de la session (six fixes et un bonus tiré au sort) et leurs cotes, simulées sur les
+ * 20 derniers matchs EA. Les joueurs proposés sont ceux présents dans le salon à l'ouverture (au
+ * moins deux) ; à défaut, ceux vus sur les 10 derniers matchs, sinon tout l'effectif actif.
  */
 export async function buildOpening() {
   const db = getDb();
-  const [matchRows, memberRows, previousRows] = await Promise.all([
+  const [matchRows, memberRows, previousRows, lobbyRows, voteRows] = await Promise.all([
     db.execute(sql`select opponent_name, result, goals_for, goals_against, player_stats, opponent_quit from matches
       where club_id = (select min(id) from clubs) order by played_at desc limit 20`),
     db.execute(sql`select id, gamertag, avg_rating from members where club_id = (select min(id) from clubs) and is_active order by gamertag`),
     db.execute(sql`select coalesce((select jsonb_agg(m->>'id') from jsonb_array_elements(markets) m), '[]'::jsonb) as markets
       from bet_fixtures where markets is not null order by id desc limit 1`),
+    db.execute(sql.raw(`select distinct c.member_id from credit_wallets w
+      join club_player_claims c on c.account_id = w.account_id and c.status = 'approved'
+      where w.seen_at > now() - interval '${LOBBY}'`)),
+    // Les voix du Crack des 10 dernières soirées réglées, la plus récente d'abord.
+    db.execute(sql`select v.member_id, dense_rank() over (order by f.id desc) as rank from bet_votes v
+      join bet_fixtures f on f.id = v.fixture_id
+      where v.category = 'crack' and f.status = 'settled' and f.id in (select id from bet_fixtures where status = 'settled' order by id desc limit 10)`),
   ]);
   const byTag = new Map(memberRows.rows.map((r) => [String(r.gamertag), Number(r.id)]));
   const history: FormMatch[] = matchRows.rows.map((r) => {
@@ -84,14 +96,21 @@ export async function buildOpening() {
       if (goals > 0) scorers.push(id);
       byPlayer[id] = { goals, missed: Math.max(0, (Number(p.shots) || 0) - goals) };
     }
+    const motm = (stats ?? []).find((p) => p.motm);
     return { opponent: String(r.opponent_name), result: r.result as FormMatch['result'], goalsFor: Number(r.goals_for),
       goalsAgainst: Number(r.goals_against), redCard: stats && stats.length ? stats.some((p) => Number(p.redCards) > 0) : null,
-      opponentQuit: r.opponent_quit === null ? null : Boolean(r.opponent_quit), ratings, ...(stats && stats.length ? { scorers, players: byPlayer } : {}) };
+      opponentQuit: r.opponent_quit === null ? null : Boolean(r.opponent_quit), ratings,
+      motm: motm ? byTag.get(String(motm.gamertag)) ?? null : null, ...(stats && stats.length ? { scorers, players: byPlayer } : {}) };
   });
+  const votes = new Map<number, number>();
+  for (const r of voteRows.rows) votes.set(Number(r.member_id), (votes.get(Number(r.member_id)) ?? 0) + VOTE_DECAY ** (Number(r.rank) - 1));
+  const lobby = new Set(lobbyRows.rows.map((r) => Number(r.member_id)));
   const recent = new Set(history.slice(0, 10).flatMap((m) => Object.keys(m.ratings).map(Number)));
-  const players: FormPlayer[] = memberRows.rows
-    .map((r) => ({ memberId: Number(r.id), gamertag: String(r.gamertag), avgRating: r.avg_rating === null ? null : Number(r.avg_rating) }))
-    .filter((p, _, all) => recent.size === 0 || recent.has(p.memberId) || all.every((q) => !recent.has(q.memberId)));
+  const roster = memberRows.rows.map((r) => ({ memberId: Number(r.id), gamertag: String(r.gamertag),
+    avgRating: r.avg_rating === null ? null : Number(r.avg_rating), votes: votes.get(Number(r.id)) ?? 0 }));
+  const present = roster.filter((p) => lobby.has(p.memberId));
+  const players: FormPlayer[] = present.length >= 2 ? present
+    : roster.filter((p, _, all) => recent.size === 0 || recent.has(p.memberId) || all.every((q) => !recent.has(q.memberId)));
   return openSession((previousRows.rows[0]?.markets ?? []) as MarketId[], history, players);
 }
 

@@ -22,9 +22,12 @@ export interface FormMatch {
   scorers?: number[];
   /** Buts et tirs ratés de chaque joueur présent, par id de membre. Absent : feuille de match inconnue. */
   players?: Record<number, { goals: number; missed: number }>;
+  /** Homme du match désigné par EA (id de membre), s'il est des nôtres. */
+  motm?: number | null;
 }
 
-export interface FormPlayer { memberId: number; gamertag: string; avgRating: number | null }
+/** `votes` : voix reçues au vote du Crack des soirées passées, pondérées (la dernière soirée pèse le plus). */
+export interface FormPlayer { memberId: number; gamertag: string; avgRating: number | null; votes?: number }
 
 /** Option de pari : `trend` = écart de cote dû au dernier match (0 pour les paris de session). */
 export interface DrawnOption extends MarketOption { trend: number }
@@ -120,17 +123,26 @@ function simulate(history: FormMatch[], players: FormPlayer[], random: () => num
   return (key: string, _outcomes: number) => ((counts.get(key) ?? 0) + 0.5) / (RUNS + 1);
 }
 
-/** Crack : forme récente (moyenne saison et dernière note EA). Casserole : l'inverse. */
-function playerOddsFrom(kind: 'crack' | 'flop', players: FormPlayer[], last: FormMatch | undefined): Record<string, number> {
+/**
+ * Crack de la soirée : la forme (notes EA), les voix reçues aux votes des soirées passées et les titres
+ * d'homme du match EA sur les 20 derniers matchs. Chaque source est une part ; une source sans donnée est ignorée.
+ */
+function crackOdds(players: FormPlayer[], history: FormMatch[]): Record<string, number> {
+  const share = (values: number[], prior: number) => {
+    const total = values.reduce((a, b) => a + b, 0);
+    return total === 0 ? null : values.map((v) => (v + prior) / (total + prior * values.length));
+  };
   const form = players.map((p) => {
-    const season = p.avgRating ?? DEFAULT_RATING;
-    const recent = last?.ratings[p.memberId];
-    const rating = recent === undefined ? season : season * 0.6 + recent * 0.4;
-    const w = Math.max(0.25, (rating - 5) ** 2);
-    return kind === 'crack' ? w : 1 / w;
+    const recent = history[0]?.ratings[p.memberId];
+    const rating = recent === undefined ? p.avgRating ?? DEFAULT_RATING : (p.avgRating ?? DEFAULT_RATING) * 0.6 + recent * 0.4;
+    return Math.max(0.25, (rating - 5) ** 2);
   });
-  const total = form.reduce((a, b) => a + b, 0);
-  return Object.fromEntries(players.map((p, i) => [String(p.memberId), toOdds(form[i] / total)]));
+  const w = weights(history.length);
+  const motm = players.map((p) => history.reduce((sum, m, i) => sum + (m.motm === p.memberId ? w[i] : 0), 0));
+  const sources = [[share(form, 0), 0.4], [share(players.map((p) => p.votes ?? 0), 0.5), 0.35], [share(motm, 0.3), 0.25]] as const;
+  const used = sources.filter(([v]) => v !== null) as [number[], number][];
+  const weight = used.reduce((a, [, k]) => a + k, 0);
+  return Object.fromEntries(players.map((p, i) => [String(p.memberId), toOdds(used.reduce((a, [v, k]) => a + v[i] * k, 0) / weight)]));
 }
 
 const VERDICT_WORD = { win: 'la victoire', draw: 'le nul', loss: 'la défaite' } as const;
@@ -171,9 +183,9 @@ export function openSession(previous: MarketId[], history: FormMatch[], players:
     options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag, odds: toOdds(p(`${id}:${pl.memberId}`, players.length)), trend: 0 }))
       .sort((a, b) => a.odds - b.odds),
   });
-  const crackOdds = playerOddsFrom('crack', players, recent[0]);
+  const crackPrice = crackOdds(players, recent);
   const crack: DrawnMarket = { id: 'crack', options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag,
-    odds: crackOdds[String(pl.memberId)], trend: 0 })).sort((a, b) => a.odds - b.odds) };
+    odds: crackPrice[String(pl.memberId)], trend: 0 })).sort((a, b) => a.odds - b.odds) };
   return {
     markets: [team('bilan'), team('attack'), byPlayer('scorer'), byPlayer('clumsy'), crack, team('sr'), team(bonus)],
     context: { reason: formReason(history[0]) },

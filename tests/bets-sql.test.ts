@@ -80,19 +80,18 @@ test('session complète : ticket, coup d’envoi, matchs, fin de session, vote, 
   const fixture = await open();
   assert.deepEqual(fixture.markets.map((m) => m.id), ['bilan', 'attack', 'scorer', 'clumsy', 'crack', 'sr', 'streak']);
   await balance(alex); await balance(sam);
-  // Jamais sur soi-même : Alex est Rina.
-  for (const market of ['scorer', 'clumsy', 'crack']) {
-    assert.equal((await call('place', alex, { fixtureId: fixture.id, bets: [{ market, option: String(rina), stake: 10 }] })).status, 403);
-  }
+  // Alex est Rina : jamais Maladroit sur lui-même (il pourrait rater exprès).
+  assert.equal((await call('place', alex, { fixtureId: fixture.id, bets: [{ market: 'clumsy', option: String(rina), stake: 10 }] })).status, 403);
   await call('place', alex, { fixtureId: fixture.id, bets: [
     { market: 'bilan', option: 'win', stake: 100 }, { market: 'attack', option: '2-3', stake: 50 },
     { market: 'crack', option: String(chef), stake: 50 }, { market: 'clumsy', option: String(chef), stake: 20 },
+    { market: 'scorer', option: String(chef), stake: 30 },
   ] });
   await call('place', sam, { fixtureId: fixture.id, bets: [
     { market: 'bilan', option: 'loss', stake: 50 }, { market: 'scorer', option: String(rina), stake: 50 },
     { market: 'sr', option: 'up', stake: 50 }, { market: 'streak', option: 'oui', stake: 40 }, { market: 'scorer', option: String(rina), stake: 50 },
   ] });
-  assert.equal(await balance(alex), 500 - 220);
+  assert.equal(await balance(alex), 500 - 250);
   assert.equal(await balance(sam), 500 - 190);
 
   // Coup d'envoi : plus aucune mise ; la session compte les matchs joués depuis.
@@ -123,6 +122,7 @@ test('session complète : ticket, coup d’envoi, matchs, fin de session, vote, 
   assert.equal(statusOf(vote.mySlips, 'attack'), 'won', '6 buts en 3 matchs : 2 par match');
   assert.equal(statusOf(vote.mySlips, 'clumsy'), 'won', 'Chef : 9 tirs ratés');
   assert.equal(statusOf(vote.mySlips, 'crack'), 'pending');
+  assert.equal(statusOf(vote.mySlips, 'scorer'), 'refunded', 'Alex (Rina) meilleur buteur, il avait misé sur Chef : rendu');
   const sams = (await call('state', sam)).votes[0].mySlips;
   assert.equal(statusOf(sams, 'bilan'), 'lost');
   assert.equal(statusOf(sams, 'scorer'), 'won');
@@ -134,12 +134,12 @@ test('session complète : ticket, coup d’envoi, matchs, fin de session, vote, 
   await call('vote', fan, { fixtureId: vote.id, category: 'crack', memberId: rina });
   await call('vote', sam, { fixtureId: vote.id, category: 'crack', memberId: rina });
   await call('vote', alex, { fixtureId: vote.id, category: 'crack', memberId: chef });
-  assert.equal((await call('state', fan)).votes[0].picks!.length, 8, 'dévoilés à qui a voté ; le 2e Buteur de sam remplace le 1er');
+  assert.equal((await call('state', fan)).votes[0].picks!.length, 9, 'dévoilés à qui a voté ; le 2e Buteur de sam remplace le 1er');
   await call('close-vote', admin, { fixtureId: vote.id }, true);
   state = await call('state', alex);
   assert.equal(state.votes.length, 0);
   assert.equal(statusOf(state.history[0].mySlips, 'crack'), 'refunded');
-  assert.equal(state.wallet.balance, 280 + 200 + 100 + 40 + 50);
+  assert.equal(state.wallet.balance, 250 + 200 + 100 + 40 + 30 + 50);
   assert.equal(await balance(sam), 310 + 100 + 100);
   const item = (await call('state', fan)).history[0];
   assert.equal(item.session?.matches, 3);
@@ -240,4 +240,20 @@ test('le classement liste les soldes, le mien signalé', async () => {
   assert.ok(board.length >= 3);
   assert.ok(board.every((row, i) => i === 0 || board[i - 1].balance >= row.balance));
   assert.equal(board.filter((row) => row.me).length, 1);
+});
+
+test('miser sur soi au Crack : élu, on gagne', async () => {
+  await db.query("insert into club_player_claims(account_id, member_id, status, reviewed_at) values ($1, $2, 'approved', now())", [sam, chef]);
+  await db.query('update credit_wallets set balance = 500 where account_id = $1', [sam]);
+  const fixture = await open();
+  const start = await balance(sam);
+  await call('place', sam, { fixtureId: fixture.id, bets: [{ market: 'crack', option: String(chef), stake: 40 }] });
+  await call('lock', admin, {}, true);
+  await playedMatch(0, 2, 0);
+  await call('end-session', admin, {}, true);
+  const vote = (await call('state', sam)).votes[0];
+  await call('vote', alex, { fixtureId: vote.id, category: 'crack', memberId: chef });
+  await call('close-vote', admin, { fixtureId: vote.id }, true);
+  assert.equal(statusOf((await call('state', sam)).history[0].mySlips, 'crack'), 'won');
+  assert.equal(await balance(sam), start - 40 + 80);
 });

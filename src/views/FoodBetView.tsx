@@ -39,14 +39,14 @@ const EXPLAIN: Record<MarketId, ReactNode> = {
   verdict: <>Devine le résultat de <b>FoodBall</b> ce soir : victoire, nul ou défaite.</>,
   goals: <>Devine combien de buts <b>FoodBall</b> va marquer ce soir.</>,
   against: <>Devine combien de buts <b>FoodBall</b> va encaisser ce soir.</>,
-  scorer: <>Le joueur qui marquera <b>le plus de buts</b> sur la soirée. Ex æquo : tous gagnent. Pas sur toi-même ; s’il ne joue
-    aucun match, ta mise t’est rendue.</>,
+  scorer: <>Le joueur qui marquera <b>le plus de buts</b> sur la soirée. Ex æquo : tous gagnent. Tu peux miser sur toi ; si c’est
+    toi le meilleur buteur alors que tu avais misé sur un autre, ta mise t’est rendue. Joueur absent : remboursé.</>,
   cleansheet: <>Au moins un match de la soirée <b>sans encaisser de but</b> ?</>,
   red: <>Un joueur de <b>FoodBall</b> prend-il au moins un carton rouge dans la soirée ?</>,
   ragequit: <>Au moins un adversaire quitte-t-il le match avant la fin dans la soirée ?</>,
   flop: <>Devine le joueur que le club désignera comme le moins bon du match.</>,
   crack: <>Parie sur le joueur qui sera élu <b>Crack de la soirée</b>. C’est le club qui l’élit par un vote, à la fin de la
-    session. Pas sur toi-même : si c’est toi l’élu, ta mise t’est rendue.</>,
+    session. Tu peux miser sur toi ; si c’est toi l’élu alors que tu avais misé sur un autre, ta mise t’est rendue.</>,
 };
 const ODDS_HINT = 'La cote, c’est ce que rapporte chaque crédit misé : plus elle est haute, plus c’est risqué… et plus ça paie.';
 const PHASES = ['Paris', 'Session', 'Vote', 'Résultats'] as const;
@@ -372,11 +372,11 @@ function Choose({ market, index, total, onPlaced, onSkip, skipLabel, onTicket }:
     {market.options.some((o) => o.trend && Math.abs(o.trend) >= 0.05) && <p className="fb-note" style={{ fontSize: 14 }}>▲ cote en hausse depuis le dernier match · ▼ en baisse</p>}
     {players ? (
       <div className="fb-grid fb-push" role="radiogroup" aria-label={ASK[market.id]}>
-        {market.options.map((o) => o.id === self
+        {market.options.map((o) => o.id === self && (market.id === 'clumsy' || market.id === 'flop')
           ? <button key={o.id} type="button" className="fb-player" disabled title="Pas de pari sur toi-même"><strong>Toi</strong><small>pas sur toi</small></button>
           : <button key={o.id} type="button" role="radio" aria-checked={current === o.id}
             className={`fb-player${current === o.id ? ' is-on' : ''}`} onClick={() => setPick(o.id)}>
-            <strong>{o.label}</strong><b>×{frNum(o.odds, 2)}<Trend value={o.trend} /></b>
+            <strong>{o.id === self ? 'Toi' : o.label}</strong><b>×{frNum(o.odds, 2)}<Trend value={o.trend} /></b>
           </button>)}
       </div>
     ) : (

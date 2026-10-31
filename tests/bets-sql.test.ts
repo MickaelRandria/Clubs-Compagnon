@@ -198,7 +198,7 @@ test('sans Crack au ticket, la session se règle sans vote ; skill rating inchan
   assert.equal(state.history[0].status, 'settled');
   assert.equal(statusOf(state.history[0].mySlips, 'attack'), 'won');
   assert.equal(statusOf(state.history[0].mySlips, 'sr'), 'refunded');
-  assert.equal(await balance(fan), start - 100 + 100 + 50);
+  assert.equal(await balance(fan), start - 100 + 100 + 50 + 25, 'ticket complet (2 paris sur 2) : +25');
 });
 
 test('bonus rage-quit : un abandon suffit, une issue inconnue rembourse, sinon perdu', async () => {
@@ -256,4 +256,18 @@ test('miser sur soi au Crack : élu, on gagne', async () => {
   await call('close-vote', admin, { fixtureId: vote.id }, true);
   assert.equal(statusOf((await call('state', sam)).history[0].mySlips, 'crack'), 'won');
   assert.equal(await balance(sam), start - 40 + 80);
+});
+
+test('mise max : la moitié du solde par pari ; ticket complet : +25 une seule fois', async () => {
+  await db.query('update credit_wallets set balance = 400 where account_id = $1', [fan]);
+  const markets = ticket().filter((m) => m.id === 'bilan' || m.id === 'attack');
+  const fixture = await open(markets);
+  assert.equal((await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'bilan', option: 'win', stake: 201 }] })).status, 409);
+  await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'bilan', option: 'win', stake: 200 }] });
+  assert.equal(await balance(fan), 200);
+  await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'attack', option: 'gt3', stake: 50 }] });
+  assert.equal(await balance(fan), 150 + 25, 'ticket complet');
+  await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'attack', option: 'lt2', stake: 50 }] });
+  assert.equal(await balance(fan), 175, 'changer un pari ne redonne pas le bonus');
+  await call('cancel', admin, { fixtureId: fixture.id }, true);
 });

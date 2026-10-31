@@ -103,11 +103,16 @@ export async function buildOpening() {
       motm: motm ? byTag.get(String(motm.gamertag)) ?? null : null, ...(stats && stats.length ? { scorers, players: byPlayer } : {}) };
   });
   const votes = new Map<number, number>();
-  for (const r of voteRows.rows) votes.set(Number(r.member_id), (votes.get(Number(r.member_id)) ?? 0) + VOTE_DECAY ** (Number(r.rank) - 1));
+  const voteCount = new Map<number, number>();
+  for (const r of voteRows.rows) {
+    const id = Number(r.member_id);
+    votes.set(id, (votes.get(id) ?? 0) + VOTE_DECAY ** (Number(r.rank) - 1));
+    voteCount.set(id, (voteCount.get(id) ?? 0) + 1);
+  }
   const lobby = new Set(lobbyRows.rows.map((r) => Number(r.member_id)));
   const recent = new Set(history.slice(0, 10).flatMap((m) => Object.keys(m.ratings).map(Number)));
   const roster = memberRows.rows.map((r) => ({ memberId: Number(r.id), gamertag: String(r.gamertag),
-    avgRating: r.avg_rating === null ? null : Number(r.avg_rating), votes: votes.get(Number(r.id)) ?? 0 }));
+    avgRating: r.avg_rating === null ? null : Number(r.avg_rating), votes: votes.get(Number(r.id)) ?? 0, voteCount: voteCount.get(Number(r.id)) ?? 0 }));
   const present = roster.filter((p) => lobby.has(p.memberId));
   const players: FormPlayer[] = present.length >= 2 ? present
     : roster.filter((p, _, all) => recent.size === 0 || recent.has(p.memberId) || all.every((q) => !recent.has(q.memberId)));

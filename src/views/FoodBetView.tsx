@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
 import {
-  BONUS_MARKETS, CURRENCY, DEFAULT_STAKE, MARKET_COPY, MARKET_ORDER, STAKES, optionLabel, payout,
+  BONUS_MARKETS, CURRENCY, DEFAULT_STAKE, MARKET_COPY, MARKET_ORDER, STAKES, TICKET_BONUS, maxStake, optionLabel, payout,
   type BetMatch, type BetSession, type BetsAdminAction, type BetsState, type BetPick, type Market, type MarketId, type Slip,
 } from '../../shared/bets';
 import { sessionAnswer } from '../../shared/bets-odds';
@@ -245,6 +245,8 @@ function Ticket({ markets, skipped, onOpen, onFill }: {
         </button>;
       })}
     </div>
+    <p className="fb-note">{played === markets.length ? <>Ticket complet : <b>+{TICKET_BONUS} {CR}</b> offerts.</>
+      : <>Joue les {markets.length} paris : <b>+{TICKET_BONUS} {CR}</b> offerts.</>}</p>
     {left > 0 && <button type="button" className="fb-btn fb-btn--solid fb-btn--center" onClick={onFill}>
       {left === markets.length ? 'Remplir mon ticket' : `Jouer les ${left} paris restants`}</button>}
     <p className="fb-tap fb-push">{played} joué{played > 1 ? 's' : ''} · {passed} passé{passed > 1 ? 's' : ''} · {others} autre{others > 1 ? 's' : ''} ont joué · secret jusqu’au vote</p>
@@ -324,17 +326,18 @@ function StakeSheet({ market, option, onPlaced }: { market: Market; option: Mark
   const slip = fixture.mySlips.find((s) => s.market === market.id);
   const play = useBetsPlay();
   const available = state!.wallet.balance + (slip?.stake ?? 0);
-  const [choice, setChoice] = useState<number | 'max'>(slip?.stake ?? Math.min(DEFAULT_STAKE, available));
-  const stake = choice === 'max' ? available : choice;
-  const ok = stake > 0 && stake <= available;
+  const cap = maxStake(available);
+  const [choice, setChoice] = useState<number | 'max'>(slip?.stake ?? Math.min(DEFAULT_STAKE, cap));
+  const stake = choice === 'max' ? cap : choice;
+  const ok = stake > 0 && stake <= cap;
   return <div className="fb-sheet">
     <span className="fb-sheet-title">Combien tu mets ?</span>
     <p className="fb-note" style={{ color: 'var(--fc-ardoise)', opacity: 1 }}>Si tu as vu juste, tu récupères <b style={{ color: 'var(--fc-abysse)' }}>ta mise × la cote</b>.
-      Sinon, tu perds ta mise. « Tapis » = tout ton solde.</p>
+      Sinon, tu perds ta mise. Au plus <b style={{ color: 'var(--fc-abysse)' }}>la moitié de ton solde</b> par pari (« Max » = {fmt(cap)}).</p>
     {available <= 0 ? <><p className="fb-note">Tu es à sec pour ce match.</p><Bailout /></> : <>
       <div className="fb-chips" role="group" aria-label="Ta mise">
         {[...STAKES, 'max' as const].map((s) => <button key={s} type="button" className="fb-chip" aria-pressed={choice === s}
-          disabled={s !== 'max' && s > available} onClick={() => setChoice(s)}>{s === 'max' ? 'Tapis' : s}</button>)}
+          disabled={s !== 'max' && s > cap} onClick={() => setChoice(s)}>{s === 'max' ? 'Max' : s}</button>)}
       </div>
       <div className="fb-sheet-gain"><span>{fmt(stake)} × {frNum(option.odds, 2)} =</span><b>{fmt(payout(stake, option.odds))} {CR}</b></div>
       <button type="button" className="fb-btn fb-btn--blue" disabled={!ok || play.isPending}
@@ -376,7 +379,7 @@ function Choose({ market, index, total, onPlaced, onSkip, skipLabel, onTicket }:
           ? <button key={o.id} type="button" className="fb-player" disabled title="Pas de pari sur toi-même"><strong>Toi</strong><small>pas sur toi</small></button>
           : <button key={o.id} type="button" role="radio" aria-checked={current === o.id}
             className={`fb-player${current === o.id ? ' is-on' : ''}`} onClick={() => setPick(o.id)}>
-            <strong>{o.id === self ? 'Toi' : o.label}</strong><b>×{frNum(o.odds, 2)}<Trend value={o.trend} /></b>
+            <strong>{o.id === self ? 'Toi' : o.label}</strong><b>×{frNum(o.odds, 2)}<Trend value={o.trend} /></b>{o.why && <small>{o.why}</small>}
           </button>)}
       </div>
     ) : (
@@ -507,6 +510,8 @@ function Board({ onBack }: { onBack: () => void }) {
   const { state } = useContext(FoodBetCtx);
   const mine = state!.history.filter((h) => h.mySlips.length > 0);
   const won = mine.filter((h) => h.mySlips.some((s) => s.status === 'won')).length;
+  const last = state!.history.find((h) => h.status === 'settled' && h.session);
+  const night = last ? [...standings(last.results).winners, ...standings(last.results).losers].sort((a, b) => b.net - a.net) : [];
   return <Screen tone="night">
     <h2 className="fb-big fb-big--md">Le<br />classement</h2>
     <p className="fb-note">Le solde de crédits de chaque joueur. Tout le monde démarre à <b>500</b> : celui qui en a le plus est le meilleur
@@ -515,6 +520,11 @@ function Board({ onBack }: { onBack: () => void }) {
       {state!.leaderboard.map((r, i) => <div key={r.accountId} className={`fb-rank${r.me ? ' is-me' : ''}`}>
         <i>{i + 1}</i><strong>{r.me ? 'Toi' : r.name}</strong><b>{fmt(r.balance)}</b></div>)}
     </div>
+    {night.length > 0 && <div>
+      <p className="fb-kick">La dernière soirée · {record(last!.session!)}</p>
+      <div className="fb-rows">{night.map((r, i) => <div key={r.name} className={`fb-rank${r.me ? ' is-me' : ''}`}>
+        <i>{i + 1}</i><strong>{r.me ? 'Toi' : r.name}</strong><b className={r.net >= 0 ? 'fb-gain' : undefined}>{r.net > 0 ? '+' : ''}{fmt(r.net)}</b></div>)}</div>
+    </div>}
     {mine.length > 0 && <p className="fb-note fb-push">Tes derniers FoodBets : {mine.length} joué{mine.length > 1 ? 's' : ''} · {won} gagné{won > 1 ? 's' : ''}</p>}
     <button type="button" className={`fb-btn fb-btn--solid fb-btn--center${mine.length > 0 ? '' : ' fb-push'}`} onClick={onBack}>Retour</button>
   </Screen>;

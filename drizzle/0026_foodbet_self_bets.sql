@@ -1,8 +1,18 @@
--- FoodBet : miser sur soi-même.
+-- FoodBet : miser sur soi-même, mise max, bonus de ticket.
 --
 -- Permis au Crack et au Buteur (on gagne si on l'est), interdit au Maladroit et à la Casserole
 -- (on pourrait rater exprès). Élu Crack ou meilleur buteur de la soirée alors qu'on avait misé
 -- sur un autre : la mise de ce pari est rendue.
+--
+-- Mise max par pari : la moitié du solde. Ticket complet (tous les paris joués) : +25 crédits,
+-- une fois par soirée (`credit_ledger.fixture_id`, raison 'ticket').
+ALTER TABLE credit_ledger DROP CONSTRAINT credit_ledger_reason_check;
+--> statement-breakpoint
+ALTER TABLE credit_ledger ADD CONSTRAINT credit_ledger_reason_check
+  CHECK (reason IN ('welcome', 'stake', 'payout', 'refund', 'bailout', 'ticket'));
+--> statement-breakpoint
+ALTER TABLE credit_ledger ADD COLUMN fixture_id integer REFERENCES bet_fixtures(id) ON DELETE SET NULL;
+--> statement-breakpoint
 CREATE OR REPLACE FUNCTION bets_end_session(p_fixture integer) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE f bet_fixtures%ROWTYPE; s jsonb; sl bet_slips%ROWTYPE; market_def jsonb; n integer; w integer; l integer;
   average numeric; played integer[]; best integer; stats boolean;
@@ -195,10 +205,21 @@ BEGIN
       IF stake IS NULL OR stake <= 0 OR stake > w.balance THEN
         RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'bets:insufficient';
       END IF;
+      -- Mise max par pari : la moitié du solde (jusqu'à 50 quand le solde est petit), pour ne pas tout perdre d'un coup.
+      IF stake > greatest(ceil(w.balance / 2.0)::integer, least(w.balance, 50)) THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'bets:cap';
+      END IF;
       INSERT INTO bet_slips(fixture_id, account_id, market, option, stake, odds)
         VALUES (f.id, p_account, bet->>'market', bet->>'option', stake, option_odds) RETURNING id INTO new_slip;
       PERFORM bets_credit(p_account, -stake, 'stake', new_slip);
     END LOOP;
+    -- Ticket complet : +25 crédits, une fois par soirée.
+    IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(bets_fixture_markets(f.markets, f.player_odds)) x
+        WHERE NOT EXISTS(SELECT 1 FROM bet_slips s WHERE s.fixture_id = f.id AND s.account_id = p_account AND s.market = x->>'id'))
+      AND NOT EXISTS(SELECT 1 FROM credit_ledger WHERE account_id = p_account AND reason = 'ticket' AND fixture_id = f.id) THEN
+      UPDATE credit_wallets SET balance = balance + 25 WHERE account_id = p_account;
+      INSERT INTO credit_ledger(account_id, amount, reason, fixture_id) VALUES (p_account, 25, 'ticket', f.id);
+    END IF;
 
   WHEN 'unplace' THEN
     SELECT * INTO f FROM bet_fixtures WHERE club_id = club_key AND status = 'open' FOR UPDATE;
@@ -235,6 +256,8 @@ BEGIN
 EXCEPTION WHEN raise_exception THEN
   IF SQLERRM = 'bets:insufficient' THEN
     RETURN jsonb_build_object('error', 'Solde insuffisant pour ces mises.', 'status', 409);
+  ELSIF SQLERRM = 'bets:cap' THEN
+    RETURN jsonb_build_object('error', 'Mise trop forte : au plus la moitié de ton solde par pari.', 'status', 409);
   ELSIF SQLERRM = 'bets:self' THEN
     RETURN jsonb_build_object('error', 'Pas de pari sur toi-même.', 'status', 403);
   ELSIF SQLERRM = 'bets:invalid' THEN

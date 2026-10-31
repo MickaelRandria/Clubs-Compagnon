@@ -132,8 +132,13 @@ export const MARKET_ORDER: MarketId[] = ['bilan', 'attack', 'scorer', 'clumsy', 
 /** Le pari bonus, tiré au sort à chaque session. */
 export const BONUS_MARKETS: MarketId[] = ['cleansheet', 'red', 'ragequit', 'streak'];
 
-/** `trend` : effet du dernier match sur la cote (positif = elle monte). Absent sur les anciennes rencontres. */
-export interface MarketOption { id: string; label: string; odds: number; trend?: number }
+/** `trend` : effet du dernier match sur la cote (positif = elle monte). `why` : ce qui fait la cote d'un joueur, en clair. */
+export interface MarketOption { id: string; label: string; odds: number; trend?: number; why?: string }
+
+/** Mise max par pari : la moitié du solde, jusqu'à 50 quand le solde est petit (même règle que bets_dispatch, drizzle/0026). */
+export const maxStake = (balance: number) => Math.max(Math.ceil(balance / 2), Math.min(balance, 50));
+/** Crédits offerts une fois par soirée quand tous les paris du ticket sont joués. */
+export const TICKET_BONUS = 25;
 export interface Market { id: MarketId; options: MarketOption[] }
 export interface Slip { id: number; fixtureId: number; market: MarketId; option: string; stake: number; odds: number; status: SlipStatus; payout: number | null }
 /** Le prono d'un joueur du club, tel que tout le monde le voit une fois dévoilé. */

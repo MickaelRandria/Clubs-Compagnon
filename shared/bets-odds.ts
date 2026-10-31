@@ -26,8 +26,8 @@ export interface FormMatch {
   motm?: number | null;
 }
 
-/** `votes` : voix reçues au vote du Crack des soirées passées, pondérées (la dernière soirée pèse le plus). */
-export interface FormPlayer { memberId: number; gamertag: string; avgRating: number | null; votes?: number }
+/** `votes` : voix reçues au vote du Crack des soirées passées, pondérées (la dernière soirée pèse le plus) ; `voteCount` : leur nombre brut. */
+export interface FormPlayer { memberId: number; gamertag: string; avgRating: number | null; votes?: number; voteCount?: number }
 
 /** Option de pari : `trend` = écart de cote dû au dernier match (0 pour les paris de session). */
 export interface DrawnOption extends MarketOption { trend: number }
@@ -145,6 +145,21 @@ function crackOdds(players: FormPlayer[], history: FormMatch[]): Record<string, 
   return Object.fromEntries(players.map((p, i) => [String(p.memberId), toOdds(used.reduce((a, [v, k]) => a + v[i] * k, 0) / weight)]));
 }
 
+const dec = (n: number) => n.toFixed(1).replace('.', ',');
+
+/** Pourquoi cette cote : la donnée qui pèse le plus pour chaque joueur, en une ligne. */
+function why(id: 'scorer' | 'clumsy' | 'crack', p: FormPlayer, history: FormMatch[]): string {
+  const played = history.filter((m) => m.players?.[p.memberId]);
+  if (id === 'crack') {
+    const motm = history.filter((m) => m.motm === p.memberId).length;
+    return [p.voteCount ? `${p.voteCount} voix` : null, motm ? `${motm}× homme du match` : null,
+      p.avgRating ? `note ${dec(p.avgRating)}` : null].filter(Boolean).join(' · ') || 'peu de données';
+  }
+  if (played.length === 0) return 'pas de match récent';
+  const total = played.reduce((a, m) => a + m.players![p.memberId][id === 'scorer' ? 'goals' : 'missed'], 0);
+  return `${dec(total / played.length)} ${id === 'scorer' ? 'but' : 'raté'}${total / played.length >= 2 ? 's' : ''} / match`;
+}
+
 const VERDICT_WORD = { win: 'la victoire', draw: 'le nul', loss: 'la défaite' } as const;
 
 /** « Après la victoire 5-2 contre Team March » : le dernier match, en contexte. */
@@ -180,12 +195,13 @@ export function openSession(previous: MarketId[], history: FormMatch[], players:
   };
   const byPlayer = (id: 'scorer' | 'clumsy'): DrawnMarket => ({
     id,
-    options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag, odds: toOdds(p(`${id}:${pl.memberId}`, players.length)), trend: 0 }))
+    options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag, odds: toOdds(p(`${id}:${pl.memberId}`, players.length)), trend: 0,
+      why: why(id, pl, recent) }))
       .sort((a, b) => a.odds - b.odds),
   });
   const crackPrice = crackOdds(players, recent);
   const crack: DrawnMarket = { id: 'crack', options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag,
-    odds: crackPrice[String(pl.memberId)], trend: 0 })).sort((a, b) => a.odds - b.odds) };
+    odds: crackPrice[String(pl.memberId)], trend: 0, why: why('crack', pl, recent) })).sort((a, b) => a.odds - b.odds) };
   return {
     markets: [team('bilan'), team('attack'), byPlayer('scorer'), byPlayer('clumsy'), crack, team('sr'), team(bonus)],
     context: { reason: formReason(history[0]) },

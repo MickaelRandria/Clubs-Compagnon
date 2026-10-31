@@ -2,12 +2,13 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
 import {
-  BONUS_MARKETS, CURRENCY, DEFAULT_STAKE, MARKET_COPY, MARKET_ORDER, STAKES, TICKET_BONUS, maxStake, optionLabel, payout,
+  CURRENCY, DEFAULT_STAKE, MARKET_COPY, STAKES, TICKET_BONUS, maxStake, optionLabel, payout,
   type BetMatch, type BetSession, type BetsAdminAction, type BetsState, type BetPick, type Market, type MarketId, type Slip,
 } from '../../shared/bets';
-import { sessionAnswer } from '../../shared/bets-odds';
+import { byOrder, fmt, isPlayerMarket, plural, record, sessionLead, titleOf, topPlayers } from '../lib/foodbet';
 import { useMe } from '../api/auth';
 import { useBetsAdmin, useBetsPlay, useBetsState, useBetsStatus } from '../api/bets';
+import { Recap } from '../components/bets/Recap';
 import { SignInButton } from '../components/fc27/SignIn';
 import { frNum } from '../lib/format';
 import { usePageTitle } from '../lib/hooks';
@@ -20,7 +21,6 @@ import '../styles/foodbet.css';
 
 const CR = CURRENCY.short;
 const STARTING_TEXT = `500 ${CURRENCY.name} offerts. Avant chaque session tu remplis ton ticket, à la fin tu votes pour le joueur de la soirée. Aucun argent réel.`;
-const fmt = (n: number) => n.toLocaleString('fr-FR');
 
 /** La question en gros, une par pari. */
 const ASK: Record<MarketId, string> = {
@@ -55,28 +55,7 @@ const seenKey = (fixtureId: number) => `bets.seen.${fixtureId}`;
 const wasSeen = (fixtureId: number) => { try { return localStorage.getItem(seenKey(fixtureId)) === '1'; } catch { return true; } };
 const markSeen = (fixtureId: number) => { try { localStorage.setItem(seenKey(fixtureId), '1'); } catch { /* navigation privée */ } };
 
-const byOrder = (a: Market, b: Market) => MARKET_ORDER.indexOf(a.id) - MARKET_ORDER.indexOf(b.id);
 const score = (m: BetMatch) => `FoodBall ${m.goalsFor}–${m.goalsAgainst} ${m.opponent}`;
-const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
-const record = (s: BetSession) => `${plural(s.matches, 'match')} · ${s.wins}V ${s.draws}N ${s.losses}D`;
-const isPlayerMarket = (id: MarketId) => id === 'crack' || id === 'flop' || id === 'scorer' || id === 'clumsy';
-const titleOf = (id: MarketId) => `${BONUS_MARKETS.includes(id) ? 'Bonus · ' : ''}${MARKET_COPY[id].title}`;
-
-/** En tête de la soirée sur les buts ou les tirs ratés (ex æquo compris). */
-function topPlayers(s: BetSession, key: 'goals' | 'missed') {
-  const best = Math.max(0, ...s.players.map((p) => p[key]));
-  return { best, ids: best === 0 ? [] : s.players.filter((p) => p[key] === best).map((p) => String(p.memberId)),
-    names: best === 0 ? [] : s.players.filter((p) => p[key] === best).map((p) => p.gamertag) };
-}
-
-/** L'issue en tête d'un pari de session (null : pas encore connue, ou réglée au vote). */
-function sessionLead(id: MarketId, s: BetSession): string[] | null {
-  if (s.matches === 0 || id === 'crack' || id === 'flop') return null;
-  if (id === 'scorer' || id === 'clumsy') return topPlayers(s, id === 'scorer' ? 'goals' : 'missed').ids;
-  if (id === 'sr') return s.srStart === null || s.srNow === null || s.srStart === s.srNow ? null : [s.srNow > s.srStart ? 'up' : 'down'];
-  const a = sessionAnswer(id, s);
-  return a === null ? null : [a];
-}
 
 /** Où en est chaque pari de la session, en une ligne. */
 function sessionNow(id: MarketId, s: BetSession): string {
@@ -506,7 +485,7 @@ function Winners({ item, onDone, onBoard }: { item: BetsState['history'][number]
   </Screen>;
 }
 
-function Board({ onBack }: { onBack: () => void }) {
+function Board({ onBack, onReplay }: { onBack: () => void; onReplay: (fixtureId: number) => void }) {
   const { state } = useContext(FoodBetCtx);
   const mine = state!.history.filter((h) => h.mySlips.length > 0);
   const won = mine.filter((h) => h.mySlips.some((s) => s.status === 'won')).length;
@@ -526,6 +505,7 @@ function Board({ onBack }: { onBack: () => void }) {
         <i>{i + 1}</i><strong>{r.me ? 'Toi' : r.name}</strong><b className={r.net >= 0 ? 'fb-gain' : undefined}>{r.net > 0 ? '+' : ''}{fmt(r.net)}</b></div>)}</div>
     </div>}
     {mine.length > 0 && <p className="fb-note fb-push">Tes derniers FoodBets : {mine.length} joué{mine.length > 1 ? 's' : ''} · {won} gagné{won > 1 ? 's' : ''}</p>}
+    {last && <button type="button" className="fb-btn fb-btn--ghost fb-btn--center" onClick={() => onReplay(last.id)}>Revoir le récap de la soirée</button>}
     <button type="button" className={`fb-btn fb-btn--solid fb-btn--center${mine.length > 0 ? '' : ' fb-push'}`} onClick={onBack}>Retour</button>
   </Screen>;
 }
@@ -644,6 +624,7 @@ function AdminSheet({ state }: { state: BetsState }) {
 
 function Evening({ state }: { state: BetsState }) {
   const [board, setBoard] = useState(false);
+  const [replay, setReplay] = useState<number | null>(null);
   // Ne sert qu'à redessiner après les résultats : le « déjà vu » vit dans localStorage.
   const [, setSeen] = useState(0);
   const reveal = state.history.find((h) => h.status === 'settled' && Date.now() - new Date(h.settledAt).getTime() < 48 * 3_600_000
@@ -651,8 +632,13 @@ function Evening({ state }: { state: BetsState }) {
   const fixture = state.fixture;
   const vote = state.votes[0];
 
-  if (board) return <Board onBack={() => setBoard(false)} />;
-  if (reveal) return <Winners key={`w${reveal.id}`} item={reveal} onBoard={() => setBoard(true)} onDone={() => { markSeen(reveal.id); setSeen((n) => n + 1); }} />;
+  const replayed = state.history.find((h) => h.id === replay && h.session);
+  if (replayed) return <Recap key={`r${replayed.id}`} item={replayed} state={state} onClose={() => setReplay(null)} onBoard={() => setBoard(true)} />;
+  if (board) return <Board onBack={() => setBoard(false)} onReplay={(id) => { setBoard(false); setReplay(id); }} />;
+  const done = (id: number) => { markSeen(id); setSeen((n) => n + 1); };
+  // Format session : le récap en stories ; anciennes rencontres d'un match : l'écran des gagnants.
+  if (reveal?.session) return <Recap key={`r${reveal.id}`} item={reveal} state={state} onClose={() => done(reveal.id)} onBoard={() => setBoard(true)} />;
+  if (reveal) return <Winners key={`w${reveal.id}`} item={reveal} onBoard={() => setBoard(true)} onDone={() => done(reveal.id)} />;
   if (fixture?.status === 'open') return <OpenFlow key={`o${fixture.id}`} state={state} />;
   if (fixture?.status === 'locked') return <RoomSession />;
   if (vote) return <VoteFlow key={`v${vote.id}`} vote={vote} />;

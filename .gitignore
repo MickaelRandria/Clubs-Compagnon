@@ -9,3 +9,6 @@ dist
 .npm-cache
 artifacts
 captures
+
+# Photos d’origine des joueurs : seules les versions détourées (.webp) sont publiées.
+public/joueurs/*.jfif

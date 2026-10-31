@@ -45,9 +45,9 @@ export const betsSettings: BetsSettings = {
   },
 };
 
-async function dispatch(action: string, accountId: number, input: object, admin: boolean): Promise<BetsState> {
+async function dispatch(action: string, accountId: number, input: object, admin: boolean, present = true): Promise<BetsState> {
   // Présence dans la salle d'attente : l'écran relit l'état toutes les 15 s tant qu'il est ouvert.
-  await getDb().execute(sql`update credit_wallets set seen_at = now() where account_id = ${accountId}`);
+  if (present) await getDb().execute(sql`update credit_wallets set seen_at = now() where account_id = ${accountId}`);
   const result = await getDb().execute(sql`select bets_dispatch(${action}, ${accountId}::integer, ${JSON.stringify(input)}::jsonb, ${admin}) as data`);
   const data = result.rows[0]?.data as BetsState & { error?: string; status?: number };
   if (data.error) throw new HttpError(data.status ?? 400, data.error);
@@ -121,7 +121,7 @@ export async function buildOpening() {
 
 export const betsGame: BetsGame = {
   // La synchro EA d'abord : c'est elle qui fait arriver le match qui règle les paris.
-  state: async (accountId, admin) => { await syncFromEa(); return dispatch('state', accountId, {}, admin); },
+  state: async (accountId, admin, peek = false) => { await syncFromEa(); return dispatch('state', accountId, {}, admin, !peek); },
   play: (accountId, action) => dispatch(action.action, accountId, action, false),
   admin: async (accountId, action) => {
     // Fin de session ou suivi : on va chercher les derniers matchs chez EA tout de suite, sans

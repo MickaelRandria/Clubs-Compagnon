@@ -15,7 +15,8 @@ export interface BetsSettings {
 
 /** Jeu réel : bets_dispatch côté base. `null` dans les tests qui n'exercent que l'interrupteur. */
 export interface BetsGame {
-  state: (accountId: number, isAdmin: boolean) => Promise<BetsState>;
+  /** `peek` : simple lecture (accueil), sans compter le joueur comme présent dans le salon FoodBet. */
+  state: (accountId: number, isAdmin: boolean, peek?: boolean) => Promise<BetsState>;
   play: (accountId: number, action: BetsPlayAction) => Promise<BetsState>;
   admin: (accountId: number, action: BetsAdminAction) => Promise<BetsState>;
 }
@@ -57,7 +58,8 @@ export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: nu
   const routes = new Map<string, { method: 'GET' | 'POST'; run: (request: Request) => Promise<Response> }>([
     ['state', { method: 'GET', run: async (request) => {
       const { accountId, admin, game } = await player(request);
-      return Response.json(await game.state(accountId, admin), { headers });
+      const peek = new URL(request.url).searchParams.has('peek');
+      return Response.json(await game.state(accountId, admin, peek), { headers });
     } }],
     ['play', { method: 'POST', run: async (request) => {
       const { accountId, game } = await player(request);

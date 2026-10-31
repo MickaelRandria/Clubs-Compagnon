@@ -45,6 +45,16 @@ export function useBetsState(enabled: boolean) {
   });
 }
 
+/** Les soirées passées, pour l'accueil : simple lecture, sans compter comme présent dans le salon FoodBet. */
+export function useBetsHistory(enabled: boolean) {
+  return useQuery({
+    queryKey: ['bets-history'],
+    queryFn: () => apiRequest<BetsState>('/api/bets/state?peek'),
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
 function useBetsMutation<T>(path: string) {
   const client = useQueryClient();
   return useMutation({

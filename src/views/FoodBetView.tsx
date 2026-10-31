@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   CURRENCY, DEFAULT_STAKE, MARKET_COPY, STAKES, TICKET_BONUS, maxStake, optionLabel, payout,
   type BetMatch, type BetSession, type BetsAdminAction, type BetsState, type BetPick, type Market, type MarketId, type Slip,
@@ -8,7 +8,7 @@ import {
 import { byOrder, fmt, isPlayerMarket, plural, record, sessionLead, titleOf, topPlayers } from '../lib/foodbet';
 import { useMe } from '../api/auth';
 import { useBetsAdmin, useBetsPlay, useBetsState, useBetsStatus } from '../api/bets';
-import { Recap } from '../components/bets/Recap';
+import { Recap, RecapRings } from '../components/bets/Recap';
 import { SignInButton } from '../components/fc27/SignIn';
 import { frNum } from '../lib/format';
 import { usePageTitle } from '../lib/hooks';
@@ -180,7 +180,7 @@ function Room({ phase, status, live, explain, now, next, who, whoTitle, doneLabe
 }
 
 /** Phase 0 : la soirée n'a pas commencé. */
-function RoomBefore({ onBoard }: { onBoard: () => void }) {
+function RoomBefore({ onBoard, onReplay }: { onBoard: () => void; onReplay: (fixtureId: number) => void }) {
   const { state } = useContext(FoodBetCtx);
   const last = state!.history.find((h) => h.status === 'settled');
   const net = last ? last.mySlips.reduce((sum, s) => sum + (s.payout ?? 0) - s.stake, 0) : 0;
@@ -192,6 +192,7 @@ function RoomBefore({ onBoard }: { onBoard: () => void }) {
     who={here} whoTitle={`Dans la salle · ${here.length}`} doneLabel="là">
     {(last?.session || last?.match) && <p className="fb-note">Dernier FoodBet : {last.session ? record(last.session) : score(last.match!)}
       {last.mySlips.length > 0 && <> · <b className="fb-gain">{net > 0 ? '+' : ''}{fmt(net)} {CR}</b></>}</p>}
+    <RecapRings history={state!.history} title="Revoir les soirées" onOpen={onReplay} />
     <Bailout />
     <button type="button" className="fb-link" onClick={onBoard}>Voir le classement</button>
   </Room>;
@@ -505,7 +506,7 @@ function Board({ onBack, onReplay }: { onBack: () => void; onReplay: (fixtureId:
         <i>{i + 1}</i><strong>{r.me ? 'Toi' : r.name}</strong><b className={r.net >= 0 ? 'fb-gain' : undefined}>{r.net > 0 ? '+' : ''}{fmt(r.net)}</b></div>)}</div>
     </div>}
     {mine.length > 0 && <p className="fb-note fb-push">Tes derniers FoodBets : {mine.length} joué{mine.length > 1 ? 's' : ''} · {won} gagné{won > 1 ? 's' : ''}</p>}
-    {last && <button type="button" className="fb-btn fb-btn--ghost fb-btn--center" onClick={() => onReplay(last.id)}>Revoir le récap de la soirée</button>}
+    <RecapRings history={state!.history} title="Les soirées en stories" onOpen={onReplay} />
     <button type="button" className={`fb-btn fb-btn--solid fb-btn--center${mine.length > 0 ? '' : ' fb-push'}`} onClick={onBack}>Retour</button>
   </Screen>;
 }
@@ -622,9 +623,10 @@ function AdminSheet({ state }: { state: BetsState }) {
 
 // ---------------------------------------------------------------- La soirée
 
-function Evening({ state }: { state: BetsState }) {
+function Evening({ state, initialReplay }: { state: BetsState; initialReplay: number | null }) {
   const [board, setBoard] = useState(false);
-  const [replay, setReplay] = useState<number | null>(null);
+  // `/paris?recap=12` (depuis l'accueil) : ouvre directement le récap de cette soirée.
+  const [replay, setReplay] = useState<number | null>(initialReplay);
   // Ne sert qu'à redessiner après les résultats : le « déjà vu » vit dans localStorage.
   const [, setSeen] = useState(0);
   const reveal = state.history.find((h) => h.status === 'settled' && Date.now() - new Date(h.settledAt).getTime() < 48 * 3_600_000
@@ -642,7 +644,7 @@ function Evening({ state }: { state: BetsState }) {
   if (fixture?.status === 'open') return <OpenFlow key={`o${fixture.id}`} state={state} />;
   if (fixture?.status === 'locked') return <RoomSession />;
   if (vote) return <VoteFlow key={`v${vote.id}`} vote={vote} />;
-  return <RoomBefore onBoard={() => setBoard(true)} />;
+  return <RoomBefore onBoard={() => setBoard(true)} onReplay={setReplay} />;
 }
 
 function Message({ title, text, children }: { title: ReactNode; text: string; children?: ReactNode }) {
@@ -661,6 +663,7 @@ export function FoodBetView() {
   const signedIn = me.data?.signedIn === true;
   const query = useBetsState(ready && status.access !== 'locked' && signedIn);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [params] = useSearchParams();
   const close = () => ((window.history.state as { idx?: number } | null)?.idx ? navigate(-1) : navigate('/'));
 
   useEffect(() => {
@@ -678,7 +681,7 @@ export function FoodBetView() {
       <SignInButton className="fb-btn fb-btn--amber fb-btn--center" /></Message>
     : query.isError || !state ? <Message title="Oups" text="Impossible de charger FoodBet pour le moment.">
       <button type="button" className="fb-btn fb-btn--solid fb-btn--center" onClick={() => void query.refetch()}>Réessayer</button></Message>
-    : <Evening state={state} />;
+    : <Evening state={state} initialReplay={Number(params.get('recap')) || null} />;
 
   return createPortal(
     <FoodBetCtx.Provider value={{ state, close, preview: status.access === 'preview', adminOpen, setAdminOpen }}>

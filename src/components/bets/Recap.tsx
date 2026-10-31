@@ -233,6 +233,28 @@ async function shareImage(kind: 'podium' | 'bilan', item: Item, podium: [string,
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
+/** Récap déjà vu (même clé que l'écran FoodBet) : son rond passe en gris. */
+const recapSeen = (id: number) => { try { return localStorage.getItem(`bets.seen.${id}`) === '1'; } catch { return true; } };
+
+/** Les soirées passées en ronds de stories : la tête du Crack, la date, le bilan. Touche pour revoir le récap. */
+export function RecapRings({ history, onOpen, title }: { history: BetsState['history']; onOpen: (fixtureId: number) => void; title?: string }) {
+  const nights = history.filter((h) => h.status === 'settled' && h.session);
+  if (nights.length === 0) return null;
+  return <section className="rc-rings" aria-label={title ?? 'Les soirées FoodBet'}>
+    {title && <p className="rc-rings-title">{title}</p>}
+    <div className="rc-rings-list">{nights.map((h) => {
+      const s = h.session!;
+      const star = h.crack?.[0] ?? [...h.results].sort((a, b) => net(b) - net(a))[0]?.name ?? 'FoodBet';
+      const day = new Date(s.startedAt ?? h.settledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      return <button key={h.id} type="button" className={`rc-ring${recapSeen(h.id) ? ' seen' : ''}`} onClick={() => onOpen(h.id)}
+        aria-label={`Récap du ${day} : ${s.wins} victoires, ${s.draws} nuls, ${s.losses} défaites`}>
+        <span className="rc-ring-pic"><Face name={star} size={56} /></span>
+        <b>{day}</b><small>{s.wins}V {s.draws}N {s.losses}D</small>
+      </button>;
+    })}</div>
+  </section>;
+}
+
 export function Recap({ item, state, onClose, onBoard }: { item: Item; state: BetsState; onClose: () => void; onBoard: () => void }) {
   const session = item.session!;
   // Les rappels changent à chaque rendu du parent : les stories passent par ces références.
@@ -387,10 +409,11 @@ export function Recap({ item, state, onClose, onBoard }: { item: Item; state: Be
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') go(index + 1);
       if (e.key === 'ArrowLeft') go(index - 1);
-      if (e.key === 'Escape') onClose();
+      // Échap ferme le récap seulement, pas tout FoodBet : écouté en premier (capture), puis arrêté.
+      if (e.key === 'Escape') { e.stopImmediatePropagation(); onClose(); }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   });
 
   // Gestes : tap gauche/droite, appui long = pause, glisser vers le bas = fermer.

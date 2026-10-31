@@ -3,6 +3,7 @@ import { BetsLiveBanner } from '../components/bets/BetsLiveBanner';
 import { LastMatchTile } from '../components/home/LastMatchTile';
 import { MotmTile } from '../components/home/MotmTile';
 import { NextNightTile } from '../components/home/NextNightTile';
+import { RecapsTile } from '../components/home/RecapsTile';
 import { RankTile } from '../components/home/RankTile';
 import { StreakTile } from '../components/home/StreakTile';
 import { DataGate } from '../components/ui/DataGate';
@@ -24,6 +25,7 @@ export function HomeView() {
       {() => (
         <div className="fc-grid">
           <BetsLiveBanner />
+          <RecapsTile />
           <div className="fc-row fc-row--top">
             <StreakTile club={club.data!} last={matches.data![0]} />
             <LastMatchTile match={matches.data![0]} />

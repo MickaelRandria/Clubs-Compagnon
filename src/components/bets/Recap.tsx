@@ -121,7 +121,7 @@ function BetStory({ m, item, index, total, active, part }: { m: Market; item: It
   }, [active, m.id, item.id]);
   const count = (id: string) => picks.filter((p) => p.option === id).length;
   return <>
-    <p className="rc-kick in">{part ? `${part} · ` : ''}Pari {index} sur {total} · {titleOf(m.id)}</p>
+    <p className="rc-kick in">{part ? `${part} · ${titleOf(m.id)}` : `Pari ${index} sur ${total} · ${titleOf(m.id)}`}</p>
     <h2 className="rc-big rc-big--bet in" style={delay(0.05)}>{HEADS[m.id] ?? MARKET_COPY[m.id].title}</h2>
     <p className="rc-q in" style={delay(0.1)}>{part && m.id === 'crack' ? 'Qui sera élu joueur du match ?' : MARKET_COPY[m.id].question}</p>
     <div className={`rc-opts in${revealed ? ' revealed' : ''}`} style={delay(0.25)}>
@@ -241,7 +241,7 @@ async function shareImage(kind: 'podium' | 'bilan', item: Item, podium: [string,
  * Une soirée à revoir. Format session : la rencontre elle-même. Avant (paris match par match) : les
  * rencontres d'un même soir regroupées (`parts`), avec un bilan recalculé sur les matchs de la soirée.
  */
-export interface Night { item: Item; parts: Item[] | null }
+export interface Night { item: Item; parts: Item[] | null; labels: string[] | null }
 
 /** La soirée d'un horaire : une partie après minuit compte pour la veille. */
 const eveningOf = (iso: string) => { const d = new Date(new Date(iso).getTime() - 8 * 3_600_000); return d.toDateString(); };
@@ -264,13 +264,18 @@ function sessionOfMatches(list: Match[]): BetSession {
 
 /** Toutes les soirées à revoir, la plus récente d'abord. */
 export function nightsOf(history: Item[], matches: Match[]): Night[] {
-  const nights: Night[] = history.filter((h) => h.status === 'settled' && h.session).map((item) => ({ item, parts: null }));
+  const nights: Night[] = history.filter((h) => h.status === 'settled' && h.session).map((item) => ({ item, parts: null, labels: null }));
   const legacy = history.filter((h) => h.status === 'settled' && !h.session && h.results.length > 0);
   for (const day of [...new Set(legacy.map((h) => eveningOf(h.settledAt)))]) {
     const parts = legacy.filter((h) => eveningOf(h.settledAt) === day).sort((a, b) => a.id - b.id);
     const session = sessionOfMatches(matches.filter((m) => eveningOf(m.playedAt) === day));
     if (session.matches === 0) continue;
-    nights.push({ parts, item: {
+    // Chaque rencontre a été réglée juste après son match : le dernier match joué avant le règlement.
+    const labels = parts.map((h) => {
+      const m = matches.filter((x) => Date.parse(x.playedAt) <= Date.parse(h.settledAt)).sort((a, b) => Date.parse(b.playedAt) - Date.parse(a.playedAt))[0];
+      return m && eveningOf(m.playedAt) === day ? `${m.goalsFor}–${m.goalsAgainst} vs ${m.opponent}` : 'Rencontre';
+    });
+    nights.push({ parts, labels, item: {
       id: -parts[0].id, status: 'settled', settledAt: parts[parts.length - 1].settledAt, match: null, session,
       crack: [...new Set(parts.flatMap((p) => p.crack ?? []))], flop: null, markets: [],
       mySlips: parts.flatMap((p) => p.mySlips), results: parts.flatMap((p) => p.results), myVote: null, ballots: parts.flatMap((p) => p.ballots),
@@ -307,7 +312,9 @@ export function RecapRings({ nights, onOpen, title }: { nights: Night[]; onOpen:
   </section>;
 }
 
-export function Recap({ item, parts = null, state, onClose, onBoard }: { item: Item; parts?: Item[] | null; state: BetsState; onClose: () => void; onBoard: () => void }) {
+export function Recap({ item, parts = null, labels = null, state, onClose, onBoard }: {
+  item: Item; parts?: Item[] | null; labels?: string[] | null; state: BetsState; onClose: () => void; onBoard: () => void;
+}) {
   const session = item.session!;
   // Les rappels changent à chaque rendu du parent : les stories passent par ces références.
   const closeRef = useRef(onClose); closeRef.current = onClose;
@@ -317,9 +324,11 @@ export function Recap({ item, parts = null, state, onClose, onBoard }: { item: I
     const onBoard = () => boardRef.current();
     const list: Story[] = [];
     // Les paris de la soirée : ceux de la session (le Crack en dernier), ou ceux de chaque match, dans l'ordre.
-    const withPicks = (src: Item) => [...src.markets].sort(byOrder).filter((m) => src.results.some((p) => p.market === m.id));
+    // Un pari où tout a été remboursé n'a rien à raconter : pas de story.
+    const withPicks = (src: Item) => [...src.markets].sort(byOrder)
+      .filter((m) => src.results.some((p) => p.market === m.id && p.status !== 'refunded'));
     const played = parts
-      ? parts.flatMap((src, n) => withPicks(src).map((m) => ({ m, src, part: `Rencontre ${n + 1}` })))
+      ? parts.flatMap((src, n) => withPicks(src).map((m) => ({ m, src, part: labels?.[n] ?? `Rencontre ${n + 1}` })))
       : [...withPicks(item).filter((m) => m.id !== 'crack'), ...withPicks(item).filter((m) => m.id === 'crack')].map((m) => ({ m, src: item, part: undefined }));
     const bettors = new Set(item.results.map((p) => p.name)).size;
     list.push({ key: 'intro', tone: 'night', ms: 5500, body: (active) => <>
@@ -429,7 +438,7 @@ export function Recap({ item, parts = null, state, onClose, onBoard }: { item: I
       </div>
     </> });
     return list;
-  }, [item, parts, state.leaderboard, session]);
+  }, [item, parts, labels, state.leaderboard, session]);
 
   const [index, setIndex] = useState(0);
   const [dir, setDir] = useState(1);

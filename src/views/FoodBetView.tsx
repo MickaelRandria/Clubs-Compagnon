@@ -636,7 +636,7 @@ function Evening({ state, initialReplay }: { state: BetsState; initialReplay: nu
 
   const nights = useNights(state.history);
   const replayed = nights.find((n) => n.item.id === replay);
-  if (replayed) return <Recap key={`r${replayed.item.id}`} item={replayed.item} parts={replayed.parts} state={state} onClose={() => setReplay(null)} onBoard={() => setBoard(true)} />;
+  if (replayed) return <Recap key={`r${replayed.item.id}`} item={replayed.item} parts={replayed.parts} labels={replayed.labels} state={state} onClose={() => setReplay(null)} onBoard={() => setBoard(true)} />;
   if (board) return <Board nights={nights} onBack={() => setBoard(false)} onReplay={(id) => { setBoard(false); setReplay(id); }} />;
   const done = (id: number) => { markSeen(id); setSeen((n) => n + 1); };
   // Format session : le récap en stories ; anciennes rencontres d'un match : l'écran des gagnants.

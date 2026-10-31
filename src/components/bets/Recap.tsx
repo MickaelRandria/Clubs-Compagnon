@@ -136,21 +136,34 @@ function BetStory({ m, item, index, total, active, part }: { m: Market; item: It
   </>;
 }
 
-function CrackVotes({ item, active }: { item: Item; active: boolean }) {
+/** Le Crack : l'élu en grand, couronné, ses électeurs dessous ; les paris en une ligne de pastilles. */
+function CrackStory({ m, item, index, total, part, active }: { m: Market; item: Item; index: number; total: number; part?: string; active: boolean }) {
+  const elected = item.crack ?? [];
   const groups = [...new Set(item.ballots.map((b) => b.gamertag))]
-    .map((gamertag) => ({ gamertag, voters: item.ballots.filter((b) => b.gamertag === gamertag).map((b) => (b.me ? 'toi' : b.voter)) }))
+    .map((gamertag) => ({ gamertag, voters: item.ballots.filter((b) => b.gamertag === gamertag) }))
     .sort((a, b) => b.voters.length - a.voters.length);
-  const total = Math.max(1, item.ballots.length);
-  const [grow, setGrow] = useState(false);
-  useEffect(() => { setGrow(false); if (!active) return; const t = window.setTimeout(() => setGrow(true), reduce() ? 0 : 900); return () => clearTimeout(t); }, [active]);
-  if (groups.length === 0) return null;
-  return <div className="rc-votes">
-    {groups.map((g, i) => <div key={g.gamertag} className={`rc-vote${i === 0 ? ' lead' : ''} in`} style={delay(0.5 + i * 0.15)}>
-      <header><Face name={g.gamertag} size={26} /><span>{g.gamertag}</span><em>{g.voters.length} voix</em></header>
-      <div className="rc-bar"><i style={{ width: grow ? `${(g.voters.length / total) * 100}%` : 0 }} /></div>
-      <small>Voté par {g.voters.join(', ')}</small>
-    </div>)}
-  </div>;
+  const lead = groups.find((g) => elected.includes(g.gamertag));
+  const others = groups.filter((g) => !elected.includes(g.gamertag));
+  const picks = item.results.filter((p) => p.market === m.id).sort((a, b) => shown(b) - shown(a));
+  const name = elected.join(' & ') || 'Personne';
+  return <>
+    <p className="rc-kick in">{part ? `${part} · ${titleOf(m.id)}` : `Pari ${index} sur ${total} · ${titleOf(m.id)}`}</p>
+    <h2 className="rc-big rc-big--bet in" style={delay(0.05)}>Le crack<br />du <em>{part ? 'match' : 'soir'}</em></h2>
+    <div className="rc-sacre">
+      <div className="rc-sacre-pic">{elected[0] && <Portrait name={elected[0]} />}<span className="rc-crown" aria-hidden="true">👑</span></div>
+      <strong className="rc-sacre-name">{name}</strong>
+      <span className="rc-sacre-votes">{lead ? `${lead.voters.length} voix sur ${item.ballots.length}` : 'Élu par le club'}</span>
+      {lead && <div className="rc-sacre-voters in" style={delay(1.2)}>{lead.voters.map((b) => <span key={b.voter} title={b.me ? 'Toi' : b.voter}><Face name={b.voter} size={34} /></span>)}</div>}
+      {others.length > 0 && <p className="rc-sacre-others in" style={delay(1.4)}>
+        {others.map((g) => `${g.gamertag} · ${g.voters.length} voix (${g.voters.map((b) => (b.me ? 'toi' : b.voter)).join(', ')})`).join(' — ')}</p>}
+    </div>
+    {picks.length > 0 && <>
+      <p className="rc-kick in" style={delay(1.6)}>Ils l’avaient vu</p>
+      <div className="rc-chips">{picks.map((p, k) => <span key={`${p.name}${p.option}`} className={`rc-chip ${p.status} in`} style={delay(1.7 + k * 0.1)}>
+        <Face name={p.name} size={24} />{p.me ? 'Toi' : p.name}
+        <em>{p.status === 'refunded' ? 'rendu' : <CountUp value={shown(p)} active={active} wait={1700 + k * 100} />}</em></span>)}</div>
+    </>}
+  </>;
 }
 
 function Confetti({ active }: { active: boolean }) {
@@ -349,10 +362,7 @@ export function Recap({ item, parts = null, labels = null, state, onClose, onBoa
     played.forEach(({ m, src, part }, i) => {
       const key = `${src.id}-${m.id}`;
       if (m.id === 'crack') {
-        list.push({ key, tone: 'ice', ms: 8000, face: src.crack?.[0], body: (active) => <>
-          <BetStory m={m} item={src} index={i + 1} total={played.length} active={active} part={part} />
-          <CrackVotes item={src} active={active} />
-        </> });
+        list.push({ key, tone: 'ice', ms: 8000, body: (active) => <CrackStory m={m} item={src} index={i + 1} total={played.length} part={part} active={active} /> });
         return;
       }
       const right = rightOptions(m, src);

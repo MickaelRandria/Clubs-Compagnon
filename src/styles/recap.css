@@ -165,3 +165,27 @@
 .rc-ring small { font: 600 11px/1 var(--fc-text); opacity: .7; white-space: nowrap; }
 .rc-ring:focus-visible { outline: 2px solid #FFB547; outline-offset: 3px; }
 .fc-recaps { padding: 14px 16px 10px; background: rgba(6,12,31,.62); color: #F2F4F8; min-width: 0; }
+
+/* Le Crack, version « sacre » : l'élu en grand au centre, couronné ; ses électeurs dessous. */
+.rc-sacre { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; text-align: center; }
+.rc-sacre-pic { position: absolute; left: 0; right: 0; bottom: 96px; margin-inline: auto; width: min(280px, 78%); aspect-ratio: 1;
+  animation: rcRise .6s cubic-bezier(.2,.8,.2,1) both; }
+.rc-sacre-pic .rc-portrait { position: absolute; inset: 0; }
+.rc-crown { position: absolute; left: 50%; top: -34px; font-size: 44px; transform: translateX(-50%) rotate(-8deg);
+  animation: rcCrown .5s cubic-bezier(.2,1.4,.4,1) .9s both; }
+@keyframes rcCrown { from { opacity: 0; transform: translateX(-50%) translateY(-30px) rotate(-30deg) scale(1.6); } }
+.rc-sacre-name { position: relative; font: italic 800 44px/.9 var(--fc-display); text-transform: uppercase; animation: rcStampName .45s cubic-bezier(.2,1.4,.4,1) .7s both; }
+@keyframes rcStampName { from { opacity: 0; transform: scale(1.8); } }
+.rc-sacre-votes { position: relative; font: 800 17px/1 var(--fc-display); letter-spacing: .06em; text-transform: uppercase; }
+.rc-sacre-voters { position: relative; display: flex; justify-content: center; margin-top: 6px; }
+.rc-sacre-voters span { margin-left: -6px; }
+.rc-sacre-voters .rc-av { border-radius: 50%; clip-path: none; box-shadow: 0 0 0 2px var(--rc-chalk); }
+.rc-sacre-others { position: relative; margin: 4px 0 0; font: 600 13px/1.3 var(--fc-text); opacity: .75; }
+.rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-chip { display: flex; align-items: center; gap: 6px; padding: 4px 9px 4px 4px; background: rgba(6,12,31,.12); font: 800 15px/1 var(--fc-display);
+  text-transform: uppercase; white-space: nowrap; }
+.rc.t-night .rc-chip, .rc.t-blue .rc-chip, .rc.t-red .rc-chip { background: rgba(242,244,248,.1); }
+.rc-chip em { font-style: normal; }
+.rc-chip.won em { color: #0B7A4B; } .rc.t-night .rc-chip.won em, .rc.t-blue .rc-chip.won em { color: var(--rc-win); }
+.rc-chip.lost { opacity: .55; } .rc-chip.lost em { color: #B3122A; } .rc.t-night .rc-chip.lost em { color: var(--rc-lose); }
+@media (prefers-reduced-motion: reduce) { .rc-crown, .rc-sacre-name, .rc-sacre-pic { animation: none; } }

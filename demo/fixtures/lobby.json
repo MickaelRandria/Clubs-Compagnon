@@ -1,0 +1,20 @@
+{
+  "playing": {
+    "title": "Never Gonna Give You Up",
+    "artist": "Rick Astley",
+    "album": "Whenever You Need Somebody",
+    "cover": "/demo/fixtures/lobby-cover.svg",
+    "url": "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",
+    "progressMs": 84000,
+    "durationMs": 213573,
+    "at": "2026-10-30T21:00:00.000Z"
+  },
+  "next": {
+    "title": "Get Lucky (Radio Edit)",
+    "artist": "Daft Punk, Pharrell Williams, Nile Rodgers",
+    "url": "https://open.spotify.com/track/2Foc5Q5nqNiosCNqttzHof"
+  },
+  "host": "vrYmika",
+  "jamUrl": "https://spotify.link/demo-foodball",
+  "connected": true
+}

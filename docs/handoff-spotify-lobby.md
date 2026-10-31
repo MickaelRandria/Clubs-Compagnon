@@ -13,7 +13,7 @@ Une carte « En ce moment dans le lobby » qui montre en direct ce que l'**hôte
 - Emplacements : en haut de l'accueil (`src/views/HomeView.tsx`, carte complète) et dans la salle
   d'attente FoodBet (`src/views/FoodBetView.tsx`, `RoomBefore` et `RoomSession`, version compacte).
 - La carte n'apparaît que si un titre joue. Pas de compteur de personnes dans la Jam (Spotify ne le donne pas).
-- Un seul hôte (probablement vrYmika, à confirmer avec l'utilisateur), qui relie son compte Spotify une fois.
+- Un seul hôte, choisi en reliant son compte Spotify depuis un profil admin. Aucun pseudo n'est codé en dur.
 - Le lien de la Jam ne vient pas de l'API Spotify : un admin le colle dans l'app (champ « Lien de la Jam »).
 
 ## Contraintes techniques
@@ -21,13 +21,16 @@ Une carte « En ce moment dans le lobby » qui montre en direct ce que l'**hôte
 - **Plus aucune fonction Vercel libre (12/12)** : ne pas créer de fichier dans `api/`. La connexion Spotify
   passe par le routeur de connexion existant (`api/auth/[action].ts` → `server/auth-router.ts`), la lecture
   du titre en cours et le lien de la Jam par le routeur FoodBet (`api/bets/[action].ts` → `server/bets-http.ts`).
-- Spotify en **mode développeur** : l'hôte doit être ajouté dans « User Management » de l'app Spotify.
+- Spotify en **mode développeur** : le propriétaire de l'app doit avoir **Premium** ; une nouvelle app
+  accepte **5 comptes autorisés**. Ajouter l'hôte dans « User Management » s'il ne possède pas l'app.
 - Portées OAuth : `user-read-currently-playing user-read-playback-state` (titre en cours + file d'attente).
 - Aucun secret côté navigateur : le serveur garde le jeton de rafraîchissement et appelle Spotify.
-  Petit cache mémoire (~10 s) pour ne pas appeler Spotify à chaque visiteur.
+  Petit cache mémoire (~10 s), partagé entre requêtes simultanées d'une même instance serveur.
+  Ce cache n'est pas partagé entre plusieurs instances Vercel. Les réponses 429 respectent `Retry-After`.
 - Variables d'environnement Vercel (posées par l'utilisateur, jamais dans le code ni dans la conversation) :
   `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`. Adresse de retour à déclarer dans l'app Spotify :
-  `https://clubs-compagnon.vercel.app/api/auth/spotify-callback` (et `http://localhost:5173/api/auth/spotify-callback` en local).
+  `https://clubs-compagnon.vercel.app/api/auth/spotify-callback` (et `http://127.0.0.1:5173/api/auth/spotify-callback` en local).
+  `localhost` est refusé par Spotify. Ouvrir le site avec la même origine que celle déclarée.
 
 ## Plan et avancement
 
@@ -41,9 +44,9 @@ Branche : `lobby-spotify` (partie de `main` après le commit `0c9ba4a`).
 | 4. Routes `GET /api/bets/lobby` (titre en cours, public) et `POST /api/bets/jam` (admin : lien de la Jam) | `server/bets-http.ts`, `api/bets/[action].ts` | fait |
 | 5. Front : composant `LobbyMusic` (complet / compact), interrogé toutes les 15 s ; accueil + salle d'attente FoodBet | `src/components/home/LobbyMusic.tsx`, `src/styles/lobby.css`, `src/api/bets.ts` | fait |
 | 6. Admin : sur la page Profil (admins), « Connecter Spotify » et champ « Lien de la Jam » | `src/views/ProfileView.tsx` (`LobbyAdmin`) | fait |
-| 7. Démo : `/api/bets/lobby` simulé dans `demo/serve.ts` ; captures 390 px | `demo/` | à faire |
-| 8. Tests (`npm run test:fc27`), build (`npm run build`), commit sur la branche | — | à faire |
-| 9. Mise en prod : **demander l'accord**, appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | — | à faire |
+| 7. Démo : `/api/bets/lobby` simulé dans `demo/serve.ts` ; captures 390 px | `demo/`, `captures/` (ignoré) | fait |
+| 8. Tests (`npm run test:fc27`), build (`npm run build`), commit sur la branche | 221 tests verts, 29 ajoutés ; parcours Chrome 390/320 px validés ; build réussi (12/12 fonctions) | fait |
+| 9. Mise en prod : **demander l'accord**, appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | — | en attente d'accord explicite et de configuration Spotify |
 
 Mettre à jour la colonne « État » à chaque étape terminée.
 
@@ -58,5 +61,51 @@ Vérifier ensuite par une requête. Ne le faire qu'avec l'accord explicite de l'
 
 - Créer l'app sur developer.spotify.com (Web API), déclarer l'adresse de retour ci-dessus, ajouter l'hôte
   dans « User Management », poser `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` dans Vercel (Production).
-- Confirmer l'hôte de la musique.
+- Choisir l'hôte en reliant son Spotify depuis un profil admin (son compte Discord doit être admin).
 - Après déploiement : l'hôte va sur Profil → « Connecter Spotify » ; un admin colle le lien de la Jam.
+
+## Reprise par Codex — 31 octobre 2026
+
+La partie locale est complétée sur `lobby-spotify`. Aucun push ni écriture de base distante effectué.
+
+- OAuth : cookie Spotify distinct de Discord, lié au compte initiateur ; rôle admin revérifié au retour.
+- Jetons : remplacement complet lors d'un changement d'hôte ; rafraîchissement conditionnel qui n'écrase
+  pas une reconnexion concurrente ; un seul nouvel essai après 401, suppression d'une connexion révoquée.
+- Réseau : délai de 8 s par appel, erreurs sans secret, cache invalidé lors d'une modification, appels
+  simultanés regroupés ; pause, podcast et publicité masquent la carte.
+- Front : logo officiel et liens des morceaux vers Spotify, progression accessible, suppression de l'ancien
+  morceau en cas de panne ou de perte réseau ; aucune persistance disque de la musique en direct.
+- Admin : chargement et erreurs explicites, protection de la saisie pendant l'enregistrement et retour
+  distinct pour un retrait du lien. Le bouton « Déconnecter Spotify » supprime le compte hôte et les
+  jetons stockés ; le lien Jam saisi par un admin reste indépendant et peut être retiré dans le formulaire.
+- Démo : pochette locale et fixture `demo/fixtures/lobby.json`, `/profil?admin` avec `--connecte`.
+  États sur toute page : `?musique=pause|absente|indisponible|sans-jam`, lecture par défaut.
+- Tests ajoutés : `tests/spotify.test.ts`, `tests/lobby.test.ts` (vraies migrations dans PGlite en mémoire),
+  `tests/lobby.browser.ts` (Chrome + démo autonome, aucune base distante ni requête Spotify).
+- Validation finale : **221/221 tests**, dont 29 nouveaux, build réussi, aucun débordement à 390/320 px
+  ni exception JavaScript dans les parcours testés. Le build signale encore des annotations de la dépendance
+  Zod et le poids du bundle principal ; ces avertissements n'empêchent pas la compilation.
+
+Commandes de vérification :
+
+```powershell
+npm run test:fc27
+npm run test:lobby:browser
+npm run build
+npm run captures -- --connecte / '/paris?scene=rien' '/paris?scene=session' '/profil?admin' '/?musique=pause' '/?musique=sans-jam'
+```
+
+Captures dans `captures/` : accueil, FoodBet avant/session, profil admin, pause, sans Jam ; aperçus
+recadrés `lobby-accueil.png`, `lobby-foodbet.png`, `lobby-profil.png`. Les tests navigateur vérifient
+également 320 px, les noms longs, la progression, les liens, l'enregistrement/retrait/déconnexion simulés,
+le refus réel des écritures en démo et la disparition du morceau après perte réseau.
+
+Limite de validation : la connexion à un vrai compte Spotify et une vraie Jam restent à essayer après
+configuration et déploiement autorisé. Les échanges OAuth et Spotify sont simulés dans les tests locaux.
+
+Documentation Spotify vérifiée le 31 octobre 2026 :
+
+- [Quotas : Premium du propriétaire et cinq comptes autorisés](https://developer.spotify.com/documentation/web-api/concepts/quota-modes).
+- [Adresses de retour : HTTPS et exception pour les IP de boucle locale](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri).
+- [Attribution, liens et pochettes](https://developer.spotify.com/documentation/design).
+- [Politique : déconnexion et suppression des données, I.2](https://developer.spotify.com/policy).

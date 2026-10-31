@@ -33,6 +33,7 @@ export interface PhotoStore {
 export interface LobbyStore {
   now: (origin: string) => Promise<LobbyMusic>;
   saveJam: (url: string) => Promise<void>;
+  disconnect?: () => Promise<void>;
 }
 
 /** Une photo envoyée : une image en data URL, 400 Ko au plus (l'app l'envoie en WebP de 420 px). */
@@ -110,6 +111,16 @@ export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: nu
       const parsed = jamUrlSchema.safeParse(await body(request));
       if (!parsed.success) throw new HttpError(400, 'Colle le lien de partage de la Jam (spotify.link ou open.spotify.com).');
       await lobby.saveJam(parsed.data.url);
+      return Response.json(await lobby.now(requestOrigin(request)), { headers });
+    } }],
+    ['spotify-disconnect', { method: 'POST', run: async (request) => {
+      if (!lobby?.disconnect) throw new HttpError(404, 'Route inconnue.');
+      const accountId = readSession(request);
+      if (accountId === null) throw new HttpError(401, 'Connecte-toi avec Discord.');
+      const origin = request.headers.get('origin');
+      if (origin && origin !== requestOrigin(request)) throw new HttpError(403, 'Cette action doit être envoyée depuis le site.');
+      if (!await isAdmin(accountId)) throw new HttpError(403, 'Réservé aux admins du club.');
+      await lobby.disconnect();
       return Response.json(await lobby.now(requestOrigin(request)), { headers });
     } }],
     ['photos', { method: 'GET', run: async () => {

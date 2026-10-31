@@ -46,7 +46,7 @@ Branche : `lobby-spotify` (partie de `main` après le commit `0c9ba4a`).
 | 6. Admin : sur la page Profil (admins), « Connecter Spotify » et champ « Lien de la Jam » | `src/views/ProfileView.tsx` (`LobbyAdmin`) | fait |
 | 7. Démo : `/api/bets/lobby` simulé dans `demo/serve.ts` ; captures 390 px | `demo/`, `captures/` (ignoré) | fait |
 | 8. Tests (`npm run test:fc27`), build (`npm run build`), commit sur la branche | 221 tests verts, 29 ajoutés ; parcours Chrome 390/320 px validés ; build réussi (12/12 fonctions) | fait |
-| 9. Mise en prod : **demander l'accord**, appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | — | en attente d'accord explicite et de configuration Spotify |
+| 9. Mise en prod : appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | Accord explicite reçu le 31/10/2026 ; variables Spotify présentes dans Vercel Production | en attente d'accès à la branche Neon de production |
 
 Mettre à jour la colonne « État » à chaque étape terminée.
 
@@ -59,8 +59,9 @@ Vérifier ensuite par une requête. Ne le faire qu'avec l'accord explicite de l'
 
 ## Reste à demander à l'utilisateur
 
-- Créer l'app sur developer.spotify.com (Web API), déclarer l'adresse de retour ci-dessus, ajouter l'hôte
-  dans « User Management », poser `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` dans Vercel (Production).
+- Connecter Neon pour permettre l'accès à la branche de production. L'app Spotify a été créée et
+  `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` sont présents dans Vercel Production (vérifié sans lire les valeurs).
+- Vérifier l'adresse de retour ci-dessus et ajouter l'hôte dans « User Management » si nécessaire.
 - Choisir l'hôte en reliant son Spotify depuis un profil admin (son compte Discord doit être admin).
 - Après déploiement : l'hôte va sur Profil → « Connecter Spotify » ; un admin colle le lien de la Jam.
 
@@ -109,3 +110,25 @@ Documentation Spotify vérifiée le 31 octobre 2026 :
 - [Adresses de retour : HTTPS et exception pour les IP de boucle locale](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri).
 - [Attribution, liens et pochettes](https://developer.spotify.com/documentation/design).
 - [Politique : déconnexion et suppression des données, I.2](https://developer.spotify.com/policy).
+
+## Préparation de la mise en production — 31 octobre 2026
+
+L'utilisateur a explicitement autorisé la migration 0028 sur la base de production et le push sur `main`.
+Cet accord est acquis : ne pas le redemander pour reprendre le même déploiement.
+
+- Nouveau préflight local sur `991c2a9` : 221/221 tests et build réussis, 12/12 fonctions.
+- `origin/main` et la production Vercel sont encore sur `0c9ba4a`.
+- Le CLI Vercel local est authentifié sur `mickaelrandrias-projects/clubs-compagnon` ; les deux variables
+  Spotify sont présentes comme secrets de l'environnement Production. Le connecteur Vercel refuse leur
+  énumération (403), mais le CLI permet de vérifier les noms sans accéder aux valeurs.
+- **Ne pas utiliser la connexion actuelle de `.env.local` pour cette migration** : malgré sa mention
+  `VERCEL_ENV=production`, une requête de lecture identifie la branche Neon `br-green-king-b2dbq2kb`,
+  et non `br-patient-rice-b2zco9zo`. Aucune écriture n'y a été effectuée.
+- Vercel ne restitue pas les valeurs des secrets de production au CLI. Une connexion Neon a été proposée
+  pour accéder directement à la bonne branche. Elle reste à confirmer.
+- Transaction préparée dans `captures/deploiement-spotify-0028.sql` (ignoré par git) : contrôle du projet,
+  de la branche et de la migration précédente, création de la table et inscription au journal en une
+  transaction, puis lecture de vérification. Elle n'a pas été exécutée.
+- Empreinte SHA-256 de 0028 en LF : `7dea4cb229366167129ef7aad768de84ff9b64971a10cd631c26bf495ec62ed8` ;
+  `created_at` : `1791600000000`. Appliquer uniquement 0028 sur la production confirmée, vérifier table
+  et journal, puis publier la branche et intégrer sur `main`. Aucun push n'a encore été effectué.

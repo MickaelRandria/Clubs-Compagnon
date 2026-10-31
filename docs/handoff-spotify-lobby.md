@@ -46,7 +46,7 @@ Branche : `lobby-spotify` (partie de `main` après le commit `0c9ba4a`).
 | 6. Admin : sur la page Profil (admins), « Connecter Spotify » et champ « Lien de la Jam » | `src/views/ProfileView.tsx` (`LobbyAdmin`) | fait |
 | 7. Démo : `/api/bets/lobby` simulé dans `demo/serve.ts` ; captures 390 px | `demo/`, `captures/` (ignoré) | fait |
 | 8. Tests (`npm run test:fc27`), build (`npm run build`), commit sur la branche | 221 tests verts, 29 ajoutés ; parcours Chrome 390/320 px validés ; build réussi (12/12 fonctions) | fait |
-| 9. Mise en prod : appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | Accord explicite reçu le 31/10/2026 ; variables Spotify présentes dans Vercel Production | en attente d'accès à la branche Neon de production |
+| 9. Mise en prod : appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | Accord reçu ; variables Spotify présentes ; migration appliquée et vérifiée le 31/10/2026 | migration faite, publication GitHub/Vercel à suivre |
 
 Mettre à jour la colonne « État » à chaque étape terminée.
 
@@ -59,8 +59,8 @@ Vérifier ensuite par une requête. Ne le faire qu'avec l'accord explicite de l'
 
 ## Reste à demander à l'utilisateur
 
-- Connecter Neon pour permettre l'accès à la branche de production. L'app Spotify a été créée et
-  `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` sont présents dans Vercel Production (vérifié sans lire les valeurs).
+- L'app Spotify est créée, Neon est accessible et `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` sont
+  présents dans Vercel Production (vérifié sans lire les valeurs).
 - Vérifier l'adresse de retour ci-dessus et ajouter l'hôte dans « User Management » si nécessaire.
 - Choisir l'hôte en reliant son Spotify depuis un profil admin (son compte Discord doit être admin).
 - Après déploiement : l'hôte va sur Profil → « Connecter Spotify » ; un admin colle le lien de la Jam.
@@ -124,11 +124,11 @@ Cet accord est acquis : ne pas le redemander pour reprendre le même déploiemen
 - **Ne pas utiliser la connexion actuelle de `.env.local` pour cette migration** : malgré sa mention
   `VERCEL_ENV=production`, une requête de lecture identifie la branche Neon `br-green-king-b2dbq2kb`,
   et non `br-patient-rice-b2zco9zo`. Aucune écriture n'y a été effectuée.
-- Vercel ne restitue pas les valeurs des secrets de production au CLI. Une connexion Neon a été proposée
-  pour accéder directement à la bonne branche. Elle reste à confirmer.
+- Vercel ne restitue pas les valeurs des secrets de production au CLI. Le plugin Neon a été activé et
+  donne désormais accès directement à la bonne branche, sans exporter ses identifiants.
 - Transaction préparée dans `captures/deploiement-spotify-0028.sql` (ignoré par git) : contrôle du projet,
   de la branche et de la migration précédente, création de la table et inscription au journal en une
-  transaction, puis lecture de vérification. Elle n'a pas été exécutée.
+  transaction, puis lecture de vérification. La migration a été exécutée via Neon sur la branche confirmée.
 - Empreinte SHA-256 de 0028 en LF : `7dea4cb229366167129ef7aad768de84ff9b64971a10cd631c26bf495ec62ed8` ;
-  `created_at` : `1791600000000`. Appliquer uniquement 0028 sur la production confirmée, vérifier table
-  et journal, puis publier la branche et intégrer sur `main`. Aucun push n'a encore été effectué.
+  `created_at` : `1791600000000`. Vérification après transaction : table `lobby_music` présente et vide,
+  une seule entrée au journal avec l'empreinte attendue. La publication du code sur `main` suit cette étape.

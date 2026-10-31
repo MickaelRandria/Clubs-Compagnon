@@ -46,7 +46,7 @@ Branche : `lobby-spotify` (partie de `main` après le commit `0c9ba4a`).
 | 6. Admin : sur la page Profil (admins), « Connecter Spotify » et champ « Lien de la Jam » | `src/views/ProfileView.tsx` (`LobbyAdmin`) | fait |
 | 7. Démo : `/api/bets/lobby` simulé dans `demo/serve.ts` ; captures 390 px | `demo/`, `captures/` (ignoré) | fait |
 | 8. Tests (`npm run test:fc27`), build (`npm run build`), commit sur la branche | 221 tests verts, 29 ajoutés ; parcours Chrome 390/320 px validés ; build réussi (12/12 fonctions) | fait |
-| 9. Mise en prod : appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | Accord reçu ; variables Spotify présentes ; migration appliquée et vérifiée le 31/10/2026 | migration faite, publication GitHub/Vercel à suivre |
+| 9. Mise en prod : appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | Migration vérifiée, PR #1 fusionnée sur `main`, Vercel READY et parcours public validé le 31/10/2026 | fait |
 
 Mettre à jour la colonne « État » à chaque étape terminée.
 
@@ -67,7 +67,8 @@ Vérifier ensuite par une requête. Ne le faire qu'avec l'accord explicite de l'
 
 ## Reprise par Codex — 31 octobre 2026
 
-La partie locale est complétée sur `lobby-spotify`. Aucun push ni écriture de base distante effectué.
+La partie locale a été complétée sur `lobby-spotify`, puis publiée en production après accord explicite
+de l'utilisateur (voir le bilan de déploiement ci-dessous).
 
 - OAuth : cookie Spotify distinct de Discord, lié au compte initiateur ; rôle admin revérifié au retour.
 - Jetons : remplacement complet lors d'un changement d'hôte ; rafraîchissement conditionnel qui n'écrase
@@ -117,7 +118,7 @@ L'utilisateur a explicitement autorisé la migration 0028 sur la base de product
 Cet accord est acquis : ne pas le redemander pour reprendre le même déploiement.
 
 - Nouveau préflight local sur `991c2a9` : 221/221 tests et build réussis, 12/12 fonctions.
-- `origin/main` et la production Vercel sont encore sur `0c9ba4a`.
+- Avant publication, `origin/main` et la production Vercel étaient sur `0c9ba4a`.
 - Le CLI Vercel local est authentifié sur `mickaelrandrias-projects/clubs-compagnon` ; les deux variables
   Spotify sont présentes comme secrets de l'environnement Production. Le connecteur Vercel refuse leur
   énumération (403), mais le CLI permet de vérifier les noms sans accéder aux valeurs.
@@ -131,4 +132,24 @@ Cet accord est acquis : ne pas le redemander pour reprendre le même déploiemen
   transaction, puis lecture de vérification. La migration a été exécutée via Neon sur la branche confirmée.
 - Empreinte SHA-256 de 0028 en LF : `7dea4cb229366167129ef7aad768de84ff9b64971a10cd631c26bf495ec62ed8` ;
   `created_at` : `1791600000000`. Vérification après transaction : table `lobby_music` présente et vide,
-  une seule entrée au journal avec l'empreinte attendue. La publication du code sur `main` suit cette étape.
+  une seule entrée au journal avec l'empreinte attendue. La publication du code sur `main` a suivi cette étape.
+
+## Déploiement terminé — 31 octobre 2026
+
+- [PR #1](https://github.com/MickaelRandria/Clubs-Compagnon/pull/1) fusionnée sur `main` : commit applicatif
+  `3ef0dd94683385fc2814701c7f6771bdf152a7bf`. Les captures avant/après sont liées dans la PR et retirées
+  de l'arbre avant fusion.
+- Déploiement Vercel `dpl_HrJNcB5No5FS3qHB3A9ajWXEbZhj`, état **READY**, environnement Production,
+  alias [clubs-compagnon.vercel.app](https://clubs-compagnon.vercel.app).
+- Vérifications publiques : accueil et `/profil` HTTP 200, largeur 390 px sans débordement,
+  aucune exception JavaScript ni requête échouée dans Chrome. Logo Spotify HTTP 200.
+- `GET /api/bets/lobby` HTTP 200 : `playing`, `next`, `host` et `jamUrl` à `null`, `connected: false`.
+  C'est l'état attendu avant la première connexion de l'hôte.
+- `GET /api/auth/spotify` HTTP 401 sans compte Discord ; aucune connexion ni écriture de test simulée
+  en production. Aucun journal de niveau erreur/fatal trouvé sur ce déploiement dans les dix minutes
+  du contrôle.
+
+Activation restante par l'hôte : ouvrir [Mon profil](https://clubs-compagnon.vercel.app/profil) avec son
+compte Discord admin, cliquer « Connecter Spotify », autoriser l'app, coller le lien de la Jam puis lancer
+un morceau. La carte apparaît sur l'accueil et dans FoodBet quand un titre joue. Cette connexion réelle
+et l'ouverture de la Jam nécessitent le compte personnel de l'hôte et restent à effectuer par lui.

@@ -113,7 +113,16 @@ function betsState(scene: Scene, admin: boolean): BetsState {
       ballots: [me, ...others].filter((m) => m.id !== crack.id).map((m, i) => {
         const pickFor = i === 3 ? others[1] : crack;
         return { voter: m.gamertag, me: m.id === me.id, memberId: pickFor.id, gamertag: pickFor.gamertag };
-      }) }] : [],
+      }) },
+      // Une soirée d'avant le format session : un pari Crack par match, sans bilan de soirée.
+      ...[9, 7].map((k, n) => {
+        const crackMarket = markets.find((m) => m.id === 'crack')!;
+        const elected = others[n];
+        const legacy = [pick(me.gamertag, true, 'crack', String(elected.id), 50, true), pick(others[2].gamertag, false, 'crack', String(me.id), 50, false)];
+        return { id: 10 + n, status: 'settled' as const, settledAt: matches[k].playedAt, match: null, session: null, crack: [elected.gamertag], flop: null,
+          markets: [crackMarket], mySlips: [], results: legacy, myVote: null,
+          ballots: others.slice(0, 3).map((m) => ({ voter: m.gamertag, me: false, memberId: elected.id, gamertag: elected.gamertag })) };
+      })] : [],
     leaderboard: [
       { accountId: 2, name: others[0].gamertag, balance: 1820, me: false },
       { accountId: 1, name: me.gamertag, balance: settled ? 1345 : 1100, me: true },

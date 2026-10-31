@@ -47,7 +47,7 @@
 .rc-opt small { margin-left: 6px; font: 700 12px/1 var(--fc-display); opacity: .65; }
 .rc-opt.lit { background: var(--rc-chalk); color: var(--rc-night); }
 .rc.t-ice .rc-opt.lit, .rc.t-amber .rc-opt.lit { background: var(--rc-night); color: var(--rc-chalk); }
-.rc-opt.right { background: var(--rc-win); color: var(--rc-night); animation: rcStamp .45s cubic-bezier(.2,1.4,.4,1) both; }
+.rc .rc-opts .rc-opt.right { background: var(--rc-win); color: var(--rc-night); animation: rcStamp .45s cubic-bezier(.2,1.4,.4,1) both; }
 .rc-opt.wrong { opacity: .35; }
 @keyframes rcStamp { 0% { transform: rotate(-2deg) scale(2); opacity: 0; } 100% { transform: rotate(-2deg) scale(1.12); opacity: 1; } }
 .rc-verdict { min-height: 18px; margin: 0; font: 700 13px/1.3 var(--fc-display); letter-spacing: .12em; text-transform: uppercase; opacity: 0; transition: opacity .3s; }

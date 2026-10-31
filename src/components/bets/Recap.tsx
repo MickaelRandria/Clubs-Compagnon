@@ -1,7 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { apiRequest } from '../../api/client';
 import { MARKET_COPY, type BetPick, type BetSession, type BetsState, type Market, type MarketId } from '../../../shared/bets';
 import { byOrder, fmt, isPlayerMarket, plural, record, sessionLead, titleOf, topPlayers } from '../../lib/foodbet';
 import { colorOf, initials, photoOf } from '../../lib/player-photos';
+import type { Match } from '../../../shared/types';
 import '../../styles/recap.css';
 
 // Le récap de fin de soirée FoodBet, en stories plein écran : la soirée en chiffres, un pari par
@@ -95,7 +98,7 @@ function Row({ p, markets, revealed, d }: { p: BetPick; markets: Market[]; revea
 }
 
 /** Un pari : les pronos d'abord, la lumière passe d'une réponse à l'autre, puis se fige sur la bonne. */
-function BetStory({ m, item, index, total, active }: { m: Market; item: Item; index: number; total: number; active: boolean }) {
+function BetStory({ m, item, index, total, active, part }: { m: Market; item: Item; index: number; total: number; active: boolean; part?: string }) {
   const picks = item.results.filter((p) => p.market === m.id);
   const right = rightOptions(m, item);
   const options = isPlayerMarket(m.id) ? m.options.filter((o) => right.includes(o.id) || picks.some((p) => p.option === o.id)) : m.options;
@@ -118,14 +121,15 @@ function BetStory({ m, item, index, total, active }: { m: Market; item: Item; in
   }, [active, m.id, item.id]);
   const count = (id: string) => picks.filter((p) => p.option === id).length;
   return <>
-    <p className="rc-kick in">Pari {index} sur {total} · {titleOf(m.id)}</p>
+    <p className="rc-kick in">{part ? `${part} · ` : ''}Pari {index} sur {total} · {titleOf(m.id)}</p>
     <h2 className="rc-big rc-big--bet in" style={delay(0.05)}>{HEADS[m.id] ?? MARKET_COPY[m.id].title}</h2>
-    <p className="rc-q in" style={delay(0.1)}>{MARKET_COPY[m.id].question}</p>
+    <p className="rc-q in" style={delay(0.1)}>{part && m.id === 'crack' ? 'Qui sera élu joueur du match ?' : MARKET_COPY[m.id].question}</p>
     <div className={`rc-opts in${revealed ? ' revealed' : ''}`} style={delay(0.25)}>
       {options.map((o, i) => <span key={o.id} className={`rc-opt${lit === i ? ' lit' : ''}${revealed ? (right.includes(o.id) ? ' right' : ' wrong') : ''}`}>
         {o.label}{count(o.id) > 0 && <small>{count(o.id)}</small>}</span>)}
     </div>
-    <p className={`rc-verdict${revealed ? ' on' : ''}`}>{item.session ? verdict(m.id, item.session, item.crack) : ''}</p>
+    <p className={`rc-verdict${revealed ? ' on' : ''}`}>{item.session ? verdict(m.id, item.session, item.crack)
+      : m.id === 'crack' && item.crack?.length ? `Élu par le club : ${item.crack.join(' & ')}` : ''}</p>
     <div className={`rc-rows${revealed ? ' revealed' : ''}`}>
       {picks.map((p, k) => <Row key={`${p.name}${p.option}`} p={p} markets={item.markets} revealed={revealed} d={0.45 + k * 0.15} />)}
     </div>
@@ -233,16 +237,64 @@ async function shareImage(kind: 'podium' | 'bilan', item: Item, podium: [string,
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
+/**
+ * Une soirée à revoir. Format session : la rencontre elle-même. Avant (paris match par match) : les
+ * rencontres d'un même soir regroupées (`parts`), avec un bilan recalculé sur les matchs de la soirée.
+ */
+export interface Night { item: Item; parts: Item[] | null }
+
+/** La soirée d'un horaire : une partie après minuit compte pour la veille. */
+const eveningOf = (iso: string) => { const d = new Date(new Date(iso).getTime() - 8 * 3_600_000); return d.toDateString(); };
+
+function sessionOfMatches(list: Match[]): BetSession {
+  const played = [...list].sort((a, b) => a.playedAt.localeCompare(b.playedAt));
+  let run = 0, bestStreak = 0;
+  for (const m of played) { run = m.result === 'win' ? run + 1 : 0; bestStreak = Math.max(bestStreak, run); }
+  const last = played[played.length - 1];
+  return {
+    startedAt: played[0]?.playedAt ?? null, endedAt: last?.playedAt ?? null, matches: played.length,
+    wins: played.filter((m) => m.result === 'win').length, draws: played.filter((m) => m.result === 'draw').length,
+    losses: played.filter((m) => m.result === 'loss').length, goalsFor: played.reduce((a, m) => a + m.goalsFor, 0),
+    goalsAgainst: played.reduce((a, m) => a + m.goalsAgainst, 0), cleanSheets: played.filter((m) => m.goalsAgainst === 0).length,
+    withStats: 0, reds: 0, ragequits: played.filter((m) => m.opponentQuit).length, quitKnown: played.length, bestStreak,
+    srStart: null, srNow: null, players: [],
+    last: last ? { id: last.id, opponent: last.opponent, goalsFor: last.goalsFor, goalsAgainst: last.goalsAgainst, result: last.result, playedAt: last.playedAt } : null,
+  };
+}
+
+/** Toutes les soirées à revoir, la plus récente d'abord. */
+export function nightsOf(history: Item[], matches: Match[]): Night[] {
+  const nights: Night[] = history.filter((h) => h.status === 'settled' && h.session).map((item) => ({ item, parts: null }));
+  const legacy = history.filter((h) => h.status === 'settled' && !h.session && h.results.length > 0);
+  for (const day of [...new Set(legacy.map((h) => eveningOf(h.settledAt)))]) {
+    const parts = legacy.filter((h) => eveningOf(h.settledAt) === day).sort((a, b) => a.id - b.id);
+    const session = sessionOfMatches(matches.filter((m) => eveningOf(m.playedAt) === day));
+    if (session.matches === 0) continue;
+    nights.push({ parts, item: {
+      id: -parts[0].id, status: 'settled', settledAt: parts[parts.length - 1].settledAt, match: null, session,
+      crack: [...new Set(parts.flatMap((p) => p.crack ?? []))], flop: null, markets: [],
+      mySlips: parts.flatMap((p) => p.mySlips), results: parts.flatMap((p) => p.results), myVote: null, ballots: parts.flatMap((p) => p.ballots),
+    } });
+  }
+  return nights.sort((a, b) => b.item.settledAt.localeCompare(a.item.settledAt));
+}
+
+/** Les soirées à revoir, avec les matchs nécessaires aux soirées d'avant le format session. */
+export function useNights(history: Item[] | undefined): Night[] {
+  const legacy = (history ?? []).some((h) => h.status === 'settled' && !h.session && h.results.length > 0);
+  const matches = useQuery({ queryKey: ['matches', 50], queryFn: () => apiRequest<Match[]>('/api/matches?limit=50'), enabled: legacy, staleTime: 5 * 60_000 });
+  return useMemo(() => nightsOf(history ?? [], matches.data ?? []), [history, matches.data]);
+}
+
 /** Récap déjà vu (même clé que l'écran FoodBet) : son rond passe en gris. */
 const recapSeen = (id: number) => { try { return localStorage.getItem(`bets.seen.${id}`) === '1'; } catch { return true; } };
 
 /** Les soirées passées en ronds de stories : la tête du Crack, la date, le bilan. Touche pour revoir le récap. */
-export function RecapRings({ history, onOpen, title }: { history: BetsState['history']; onOpen: (fixtureId: number) => void; title?: string }) {
-  const nights = history.filter((h) => h.status === 'settled' && h.session);
+export function RecapRings({ nights, onOpen, title }: { nights: Night[]; onOpen: (id: number) => void; title?: string }) {
   if (nights.length === 0) return null;
   return <section className="rc-rings" aria-label={title ?? 'Les soirées FoodBet'}>
     {title && <p className="rc-rings-title">{title}</p>}
-    <div className="rc-rings-list">{nights.map((h) => {
+    <div className="rc-rings-list">{nights.map(({ item: h }) => {
       const s = h.session!;
       const star = h.crack?.[0] ?? [...h.results].sort((a, b) => net(b) - net(a))[0]?.name ?? 'FoodBet';
       const day = new Date(s.startedAt ?? h.settledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -255,7 +307,7 @@ export function RecapRings({ history, onOpen, title }: { history: BetsState['his
   </section>;
 }
 
-export function Recap({ item, state, onClose, onBoard }: { item: Item; state: BetsState; onClose: () => void; onBoard: () => void }) {
+export function Recap({ item, parts = null, state, onClose, onBoard }: { item: Item; parts?: Item[] | null; state: BetsState; onClose: () => void; onBoard: () => void }) {
   const session = item.session!;
   // Les rappels changent à chaque rendu du parent : les stories passent par ces références.
   const closeRef = useRef(onClose); closeRef.current = onClose;
@@ -264,9 +316,11 @@ export function Recap({ item, state, onClose, onBoard }: { item: Item; state: Be
     const onClose = () => closeRef.current();
     const onBoard = () => boardRef.current();
     const list: Story[] = [];
-    const markets = [...item.markets].sort(byOrder).filter((m) => m.id !== 'crack' && item.results.some((p) => p.market === m.id));
-    const crackMarket = item.markets.find((m) => m.id === 'crack');
-    const played = [...markets, ...(crackMarket ? [crackMarket] : [])];
+    // Les paris de la soirée : ceux de la session (le Crack en dernier), ou ceux de chaque match, dans l'ordre.
+    const withPicks = (src: Item) => [...src.markets].sort(byOrder).filter((m) => src.results.some((p) => p.market === m.id));
+    const played = parts
+      ? parts.flatMap((src, n) => withPicks(src).map((m) => ({ m, src, part: `Rencontre ${n + 1}` })))
+      : [...withPicks(item).filter((m) => m.id !== 'crack'), ...withPicks(item).filter((m) => m.id === 'crack')].map((m) => ({ m, src: item, part: undefined }));
     const bettors = new Set(item.results.map((p) => p.name)).size;
     list.push({ key: 'intro', tone: 'night', ms: 5500, body: (active) => <>
       <p className="rc-kick in">Fin de soirée · {plural(session.matches, 'match')}</p>
@@ -283,19 +337,21 @@ export function Recap({ item, state, onClose, onBoard }: { item: Item; state: Be
       <p className="rc-q in" style={{ ...delay(0.8), marginTop: 'auto' }}>{plural(bettors, 'parieur')}, {plural(played.length, 'pari')} joués. Voyons qui a vu juste.</p>
       <p className="rc-hint in" style={delay(1)}>Touche pour avancer · appui long pour pause</p>
     </> });
-    markets.forEach((m, i) => {
-      const right = rightOptions(m, item);
-      const best = item.results.filter((p) => p.market === m.id && p.status === 'won').sort((a, b) => shown(b) - shown(a))[0];
+    played.forEach(({ m, src, part }, i) => {
+      const key = `${src.id}-${m.id}`;
+      if (m.id === 'crack') {
+        list.push({ key, tone: 'ice', ms: 8000, face: src.crack?.[0], body: (active) => <>
+          <BetStory m={m} item={src} index={i + 1} total={played.length} active={active} part={part} />
+          <CrackVotes item={src} active={active} />
+        </> });
+        return;
+      }
+      const right = rightOptions(m, src);
+      const best = src.results.filter((p) => p.market === m.id && p.status === 'won').sort((a, b) => shown(b) - shown(a))[0];
       const face = isPlayerMarket(m.id) ? m.options.find((o) => right.includes(o.id))?.label ?? best?.name : best?.name;
-      list.push({ key: m.id, tone: TONES[i % TONES.length], ms: 6000 + item.results.filter((p) => p.market === m.id).length * 500, face,
-        body: (active) => <BetStory m={m} item={item} index={i + 1} total={played.length} active={active} /> });
+      list.push({ key, tone: TONES[i % TONES.length], ms: 6000 + src.results.filter((p) => p.market === m.id).length * 500, face,
+        body: (active) => <BetStory m={m} item={src} index={i + 1} total={played.length} active={active} part={part} /> });
     });
-    if (crackMarket) {
-      list.push({ key: 'crack', tone: 'ice', ms: 8000, face: item.crack?.[0], body: (active) => <>
-        <BetStory m={crackMarket} item={item} index={played.length} total={played.length} active={active} />
-        <CrackVotes item={item} active={active} />
-      </> });
-    }
     const won = item.results.filter((p) => p.status === 'won').sort((a, b) => b.odds - a.odds || shown(b) - shown(a));
     const coup = won[0];
     if (coup) list.push({ key: 'coup', tone: 'night', ms: 6000, face: coup.name, body: (active) => <>
@@ -344,7 +400,7 @@ export function Recap({ item, state, onClose, onBoard }: { item: Item; state: Be
         <p className="rc-kick in">Ton bilan</p>
         <p className="rc-huge in" style={delay(0.15)}><CountUp value={myNet} active={active} wait={150} /></p>
         <p className="rc-q in" style={delay(0.35)}>crédits sur la soirée · {mine.filter((p) => p.status === 'won').length} paris gagnés sur {mine.length}.</p>
-        <div className="rc-checks">{mine.map((p, i) => <div key={p.market} className={`rc-check ${p.status} in`} style={delay(0.6 + i * 0.1)}>
+        <div className="rc-checks">{mine.map((p, i) => <div key={`${i}${p.market}`} className={`rc-check ${p.status} in`} style={delay(0.6 + i * 0.1)}>
           <i>{p.status === 'won' ? '✓' : p.status === 'lost' ? '✗' : '↺'}</i><span>{titleOf(p.market)}</span>
           <b>{p.status === 'refunded' ? 'rendu' : sign(shown(p))}</b></div>)}</div>
         <button type="button" className="rc-btn in" style={{ ...delay(1.4), marginTop: 'auto' }} data-action
@@ -373,7 +429,7 @@ export function Recap({ item, state, onClose, onBoard }: { item: Item; state: Be
       </div>
     </> });
     return list;
-  }, [item, state.leaderboard, session]);
+  }, [item, parts, state.leaderboard, session]);
 
   const [index, setIndex] = useState(0);
   const [dir, setDir] = useState(1);

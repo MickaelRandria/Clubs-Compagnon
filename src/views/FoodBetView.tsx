@@ -8,7 +8,7 @@ import {
 import { byOrder, fmt, isPlayerMarket, plural, record, sessionLead, titleOf, topPlayers } from '../lib/foodbet';
 import { useMe } from '../api/auth';
 import { useBetsAdmin, useBetsPlay, useBetsState, useBetsStatus } from '../api/bets';
-import { Recap, RecapRings } from '../components/bets/Recap';
+import { Recap, RecapRings, useNights, type Night } from '../components/bets/Recap';
 import { SignInButton } from '../components/fc27/SignIn';
 import { frNum } from '../lib/format';
 import { usePageTitle } from '../lib/hooks';
@@ -180,7 +180,7 @@ function Room({ phase, status, live, explain, now, next, who, whoTitle, doneLabe
 }
 
 /** Phase 0 : la soirée n'a pas commencé. */
-function RoomBefore({ onBoard, onReplay }: { onBoard: () => void; onReplay: (fixtureId: number) => void }) {
+function RoomBefore({ nights, onBoard, onReplay }: { nights: Night[]; onBoard: () => void; onReplay: (id: number) => void }) {
   const { state } = useContext(FoodBetCtx);
   const last = state!.history.find((h) => h.status === 'settled');
   const net = last ? last.mySlips.reduce((sum, s) => sum + (s.payout ?? 0) - s.stake, 0) : 0;
@@ -192,7 +192,7 @@ function RoomBefore({ onBoard, onReplay }: { onBoard: () => void; onReplay: (fix
     who={here} whoTitle={`Dans la salle · ${here.length}`} doneLabel="là">
     {(last?.session || last?.match) && <p className="fb-note">Dernier FoodBet : {last.session ? record(last.session) : score(last.match!)}
       {last.mySlips.length > 0 && <> · <b className="fb-gain">{net > 0 ? '+' : ''}{fmt(net)} {CR}</b></>}</p>}
-    <RecapRings history={state!.history} title="Revoir les soirées" onOpen={onReplay} />
+    <RecapRings nights={nights} title="Revoir les soirées" onOpen={onReplay} />
     <Bailout />
     <button type="button" className="fb-link" onClick={onBoard}>Voir le classement</button>
   </Room>;
@@ -486,7 +486,7 @@ function Winners({ item, onDone, onBoard }: { item: BetsState['history'][number]
   </Screen>;
 }
 
-function Board({ onBack, onReplay }: { onBack: () => void; onReplay: (fixtureId: number) => void }) {
+function Board({ nights, onBack, onReplay }: { nights: Night[]; onBack: () => void; onReplay: (id: number) => void }) {
   const { state } = useContext(FoodBetCtx);
   const mine = state!.history.filter((h) => h.mySlips.length > 0);
   const won = mine.filter((h) => h.mySlips.some((s) => s.status === 'won')).length;
@@ -506,7 +506,7 @@ function Board({ onBack, onReplay }: { onBack: () => void; onReplay: (fixtureId:
         <i>{i + 1}</i><strong>{r.me ? 'Toi' : r.name}</strong><b className={r.net >= 0 ? 'fb-gain' : undefined}>{r.net > 0 ? '+' : ''}{fmt(r.net)}</b></div>)}</div>
     </div>}
     {mine.length > 0 && <p className="fb-note fb-push">Tes derniers FoodBets : {mine.length} joué{mine.length > 1 ? 's' : ''} · {won} gagné{won > 1 ? 's' : ''}</p>}
-    <RecapRings history={state!.history} title="Les soirées en stories" onOpen={onReplay} />
+    <RecapRings nights={nights} title="Les soirées en stories" onOpen={onReplay} />
     <button type="button" className={`fb-btn fb-btn--solid fb-btn--center${mine.length > 0 ? '' : ' fb-push'}`} onClick={onBack}>Retour</button>
   </Screen>;
 }
@@ -634,9 +634,10 @@ function Evening({ state, initialReplay }: { state: BetsState; initialReplay: nu
   const fixture = state.fixture;
   const vote = state.votes[0];
 
-  const replayed = state.history.find((h) => h.id === replay && h.session);
-  if (replayed) return <Recap key={`r${replayed.id}`} item={replayed} state={state} onClose={() => setReplay(null)} onBoard={() => setBoard(true)} />;
-  if (board) return <Board onBack={() => setBoard(false)} onReplay={(id) => { setBoard(false); setReplay(id); }} />;
+  const nights = useNights(state.history);
+  const replayed = nights.find((n) => n.item.id === replay);
+  if (replayed) return <Recap key={`r${replayed.item.id}`} item={replayed.item} parts={replayed.parts} state={state} onClose={() => setReplay(null)} onBoard={() => setBoard(true)} />;
+  if (board) return <Board nights={nights} onBack={() => setBoard(false)} onReplay={(id) => { setBoard(false); setReplay(id); }} />;
   const done = (id: number) => { markSeen(id); setSeen((n) => n + 1); };
   // Format session : le récap en stories ; anciennes rencontres d'un match : l'écran des gagnants.
   if (reveal?.session) return <Recap key={`r${reveal.id}`} item={reveal} state={state} onClose={() => done(reveal.id)} onBoard={() => setBoard(true)} />;
@@ -644,7 +645,7 @@ function Evening({ state, initialReplay }: { state: BetsState; initialReplay: nu
   if (fixture?.status === 'open') return <OpenFlow key={`o${fixture.id}`} state={state} />;
   if (fixture?.status === 'locked') return <RoomSession />;
   if (vote) return <VoteFlow key={`v${vote.id}`} vote={vote} />;
-  return <RoomBefore onBoard={() => setBoard(true)} onReplay={setReplay} />;
+  return <RoomBefore nights={nights} onBoard={() => setBoard(true)} onReplay={setReplay} />;
 }
 
 function Message({ title, text, children }: { title: ReactNode; text: string; children?: ReactNode }) {

@@ -3,7 +3,9 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { apiRequest } from '../../api/client';
 import { MARKET_COPY, type BetPick, type BetSession, type BetsState, type Market, type MarketId } from '../../../shared/bets';
 import { byOrder, fmt, isPlayerMarket, plural, record, sessionLead, titleOf, topPlayers } from '../../lib/foodbet';
+import { usePlayerPhotos } from '../../api/bets';
 import { colorOf, initials, photoOf } from '../../lib/player-photos';
+import { PhotoPicker } from './PhotoPicker';
 import type { Match } from '../../../shared/types';
 import '../../styles/recap.css';
 
@@ -133,6 +135,53 @@ function BetStory({ m, item, index, total, active, part }: { m: Market; item: It
     <div className={`rc-rows${revealed ? ' revealed' : ''}`}>
       {picks.map((p, k) => <Row key={`${p.name}${p.option}`} p={p} markets={item.markets} revealed={revealed} d={0.45 + k * 0.15} />)}
     </div>
+  </>;
+}
+
+/** Ta photo : l'ajouter si tu n'en as pas, sinon la voir et la remplacer si tu veux. */
+function PhotoStory({ name, onNext }: { name: string; onNext: () => void }) {
+  const photo = photoOf(name);
+  return <>
+    <p className="rc-kick in">{photo ? 'Ta photo actuelle' : '30 secondes'}</p>
+    <h2 className="rc-big in" style={delay(0.1)}>{photo ? <>Elle te<br /><em>plaît</em> ?</> : <>Ta photo,<br /><em>en sticker</em></>}</h2>
+    <div className="rc-cam in" style={delay(0.3)}>
+      {photo ? <><span className="rc-cam-now" style={{ backgroundImage: `url(${photo})` }} /><span className="rc-cam-badge">En ligne</span></>
+        : <><span className="rc-cam-raw" style={{ backgroundImage: 'url(/joueurs/rina94jjg.webp)' }} /><span className="rc-cam-arrow">→</span>
+          <span className="rc-cam-cut" style={{ backgroundImage: 'url(/joueurs/rina94jjg.webp)' }} /></>}
+    </div>
+    <p className="rc-q in" style={delay(0.45)}>{photo ? 'C’est elle qu’on voit dans les stories, au podium et au classement. Tu peux la remplacer quand tu veux.'
+      : 'Envoie une photo de toi, face caméra : elle remplace tes initiales dans toutes les stories, au podium et au classement.'}</p>
+    <div className="rc-photo-actions in" style={delay(0.6)}>
+      <PhotoPicker label={photo ? '📷 Remplacer ma photo' : '📷 Choisir une photo'} className="rc-btn" />
+      <button type="button" className="rc-btn ghost" data-action onClick={onNext}>{photo ? 'Garder celle-ci' : 'Plus tard'}</button>
+    </div>
+  </>;
+}
+
+const TUTO = [
+  { title: 'Remplis ton ticket', text: 'Avant le premier match, 7 paris sur toute la soirée : le bilan, les buts, le buteur, le maladroit, le Crack, le skill rating et un bonus. Passe ceux que tu veux.' },
+  { title: 'Joue, on suit', text: 'Les paris ferment au coup d’envoi. Pendant la session, chacun de tes paris se suit en direct, mis à jour après chaque match. Arrivé en retard ? L’admin ouvre le guichet entre deux matchs.' },
+  { title: 'Vote et encaisse', text: 'Fin de session : le club élit le Crack de la soirée, les gains tombent et le récap arrive en stories.' },
+];
+
+/** Le nouveau FoodBet en 3 cartes qu'on fait défiler. */
+function TutoStory({ onDone }: { onDone: () => void }) {
+  const [card, setCard] = useState(0);
+  return <>
+    <p className="rc-kick in">Ce soir, en 3 gestes</p>
+    <h2 className="rc-big in" style={delay(0.1)}>Le nouveau<br /><em>FoodBet</em></h2>
+    <div className="rc-tuto in" style={delay(0.3)}>
+      <div className="rc-tuto-track" style={{ transform: `translateX(calc(${-card} * (min(272px, 78vw) + 14px)))` }}>
+        {TUTO.map((t, i) => <div key={t.title} className={`rc-tuto-card${i === card ? '' : ' dim'}`}>
+          <i>{i + 1}</i><b>{t.title}</b><span>{t.text}</span>
+          {i === 2 && <div className="rc-tuto-rules"><p><b>½</b><span>Au plus la moitié de ton solde par pari (un quart au guichet)</span></p>
+            <p><b>+25</b><span>Ticket complet : 25 crédits offerts</span></p><p><b>Toi</b><span>Mise sur toi au Crack et au Buteur ; jamais au Maladroit</span></p></div>}
+        </div>)}
+      </div>
+    </div>
+    <div className="rc-dots" aria-hidden="true">{TUTO.map((t, i) => <i key={t.title} className={i === card ? 'on' : undefined} />)}</div>
+    <button type="button" className="rc-btn" data-action style={{ marginTop: 'auto' }}
+      onClick={() => (card < TUTO.length - 1 ? setCard(card + 1) : onDone())}>{card < TUTO.length - 1 ? 'Suivant' : 'C’est parti'}</button>
   </>;
 }
 
@@ -329,8 +378,10 @@ export function Recap({ item, parts = null, labels = null, state, onClose, onBoa
   item: Item; parts?: Item[] | null; labels?: string[] | null; state: BetsState; onClose: () => void; onBoard: () => void;
 }) {
   const session = item.session!;
+  usePlayerPhotos();
   // Les rappels changent à chaque rendu du parent : les stories passent par ces références.
   const closeRef = useRef(onClose); closeRef.current = onClose;
+  const nextRef = useRef(() => {});
   const boardRef = useRef(onBoard); boardRef.current = onBoard;
   const stories = useMemo<Story[]>(() => {
     const onClose = () => closeRef.current();
@@ -436,17 +487,10 @@ export function Recap({ item, parts = null, labels = null, state, onClose, onBoa
         <button type="button" className="rc-btn ghost" data-action onClick={onClose}>Fermer</button>
       </div>
     </> });
+    // Fin du récap : ta photo (l'ajouter, ou la remplacer), puis, pour une soirée d'avant, le tuto du nouveau FoodBet.
     const me = state.leaderboard.find((r) => r.me)?.name ?? mine[0]?.name;
-    if (me && !photoOf(me)) list.push({ key: 'photo', tone: 'amber', ms: 12000, body: () => <>
-      <p className="rc-kick in">Dernière chose</p>
-      <h2 className="rc-big in" style={delay(0.1)}>Mets<br /><em>ta tête</em></h2>
-      <p className="rc-q in" style={delay(0.25)}>Ta photo remplace tes initiales partout : stories, podium, classement. Meilleur buteur ou Crack de la
-        soirée ? C’est ta tête en grand.</p>
-      <p className="rc-q in" style={delay(0.4)}>Envoie une photo de toi, face caméra, à l’admin du club : il l’ajoute pour la prochaine soirée.</p>
-      <div className="rc-actions in" style={{ ...delay(0.6), marginTop: 'auto' }}>
-        <button type="button" className="rc-btn" data-action onClick={onClose}>C’est noté</button>
-      </div>
-    </> });
+    if (me) list.push({ key: 'photo', tone: 'blue', ms: 20000, body: () => <PhotoStory name={me} onNext={() => nextRef.current()} /> });
+    if (parts) list.push({ key: 'tuto', tone: 'ice', ms: 30000, body: () => <TutoStory onDone={onClose} /> });
     return list;
   }, [item, parts, labels, state.leaderboard, session]);
 
@@ -475,6 +519,7 @@ export function Recap({ item, parts = null, labels = null, state, onClose, onBoa
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   });
+  nextRef.current = () => go(index + 1);
   const pause = (p: boolean) => {
     if (p === paused) return;
     if (p) clock.current.elapsed += performance.now() - clock.current.start; else clock.current.start = performance.now();
@@ -498,7 +543,7 @@ export function Recap({ item, parts = null, labels = null, state, onClose, onBoa
   return <section className={`rc t-${story.tone}${paused ? ' paused' : ''}`} aria-roledescription="stories" aria-label="Récap de la soirée"
     style={{ transform: drag ? `translateY(${drag * 0.6}px) scale(${1 - Math.min(drag, 300) / 3000})` : undefined }}
     onPointerDown={(e) => {
-      if ((e.target as HTMLElement).closest('[data-action], button')) return;
+      if ((e.target as HTMLElement).closest('[data-action], button, label, input')) return;
       const timer = window.setTimeout(() => { if (down.current) down.current.held = true; pause(true); }, 260);
       down.current = { x: e.clientX, y: e.clientY, held: false, timer };
     }}

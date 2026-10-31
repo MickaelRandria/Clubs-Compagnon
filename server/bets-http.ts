@@ -21,6 +21,16 @@ export interface BetsGame {
   admin: (accountId: number, action: BetsAdminAction) => Promise<BetsState>;
 }
 
+/** Photos des joueurs : la liste (pseudo → URL versionnée), l'image, et l'envoi par le joueur lui-même. */
+export interface PhotoStore {
+  list: () => Promise<Record<string, string>>;
+  get: (memberId: number) => Promise<string | null>;
+  save: (accountId: number, image: string) => Promise<void>;
+}
+
+/** Une photo envoyée : une image en data URL, 400 Ko au plus (l'app l'envoie en WebP de 420 px). */
+const PHOTO = /^data:image\/(webp|jpeg|png);base64,([A-Za-z0-9+/=]+)$/;
+
 const headers = { 'Cache-Control': 'private, no-store' };
 
 /**
@@ -31,7 +41,7 @@ const headers = { 'Cache-Control': 'private, no-store' };
  * répondent 404 tant que le mode les ferme au visiteur, pour ne rien révéler avant le
  * lancement.
  */
-export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: number) => Promise<boolean>, game?: BetsGame) {
+export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: number) => Promise<boolean>, game?: BetsGame, photos?: PhotoStore) {
   const status = async (request: Request): Promise<BetsStatus> => {
     const accountId = readSession(request);
     const [mode, admin] = await Promise.all([settings.mode(), accountId === null ? false : isAdmin(accountId)]);
@@ -75,6 +85,29 @@ export function createBetsRouter(settings: BetsSettings, isAdmin: (accountId: nu
       return Response.json(await game.admin(accountId, parsed.data), { headers });
     } }],
     ['status', { method: 'GET', run: async (request) => Response.json(await status(request), { headers }) }],
+    ['photos', { method: 'GET', run: async () => {
+      if (!photos) throw new HttpError(404, 'Route inconnue.');
+      return Response.json(await photos.list(), { headers: { 'Cache-Control': 'public, max-age=60' } });
+    } }],
+    ['photo', { method: 'GET', run: async (request) => {
+      const memberId = Number(new URL(request.url).searchParams.get('m'));
+      const image = photos && Number.isInteger(memberId) ? await photos.get(memberId) : null;
+      const parsed = image ? PHOTO.exec(image) : null;
+      if (!parsed) throw new HttpError(404, 'Pas de photo.');
+      // L'URL porte la version (?v=) : l'image peut rester en cache longtemps.
+      return new Response(Buffer.from(parsed[2], 'base64'), { headers: { 'Content-Type': `image/${parsed[1]}`, 'Cache-Control': 'public, max-age=31536000, immutable' } });
+    } }],
+    ['photo-upload', { method: 'POST', run: async (request) => {
+      if (!photos) throw new HttpError(404, 'Route inconnue.');
+      const accountId = readSession(request);
+      if (accountId === null) throw new HttpError(401, 'Connecte-toi avec Discord pour ajouter ta photo.');
+      const origin = request.headers.get('origin');
+      if (origin && origin !== requestOrigin(request)) throw new HttpError(403, 'Cette action doit être envoyée depuis le site.');
+      const image = ((await body(request)) as { image?: unknown }).image;
+      if (typeof image !== 'string' || image.length > 400_000 || !PHOTO.test(image)) throw new HttpError(400, 'Photo invalide ou trop lourde.');
+      await photos.save(accountId, image);
+      return Response.json(await photos.list(), { headers });
+    } }],
     ['mode', {
       method: 'POST',
       run: async (request) => {

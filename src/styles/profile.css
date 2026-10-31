@@ -70,3 +70,9 @@
   .my-player-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .my-player-stats > div { padding: 16px 12px; }
 }
+
+/* Ta photo (stories FoodBet, podium, classement). */
+.profile-photo-row { display: flex; align-items: center; gap: 14px; }
+.profile-photo-row img, .profile-photo-empty { flex: none; width: 84px; height: 84px; object-fit: contain; border-radius: 50%; background: rgba(242,244,248,.08); }
+.profile-photo-empty { display: grid; place-items: center; font: italic 800 34px/1 var(--fc-display); opacity: .6; }
+.profile-photo-row p { margin: 0; min-width: 0; }

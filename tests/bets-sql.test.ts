@@ -271,3 +271,40 @@ test('mise max : la moitié du solde par pari ; ticket complet : +25 une seule f
   assert.equal(await balance(fan), 175, 'changer un pari ne redonne pas le bonus');
   await call('cancel', admin, { fixtureId: fixture.id }, true);
 });
+
+test('guichet : pendant la session, cotes en direct, un quart du solde, pas de retour en arrière', async () => {
+  await db.query('update credit_wallets set balance = 400 where account_id = $1', [fan]);
+  const markets = ticket().filter((m) => m.id === 'bilan' || m.id === 'attack');
+  const fixture = await open(markets);
+  await call('lock', admin, {}, true);
+  await playedMatch(1, 3, 0);
+  assert.equal((await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'bilan', option: 'win', stake: 50 }] })).status, 409, 'guichet fermé');
+  assert.equal((await call('window', alex, { markets })).status, 403);
+  // Les cotes du guichet : la victoire est devenue probable, elle rapporte moins.
+  const live = markets.map((m) => m.id === 'bilan' ? { ...m, options: m.options.map((o) => ({ ...o, odds: o.id === 'win' ? 1.2 : 6 })) } : m);
+  const opened = await call('window', admin, { markets: live }, true);
+  assert.ok(opened.fixture?.window, 'guichet ouvert');
+  assert.equal((await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'bilan', option: 'win', stake: 101 }] })).status, 409, 'au plus un quart');
+  const state = await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'bilan', option: 'win', stake: 100 }] });
+  const slip = state.fixture!.mySlips[0];
+  assert.deepEqual([slip.odds, slip.late], [1.2, true]);
+  assert.equal((await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'bilan', option: 'loss', stake: 50 }] })).status, 409, 'un pari placé ne se change plus');
+  await call('place', fan, { fixtureId: fixture.id, bets: [{ market: 'attack', option: 'gt3', stake: 50 }] });
+  assert.equal(await balance(fan), 400 - 150, 'pas de bonus de ticket au guichet');
+  // Un match se termine : le guichet ferme.
+  await playedMatch(0, 2, 1);
+  assert.equal((await call('state', fan)).fixture?.window, null);
+  await call('end-session', admin, {}, true);
+  assert.equal(statusOf((await call('state', fan)).history[0].mySlips, 'bilan'), 'won');
+  assert.equal(await balance(fan), 250 + 120 + 0, 'victoire à 1,20 : 100 → 120 ; attaque 2,5 buts par match : perdu');
+});
+
+test('photos : une par joueur, remplacée à l’envoi suivant', async () => {
+  await db.query('insert into player_photos(member_id, image) values ($1, $2)', [rina, 'data:image/webp;base64,AAAA']);
+  await db.query(`insert into player_photos(member_id, image) values ($1, $2)
+    on conflict (member_id) do update set image = excluded.image, updated_at = now()`, [rina, 'data:image/webp;base64,BBBB']);
+  const rows = (await db.query<{ image: string }>('select image from player_photos where member_id = $1', [rina])).rows;
+  assert.deepEqual(rows.map((r) => r.image), ['data:image/webp;base64,BBBB']);
+  await assert.rejects(db.query('insert into player_photos(member_id, image) values ($1, $2)', [chef, 'x'.repeat(400_001)]), 'image trop lourde refusée');
+});
+

@@ -137,10 +137,13 @@ export interface MarketOption { id: string; label: string; odds: number; trend?:
 
 /** Mise max par pari : la moitié du solde, jusqu'à 50 quand le solde est petit (même règle que bets_dispatch, drizzle/0026). */
 export const maxStake = (balance: number) => Math.max(Math.ceil(balance / 2), Math.min(balance, 50));
+/** Au guichet : un quart du solde, jusqu'à 25 quand le solde est petit. */
+export const lateStake = (balance: number) => Math.max(Math.ceil(balance / 4), Math.min(balance, 25));
 /** Crédits offerts une fois par soirée quand tous les paris du ticket sont joués. */
 export const TICKET_BONUS = 25;
 export interface Market { id: MarketId; options: MarketOption[] }
-export interface Slip { id: number; fixtureId: number; market: MarketId; option: string; stake: number; odds: number; status: SlipStatus; payout: number | null }
+/** `late` : pris au guichet, pendant la session. */
+export interface Slip { id: number; fixtureId: number; market: MarketId; option: string; stake: number; odds: number; status: SlipStatus; payout: number | null; late?: boolean }
 /** Le prono d'un joueur du club, tel que tout le monde le voit une fois dévoilé. */
 export interface BetPick { name: string; market: MarketId; option: string; stake: number; odds: number; status: SlipStatus; payout: number | null; me: boolean }
 export interface BetMatch { id: number; opponent: string; goalsFor: number; goalsAgainst: number; result: 'win' | 'draw' | 'loss'; playedAt?: string }
@@ -161,7 +164,9 @@ export interface BetsState {
   wallet: { balance: number; canBailout: boolean; bankrupt: boolean };
   /** Session à parier (ouverte) ou en cours (verrouillée, `session` = les matchs déjà joués). */
   fixture: { id: number; status: 'open' | 'locked'; openedAt: string; lockedAt: string | null; context: { reason: string | null } | null;
-    session: BetSession | null; markets: Market[]; bettors: number; mySlips: Slip[] } | null;
+    session: BetSession | null; markets: Market[]; bettors: number; mySlips: Slip[];
+    /** Guichet ouvert par l'admin pendant la session : jusqu'à quand, et les paris recotés en direct. */
+    window: { until: string; markets: Market[] } | null } | null;
   /** Sessions finies dont le vote du Crack est ouvert. */
   votes: {
     id: number; openedAt: string; session: BetSession; markets: Market[]; mySlips: Slip[];
@@ -201,6 +206,8 @@ export type BetsPlayAction = z.infer<typeof betsPlayActionSchema>;
 export const betsAdminActionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('open') }),
   z.object({ action: z.literal('lock') }),
+  // Le guichet des retardataires : 3 minutes, cotes recalculées sur la soirée en cours.
+  z.object({ action: z.literal('window') }),
   // Fin de session : synchro EA forcée, puis tout est réglé et le vote du Crack s'ouvre.
   z.object({ action: z.literal('end-session') }),
   // Suivre la session : relance la synchro EA (l'écran admin l'appelle toutes les 20 s).

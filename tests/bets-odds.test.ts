@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { drawBonus, ODDS_MAX, ODDS_MIN, openSession, sessionAnswer, type FormMatch } from '../shared/bets-odds.js';
+import { drawBonus, ODDS_MAX, ODDS_MIN, openSession, openWindow, sessionAnswer, type FormMatch } from '../shared/bets-odds.js';
 
 const match = (result: FormMatch['result'], goalsFor: number, goalsAgainst: number, extra: Partial<FormMatch> = {}): FormMatch =>
   ({ opponent: 'Adversaire', result, goalsFor, goalsAgainst, redCard: false, ratings: {}, ...extra });
@@ -66,3 +66,16 @@ test('réponses de session : mêmes règles que la fin de session en base', () =
   assert.equal(sessionAnswer('streak', { ...s, bestStreak: 3 }), 'oui');
   assert.equal(sessionAnswer('bilan', { ...s, matches: 0 }), null);
 });
+
+test('guichet : les cotes tiennent compte de la soirée déjà jouée', () => {
+  const opening = openSession([], mixed, players, seeded());
+  const live = { matches: 4, wins: 4, losses: 0, goalsFor: 14, cleanSheets: 2, reds: 0, ragequits: 0, bestStreak: 4, run: 4, srDelta: 60,
+    goals: { 1: 6, 2: 1 }, missed: { 1: 2, 2: 7 } };
+  const window = openWindow(opening.markets, live, mixed, players, seeded());
+  const at = (markets: typeof window, market: string, option: string) => markets.find((m) => m.id === market)!.options.find((o) => o.id === option)!.odds;
+  assert.ok(at(window, 'bilan', 'win') < at(opening.markets, 'bilan', 'win'), '4V 0D : « plus de V » rapporte moins');
+  assert.ok(at(window, 'bilan', 'loss') > at(opening.markets, 'bilan', 'loss'));
+  assert.ok(at(window, 'scorer', '1') < at(window, 'scorer', '2'), 'Rina a déjà 6 buts');
+  assert.deepEqual(window.map((m) => m.id), opening.markets.map((m) => m.id), 'les mêmes paris que le ticket');
+});
+

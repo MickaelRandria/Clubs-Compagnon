@@ -5,8 +5,12 @@ const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 
 const WITH_PHOTO = new Set(['naaks-75', 'chef695046', 'rina94jjg', 'desparte971', 'willourkt', 'vrymika', 'beeruus-sama']);
 
+/** Photos envoyées depuis l'app (pseudo → URL versionnée) : elles priment sur les portraits fournis. */
+let uploaded: Record<string, string> = {};
+export const setUploadedPhotos = (map: Record<string, string>) => { uploaded = map; };
+
 /** Le portrait d'un joueur (pseudo EA ou nom affiché), ou null. */
-export const photoOf = (name: string) => (WITH_PHOTO.has(slug(name)) ? `/joueurs/${slug(name)}.webp` : null);
+export const photoOf = (name: string) => uploaded[name] ?? (WITH_PHOTO.has(slug(name)) ? `/joueurs/${slug(name)}.webp` : null);
 
 const COLORS = ['#7C8CFF', '#3DDC97', '#FF8FB1', '#C9A7FF', '#FFB547', '#6FC8FF', '#F2F4F8', '#FFD36E'];
 

@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import type { ClubProfile } from '../../shared/profile';
 import type { Account } from '../../server/auth-http';
 import { useMe } from '../api/auth';
+import { usePlayerPhotos } from '../api/bets';
+import { PhotoPicker } from '../components/bets/PhotoPicker';
 import { useProfile, useProfileAction } from '../api/profile';
 import { AccountChip, SignInButton, SignInNotice } from '../components/fc27/SignIn';
 import { ActionFeedback } from '../components/fc27/FC27Dialog';
@@ -10,8 +12,24 @@ import { MyPlayerCard } from '../components/players/MyPlayerCard';
 import { PlayerClaimAdmin } from '../components/players/PlayerClaimAdmin';
 import { Glyph } from '../components/ui/Glyph';
 import { usePageTitle } from '../lib/hooks';
+import { photoOf } from '../lib/player-photos';
 import { POS_LABEL } from '../lib/labels';
 import '../styles/profile.css';
+
+/** Ta photo de joueur : celle des stories FoodBet, du podium et du classement. */
+function PhotoPanel({ name }: { name: string }) {
+  usePlayerPhotos();
+  const photo = photoOf(name);
+  return <section className="profile-panel profile-photo" aria-label="Ta photo">
+    <p className="profile-eyebrow">Ta photo</p>
+    <div className="profile-photo-row">
+      {photo ? <img src={photo} alt="Ta photo actuelle" /> : <span className="profile-photo-empty" aria-hidden="true">?</span>}
+      <p>{photo ? 'C’est elle qu’on voit dans les stories FoodBet, au podium et au classement. Tu peux la remplacer quand tu veux.'
+        : 'Ajoute une photo de toi, face caméra : elle remplacera tes initiales dans les stories FoodBet, au podium et au classement.'}</p>
+    </div>
+    <PhotoPicker label={photo ? 'Remplacer ma photo' : 'Ajouter ma photo'} className="profile-button" />
+  </section>;
+}
 
 function ProfileContent({ profile, account }: { profile: ClubProfile; account: Account }) {
   const [memberId, setMemberId] = useState('');
@@ -24,6 +42,7 @@ function ProfileContent({ profile, account }: { profile: ClubProfile; account: A
   const selected = profile.availablePlayers.find(player => String(player.id) === memberId);
   const notices = { rejected: 'La demande a été refusée.', revoked: 'Le rattachement a été retiré par un administrateur.', cancelled: 'Tu as annulé ta demande.' };
   return <>
+    {profile.player && <PhotoPanel name={profile.player.gamertag} />}
     {profile.player ? <MyPlayerCard player={profile.player} account={account} clubName={profile.club.name} /> : <section className="profile-panel" aria-labelledby="profile-link-title">
       <p className="profile-eyebrow">{profile.club.name} · Ton identité dans le club</p>
       <ol className="profile-steps" aria-label="Rattacher mon joueur"><li>1 · Discord connecté</li><li aria-current={canChoose ? 'step' : undefined}>2 · Choisir mon joueur</li><li aria-current={pending ? 'step' : undefined}>3 · Validation admin</li></ol>

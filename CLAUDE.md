@@ -12,7 +12,7 @@ Node ≥ 20.12. Vite est volontairement en v7.
 - `npm run test:fc27` : toute la suite (PGlite en mémoire, migrations réelles, aucun réseau). Doit rester verte.
 - `npm run dev` : app + `/api` sur :5173. Exige `DATABASE_URL` dans `.env.local` (absent en session cloud).
 - `npm run demo` : la vraie app sur :5175 avec `demo/fixtures/` (photo de l'API publique de prod), sans base ni
-  réseau. `npm run demo -- --connecte` : compte démo, FoodBet ouvert avec de vraies cotes ; étape FoodBet via `/paris?scene=joue|session|vote|gagnants` (`&admin` pour la vue admin). Les écritures sont refusées.
+  réseau. `npm run demo -- --connecte` : compte démo, FoodBet ouvert avec de vraies cotes ; étape FoodBet via `/paris?scene=joue|session|guichet|vote|gagnants` (`&admin` pour la vue admin). Les écritures sont refusées.
 - `npm run captures` : captures 390 px des pages principales dans `captures/` (ignoré par git), signale tout
   débordement horizontal. Pages au choix : `npm run captures -- /matchs/211 /club`. Sans Chrome :
   `npx playwright-core install chromium`. `npm run demo:snapshot` rafraîchit les fixtures (demande le réseau).
@@ -26,7 +26,7 @@ Node ≥ 20.12. Vite est volontairement en v7.
 - **Une migration doit être appliquée en prod AVANT de pousser le code qui lit ses colonnes**, sinon l'API plante.
   Demander l'accord de l'utilisateur avant toute écriture sur la base de prod.
 - Base Neon (projet `withered-boat-37348216`) : branche `main` = prod, branche `dev` = copie pour développer.
-- Limite Vercel Hobby : 12 fonctions (10 utilisées). Regrouper plutôt qu'ajouter un fichier dans `api/`.
+- Limite Vercel Hobby : 12 fonctions (12 utilisées, plus aucune de libre). Ajouter une route dans un routeur existant (ex. `/api/bets/:action`).
 - Vérifier visuellement à 390 px de large (aucun débordement horizontal) quand on touche l'interface.
 
 ## Données EA

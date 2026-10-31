@@ -82,8 +82,15 @@ function leaders(totals: Map<number, number>): number[] {
   return best === 0 ? [] : [...totals].filter(([, n]) => n === best).map(([id]) => id);
 }
 
-/** Fréquence de chaque issue sur des soirées simulées. */
-function simulate(history: FormMatch[], players: FormPlayer[], random: () => number) {
+/** La soirée en cours, pour coter le guichet : ce qui est déjà acquis compte. `run` : victoires d'affilée en cours. */
+export interface LiveState {
+  matches: number; wins: number; losses: number; goalsFor: number; cleanSheets: number; reds: number; ragequits: number;
+  bestStreak: number; run: number; srDelta: number | null;
+  goals: Record<number, number>; missed: Record<number, number>;
+}
+
+/** Fréquence de chaque issue sur des soirées simulées, à partir de la soirée en cours (`start`) s'il y en a une. */
+function simulate(history: FormMatch[], players: FormPlayer[], random: () => number, start?: LiveState) {
   // Sans historique : toutes les issues à égalité.
   if (history.length === 0) return (_key: string, outcomes: number) => 1 / outcomes;
   const counts = new Map<string, number>();
@@ -96,15 +103,20 @@ function simulate(history: FormMatch[], players: FormPlayer[], random: () => num
     return history[history.length - 1];
   };
   for (let run = 0; run < RUNS; run++) {
-    const n = SESSION_MIN + Math.floor(random() * (SESSION_MAX - SESSION_MIN + 1));
-    const s = { matches: n, wins: 0, losses: 0, goalsFor: 0, cleanSheets: 0, reds: 0, ragequits: 0, bestStreak: 0 };
-    const goals = new Map(players.map((p) => [p.memberId, 0]));
-    const missed = new Map(players.map((p) => [p.memberId, 0]));
-    let streak = 0;
+    // Au guichet, il reste au moins un match ; la soirée fait au total de 4 à 8 matchs (plus si on a déjà dépassé).
+    const total = SESSION_MIN + Math.floor(random() * (SESSION_MAX - SESSION_MIN + 1));
+    const done = start?.matches ?? 0;
+    const n = Math.max(1, total - done) + (start && done >= total ? Math.floor(random() * 3) : 0);
+    const s = { matches: done + n, wins: start?.wins ?? 0, losses: start?.losses ?? 0, goalsFor: start?.goalsFor ?? 0,
+      cleanSheets: start?.cleanSheets ?? 0, reds: start?.reds ?? 0, ragequits: start?.ragequits ?? 0, bestStreak: start?.bestStreak ?? 0 };
+    const goals = new Map(players.map((p) => [p.memberId, start?.goals[p.memberId] ?? 0]));
+    const missed = new Map(players.map((p) => [p.memberId, start?.missed[p.memberId] ?? 0]));
+    let streak = start?.run ?? 0;
+    let swing = 0;
     for (let i = 0; i < n; i++) {
       const m = pick();
-      if (m.result === 'win') { s.wins++; streak++; s.bestStreak = Math.max(s.bestStreak, streak); } else streak = 0;
-      if (m.result === 'loss') s.losses++;
+      if (m.result === 'win') { s.wins++; swing++; streak++; s.bestStreak = Math.max(s.bestStreak, streak); } else streak = 0;
+      if (m.result === 'loss') { s.losses++; swing--; }
       s.goalsFor += m.goalsFor;
       if (m.goalsAgainst === 0) s.cleanSheets++;
       if (m.redCard) s.reds++;
@@ -115,8 +127,9 @@ function simulate(history: FormMatch[], players: FormPlayer[], random: () => num
       }
     }
     for (const id of ['bilan', 'attack', 'cleansheet', 'red', 'ragequit', 'streak'] as const) add(`${id}:${sessionAnswer(id, s)}`);
-    // Le skill rating suit le bilan ; à égalité, une chance sur deux.
-    if (s.wins === s.losses) { add('sr:up', 0.5); add('sr:down', 0.5); } else add(`sr:${s.wins > s.losses ? 'up' : 'down'}`);
+    // Le skill rating suit le bilan (environ 15 points par victoire ou défaite) ; à égalité, une chance sur deux.
+    const sr = start?.srDelta != null ? start.srDelta + 15 * swing : s.wins - s.losses;
+    if (sr === 0) { add('sr:up', 0.5); add('sr:down', 0.5); } else add(`sr:${sr > 0 ? 'up' : 'down'}`);
     for (const id of leaders(goals)) add(`scorer:${id}`);
     for (const id of leaders(missed)) add(`clumsy:${id}`);
   }
@@ -206,6 +219,26 @@ export function openSession(previous: MarketId[], history: FormMatch[], players:
     markets: [team('bilan'), team('attack'), byPlayer('scorer'), byPlayer('clumsy'), crack, team('sr'), team(bonus)],
     context: { reason: formReason(history[0]) },
   };
+}
+
+/**
+ * Le guichet : les mêmes paris que le ticket, recotés sur la soirée en cours (ce qui est acquis compte).
+ * `players` : les joueurs proposés, retardataires du salon compris.
+ */
+export function openWindow(markets: Market[], live: LiveState, history: FormMatch[], players: FormPlayer[], random: () => number = Math.random): DrawnMarket[] {
+  const recent = history.slice(0, 20);
+  const p = simulate(recent, players, random, live);
+  const crackPrice = crackOdds(players, recent);
+  return markets.map((m) => {
+    if (m.id === 'crack') return { id: m.id, options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag,
+      odds: crackPrice[String(pl.memberId)], trend: 0, why: why('crack', pl, recent) })).sort((a, b) => a.odds - b.odds) };
+    if (m.id === 'scorer' || m.id === 'clumsy') {
+      const id = m.id;
+      return { id, options: players.map((pl) => ({ id: String(pl.memberId), label: pl.gamertag, odds: toOdds(p(`${id}:${pl.memberId}`, players.length)), trend: 0,
+        why: `${(id === 'scorer' ? live.goals : live.missed)[pl.memberId] ?? 0} ${id === 'scorer' ? 'but(s)' : 'raté(s)'} ce soir` })).sort((a, b) => a.odds - b.odds) };
+    }
+    return { id: m.id, options: m.options.map((o) => ({ ...o, odds: toOdds(p(`${m.id}:${o.id}`, m.options.length)), trend: 0 })) };
+  });
 }
 
 export type { Market };

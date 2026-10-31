@@ -189,3 +189,30 @@
 .rc-chip.won em { color: #0B7A4B; } .rc.t-night .rc-chip.won em, .rc.t-blue .rc-chip.won em { color: var(--rc-win); }
 .rc-chip.lost { opacity: .55; } .rc-chip.lost em { color: #B3122A; } .rc.t-night .rc-chip.lost em { color: var(--rc-lose); }
 @media (prefers-reduced-motion: reduce) { .rc-crown, .rc-sacre-name, .rc-sacre-pic { animation: none; } }
+
+/* Fin du récap : ta photo, puis le tuto en 3 cartes. */
+.rc-cam { position: relative; align-self: center; width: 250px; height: 250px; max-width: 100%; }
+.rc-cam-raw { position: absolute; left: 0; top: 30px; width: 130px; height: 160px; background: #3a3f4f center 25% / cover; transform: rotate(-6deg);
+  box-shadow: 0 6px 18px rgba(0,0,0,.4); border: 5px solid #fff; }
+.rc-cam-arrow { position: absolute; left: 112px; top: 90px; font: 800 30px/1 var(--fc-display); }
+.rc-cam-cut, .rc-cam-now { position: absolute; background: center bottom / contain no-repeat; filter: drop-shadow(0 10px 22px rgba(6,12,31,.45)); }
+.rc-cam-cut { right: 0; bottom: 0; width: 150px; height: 170px; }
+.rc-cam-now { inset: 0 20px 10px; }
+.rc-cam-badge { position: absolute; right: 6px; bottom: 26px; padding: 5px 8px; background: var(--rc-amber); color: var(--rc-night);
+  font: 800 12px/1 var(--fc-display); text-transform: uppercase; letter-spacing: .08em; transform: rotate(-4deg); }
+.rc-photo-actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.rc-photo-actions .rc-btn.ghost { min-height: 44px; font-size: 16px; }
+.rc-tuto { overflow: hidden; margin-right: calc(-1 * max(22px, env(safe-area-inset-right, 0px))); }
+.rc-tuto-track { display: flex; gap: 14px; transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+.rc-tuto-card { flex: none; width: min(272px, 78vw); min-height: 340px; padding: 22px 20px; box-sizing: border-box; background: var(--rc-chalk);
+  color: var(--rc-night); display: flex; flex-direction: column; gap: 14px; transition: opacity .3s; }
+.rc-tuto-card.dim { opacity: .45; }
+.rc-tuto-card > i { font: italic 800 58px/.85 var(--fc-display); font-style: normal; color: var(--rc-blue); }
+.rc-tuto-card > b { font: italic 800 30px/.95 var(--fc-display); text-transform: uppercase; }
+.rc-tuto-card > span { font: 600 15px/1.5 var(--fc-text); }
+.rc-tuto-rules { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.rc-tuto-rules p { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; margin: 0; font: 600 14px/1.35 var(--fc-text); }
+.rc-tuto-rules b { font: 800 16px/1 var(--fc-display); }
+.rc-dots { display: flex; justify-content: center; gap: 6px; }
+.rc-dots i { width: 7px; height: 7px; border-radius: 4px; background: currentColor; opacity: .3; transition: width .3s; }
+.rc-dots i.on { width: 20px; opacity: 1; }

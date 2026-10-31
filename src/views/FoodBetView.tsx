@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
-  CURRENCY, DEFAULT_STAKE, MARKET_COPY, STAKES, TICKET_BONUS, maxStake, optionLabel, payout,
+  CURRENCY, DEFAULT_STAKE, MARKET_COPY, STAKES, TICKET_BONUS, lateStake, maxStake, optionLabel, payout,
   type BetMatch, type BetSession, type BetsAdminAction, type BetsState, type BetPick, type Market, type MarketId, type Slip,
 } from '../../shared/bets';
 import { byOrder, fmt, isPlayerMarket, plural, record, sessionLead, titleOf, topPlayers } from '../lib/foodbet';
@@ -199,36 +199,41 @@ function RoomBefore({ nights, onBoard, onReplay }: { nights: Night[]; onBoard: (
 }
 
 /** Phase 1 : le ticket de la soirée. Chaque pari se joue, se change ou se passe ; fermé au coup d'envoi. */
-function Ticket({ markets, skipped, onOpen, onFill }: {
-  markets: Market[]; skipped: MarketId[]; onOpen: (id: MarketId) => void; onFill: () => void;
+function Ticket({ markets, skipped, onOpen, onFill, onBack }: {
+  markets: Market[]; skipped: MarketId[]; onOpen: (id: MarketId) => void; onFill: () => void; onBack?: () => void;
 }) {
   const { state } = useContext(FoodBetCtx);
+  const late = useContext(LateCtx);
   const fixture = state!.fixture!;
   const slipOf = (id: MarketId) => fixture.mySlips.find((sl) => sl.market === id);
   const played = markets.filter((m) => slipOf(m.id)).length;
   const passed = markets.filter((m) => !slipOf(m.id) && skipped.includes(m.id)).length;
   const left = markets.length - played - passed;
   const others = state!.room.filter((r) => r.played && !r.me).length;
-  return <Screen tone="blue" phase={1} status={left === 0 ? 'Ticket rempli' : 'À toi de jouer'}
-    sheet={state!.isAdmin ? <AdminNext state={state!} /> : undefined}>
-    <h2 className="fb-big fb-big--md">Ton<br />ticket</h2>
-    <p className="fb-note">{markets.length} paris sur <b>toute la soirée</b>, quel que soit le nombre de matchs. Touche un pari pour le jouer
-      ou le changer. Fermé au coup d’envoi du premier match.</p>
+  return <Screen tone="blue" phase={late ? 2 : 1} status={late && fixture.window ? <>Guichet · <Countdown until={fixture.window.until} /></>
+    : left === 0 ? 'Ticket rempli' : 'À toi de jouer'} sheet={state!.isAdmin ? <AdminNext state={state!} /> : undefined}>
+    <h2 className="fb-big fb-big--md">{late ? <>Le<br />guichet</> : <>Ton<br />ticket</>}</h2>
+    {late ? <p className="fb-note">La session a commencé : les paris que tu n’as pas joués sont <b>recotés en direct</b> sur la soirée en cours.
+      Au plus <b>un quart de ton solde</b> par pari, et un pari placé ne se change plus.</p>
+      : <p className="fb-note">{markets.length} paris sur <b>toute la soirée</b>, quel que soit le nombre de matchs. Touche un pari pour le jouer
+        ou le changer. Fermé au coup d’envoi du premier match.</p>}
     <div className="fb-ticket">
       {markets.map((m) => {
         const slip = slipOf(m.id);
         const label = slip ? `${optionLabel(markets, slip)} · ${fmt(slip.stake)}` : skipped.includes(m.id) ? 'passé' : 'à jouer';
-        return <button key={m.id} type="button" className={`fb-tk${slip ? ' is-done' : skipped.includes(m.id) ? ' is-skip' : ''}`} onClick={() => onOpen(m.id)}>
+        return <button key={m.id} type="button" className={`fb-tk${slip ? ' is-done' : skipped.includes(m.id) ? ' is-skip' : ''}`}
+          disabled={late && !!slip} onClick={() => onOpen(m.id)}>
           <span aria-hidden="true">{MARKET_COPY[m.id].emoji}</span>
           <span><b>{titleOf(m.id)}</b><small>{MARKET_COPY[m.id].question}</small></span>
           <em>{label}</em>
         </button>;
       })}
     </div>
-    <p className="fb-note">{played === markets.length ? <>Ticket complet : <b>+{TICKET_BONUS} {CR}</b> offerts.</>
-      : <>Joue les {markets.length} paris : <b>+{TICKET_BONUS} {CR}</b> offerts.</>}</p>
+    {!late && <p className="fb-note">{played === markets.length ? <>Ticket complet : <b>+{TICKET_BONUS} {CR}</b> offerts.</>
+      : <>Joue les {markets.length} paris : <b>+{TICKET_BONUS} {CR}</b> offerts.</>}</p>}
     {left > 0 && <button type="button" className="fb-btn fb-btn--solid fb-btn--center" onClick={onFill}>
       {left === markets.length ? 'Remplir mon ticket' : `Jouer les ${left} paris restants`}</button>}
+    {onBack && <button type="button" className="fb-link" onClick={onBack}>Retour au direct</button>}
     <p className="fb-tap fb-push">{played} joué{played > 1 ? 's' : ''} · {passed} passé{passed > 1 ? 's' : ''} · {others} autre{others > 1 ? 's' : ''} ont joué · secret jusqu’au vote</p>
   </Screen>;
 }
@@ -237,6 +242,8 @@ function Ticket({ markets, skipped, onOpen, onFill }: {
 function RoomSession() {
   const { state } = useContext(FoodBetCtx);
   const fixture = state!.fixture!;
+  const [late, setLate] = useState(false);
+  if (late && fixture.window) return <OpenFlow state={state!} late onBack={() => setLate(false)} />;
   const s = fixture.session;
   const markets = [...fixture.markets].sort(byOrder);
   const verdict = (id: MarketId, slip: Slip | undefined) => {
@@ -249,6 +256,10 @@ function RoomSession() {
     <h2 className="fb-big fb-big--md">{s && s.matches > 0 ? <>Ce soir<br /><em>{s.wins}V · {s.draws}N · {s.losses}D</em></> : <>Session<br />lancée</>}</h2>
     <p className="fb-note">{fixture.mySlips.length > 0 ? <>Les paris sont fermés. Tes pronos <b>en temps réel</b>, mis à jour après chaque match. Rien à
       faire : joue.</> : <>Les paris ont fermé au coup d’envoi : <b>tu n’as rien joué ce soir</b>. Tu pourras quand même voter pour le Crack.</>}</p>
+    {fixture.window && fixture.markets.some((m) => !fixture.mySlips.some((sl) => sl.market === m.id)) && <div className="fb-window">
+      <p><b>Le guichet est ouvert</b><span>Encore <Countdown until={fixture.window.until} /> pour jouer les paris qui te manquent, recotés en direct.</span></p>
+      <button type="button" className="fb-btn fb-btn--solid fb-btn--center" onClick={() => setLate(true)}>Jouer au guichet</button>
+    </div>}
     <div className="fb-live">
       {markets.map((m) => {
         const slip = fixture.mySlips.find((sl) => sl.market === m.id);
@@ -258,7 +269,8 @@ function RoomSession() {
       })}
     </div>
     {s?.last && <p className="fb-note">Dernier match : <b>{s.last.goalsFor}–{s.last.goalsAgainst} vs {s.last.opponent}</b></p>}
-    {!state!.isAdmin && <p className="fb-tap fb-push">Phase 3 : quand vous arrêtez de jouer, l’admin clôt la session et ouvre le vote</p>}
+    {!state!.isAdmin && <p className="fb-tap fb-push">{fixture.mySlips.length < fixture.markets.length && !fixture.window
+      ? 'Arrivé en retard ? L’admin peut ouvrir le guichet entre deux matchs' : 'Phase 3 : quand vous arrêtez de jouer, l’admin clôt la session et ouvre le vote'}</p>}
   </Screen>;
 }
 
@@ -295,6 +307,17 @@ function RoomVoted({ vote, onChange }: { vote: BetsState['votes'][number]; onCha
 
 // ---------------------------------------------------------------- Phase 1 · Parier
 
+/** Au guichet (retardataires, pendant la session) : paris recotés, mise max un quart, pas de retour en arrière. */
+const LateCtx = createContext(false);
+
+/** Le temps restant avant `until` (« 2:41 »), mis à jour chaque seconde. */
+function Countdown({ until }: { until: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const left = Math.max(0, Math.round((new Date(until).getTime() - now) / 1000));
+  return <>{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</>;
+}
+
 function Trend({ value }: { value?: number }) {
   if (!value || Math.abs(value) < 0.05) return null;
   return <span className="fb-trend" title="Effet du dernier match">{value > 0 ? '▲' : '▼'}</span>;
@@ -302,18 +325,19 @@ function Trend({ value }: { value?: number }) {
 
 function StakeSheet({ market, option, onPlaced }: { market: Market; option: Market['options'][number]; onPlaced: () => void }) {
   const { state } = useContext(FoodBetCtx);
+  const late = useContext(LateCtx);
   const fixture = state!.fixture!;
   const slip = fixture.mySlips.find((s) => s.market === market.id);
   const play = useBetsPlay();
   const available = state!.wallet.balance + (slip?.stake ?? 0);
-  const cap = maxStake(available);
+  const cap = late ? lateStake(available) : maxStake(available);
   const [choice, setChoice] = useState<number | 'max'>(slip?.stake ?? Math.min(DEFAULT_STAKE, cap));
   const stake = choice === 'max' ? cap : choice;
   const ok = stake > 0 && stake <= cap;
   return <div className="fb-sheet">
     <span className="fb-sheet-title">Combien tu mets ?</span>
     <p className="fb-note" style={{ color: 'var(--fc-ardoise)', opacity: 1 }}>Si tu as vu juste, tu récupères <b style={{ color: 'var(--fc-abysse)' }}>ta mise × la cote</b>.
-      Sinon, tu perds ta mise. Au plus <b style={{ color: 'var(--fc-abysse)' }}>la moitié de ton solde</b> par pari (« Max » = {fmt(cap)}).</p>
+      Sinon, tu perds ta mise. Au plus <b style={{ color: 'var(--fc-abysse)' }}>{late ? 'un quart' : 'la moitié'} de ton solde</b> par pari (« Max » = {fmt(cap)}).</p>
     {available <= 0 ? <><p className="fb-note">Tu es à sec pour ce match.</p><Bailout /></> : <>
       <div className="fb-chips" role="group" aria-label="Ta mise">
         {[...STAKES, 'max' as const].map((s) => <button key={s} type="button" className="fb-chip" aria-pressed={choice === s}
@@ -325,7 +349,7 @@ function StakeSheet({ market, option, onPlaced }: { market: Market; option: Mark
         {play.isPending ? 'On valide…' : <>Valider <b>{fmt(stake)} {CR}</b></>}
       </button>
       {play.isError && <p className="fb-error" role="alert">{play.error.message}</p>}
-      <p className="fb-tap">Modifiable jusqu’au coup d’envoi</p>
+      <p className="fb-tap">{late ? 'Au guichet, un pari placé ne se change plus' : 'Modifiable jusqu’au coup d’envoi'}</p>
     </>}
   </div>;
 }
@@ -334,6 +358,9 @@ function Choose({ market, index, total, onPlaced, onSkip, skipLabel, onTicket }:
   market: Market; index: number; total: number; onPlaced: () => void; onSkip: () => void; skipLabel: string; onTicket: () => void;
 }) {
   const { state } = useContext(FoodBetCtx);
+  const late = useContext(LateCtx);
+  const phase = late ? 2 : 1;
+  const status = late ? 'Guichet' : 'À toi de jouer';
   const current = state!.fixture!.mySlips.find((s) => s.market === market.id)?.option ?? null;
   const [pick, setPick] = useState<string | null>(null);
   const option = market.options.find((o) => o.id === pick);
@@ -342,13 +369,13 @@ function Choose({ market, index, total, onPlaced, onSkip, skipLabel, onTicket }:
   const kicker = `Pari ${index + 1} sur ${total} · ${titleOf(market.id)}`;
 
   if (option) {
-    return <Screen tone="blue" phase={1} status="À toi de jouer" sheet={<StakeSheet market={market} option={option} onPlaced={() => { setPick(null); onPlaced(); }} />}>
+    return <Screen tone="blue" phase={phase} status={status} sheet={<StakeSheet market={market} option={option} onPlaced={() => { setPick(null); onPlaced(); }} />}>
       <p className="fb-kick">Ton choix · {titleOf(market.id)}</p>
       <h2 className="fb-big fb-big--md">{option.label}<br /><em>×{frNum(option.odds, 2)}</em></h2>
       <button type="button" className="fb-link fb-link--start" onClick={() => setPick(null)}>Changer de réponse</button>
     </Screen>;
   }
-  return <Screen tone="blue" phase={1} status="À toi de jouer">
+  return <Screen tone="blue" phase={phase} status={status}>
     <p className="fb-kick">{kicker}</p>
     <h2 className="fb-big">{ASK[market.id]}</h2>
     <p className="fb-note">{EXPLAIN[market.id]}{players ? '' : ` ${ODDS_HINT}`}</p>
@@ -371,21 +398,22 @@ function Choose({ market, index, total, onPlaced, onSkip, skipLabel, onTicket }:
         </button>)}
       </div>
     )}
-    <p className="fb-tap">{players ? 'Touche un joueur · puis ta mise' : 'Touche ta réponse · les paris ferment au coup d’envoi'}</p>
+    <p className="fb-tap">{players ? 'Touche un joueur · puis ta mise' : late ? 'Touche ta réponse · cote en direct' : 'Touche ta réponse · les paris ferment au coup d’envoi'}</p>
     <div className="fb-links"><button type="button" className="fb-link" onClick={onTicket}>Voir mon ticket</button>
       <button type="button" className="fb-link" onClick={onSkip}>{skipLabel}</button></div>
   </Screen>;
 }
 
-function OpenFlow({ state }: { state: BetsState }) {
+function OpenFlow({ state, late = false, onBack }: { state: BetsState; late?: boolean; onBack?: () => void }) {
   const fixture = state.fixture!;
-  const markets = [...fixture.markets].sort(byOrder);
+  const markets = [...(late && fixture.window ? fixture.window.markets : fixture.markets)].sort(byOrder);
   const [skipped, setSkipped] = useState<MarketId[]>([]);
   const has = (m: Market) => fixture.mySlips.some((sl) => sl.market === m.id);
   const done = (m: Market) => has(m) || skipped.includes(m.id);
-  // Première visite : on enchaîne les paris ; ensuite, le ticket.
-  const [filling, setFilling] = useState(fixture.mySlips.length === 0);
-  const [active, setActive] = useState<MarketId | null>(fixture.mySlips.length === 0 ? markets[0]?.id ?? null : null);
+  // Première visite : on enchaîne les paris ; ensuite, le ticket. Au guichet : le ticket d'abord.
+  const first = !late && fixture.mySlips.length === 0;
+  const [filling, setFilling] = useState(first);
+  const [active, setActive] = useState<MarketId | null>(first ? markets[0]?.id ?? null : null);
 
   const advance = (from: MarketId, skippedNow = false) => {
     if (!filling) { setActive(null); return; }
@@ -395,13 +423,14 @@ function OpenFlow({ state }: { state: BetsState }) {
   };
   const market = markets.find((m) => m.id === active);
   if (!market) {
-    return <Ticket markets={markets} skipped={skipped} onOpen={(id) => { setFilling(false); setActive(id); }}
-      onFill={() => { setFilling(true); setActive(markets.find((m) => !done(m))?.id ?? null); }} />;
+    return <LateCtx.Provider value={late}><Ticket markets={markets} skipped={skipped} onBack={onBack}
+      onOpen={(id) => { setFilling(false); setActive(id); }}
+      onFill={() => { setFilling(true); setActive(markets.find((m) => !done(m))?.id ?? null); }} /></LateCtx.Provider>;
   }
   const skip = () => { if (!has(market)) setSkipped((list) => [...list, market.id]); advance(market.id, true); };
-  return <Choose key={market.id} market={market} index={markets.indexOf(market)} total={markets.length}
+  return <LateCtx.Provider value={late}><Choose key={market.id} market={market} index={markets.indexOf(market)} total={markets.length}
     onPlaced={() => advance(market.id)} onSkip={skip} skipLabel={has(market) ? 'Garder mon choix' : 'Passer ce pari'}
-    onTicket={() => { setFilling(false); setActive(null); }} />;
+    onTicket={() => { setFilling(false); setActive(null); }} /></LateCtx.Provider>;
 }
 
 // ---------------------------------------------------------------- Phase 3 · Le vote
@@ -586,6 +615,11 @@ function AdminNext({ state }: { state: BetsState }) {
   return <div className="fb-adm">
     <span className="fb-adm-tag">Admin · phase suivante</span>
     {state.fixture?.status === 'locked' && <SessionNotice session={state.fixture.session} />}
+    {state.fixture?.status === 'locked' && (state.fixture.window
+      ? <p className="fb-adm-score is-in" role="status"><b>Guichet ouvert · <Countdown until={state.fixture.window.until} /></b>
+        <span>Les retardataires jouent les paris qui leur manquent, recotés en direct.</span></p>
+      : <button type="button" className="fb-btn fb-btn--sm fb-btn--light fb-admin-go" disabled={admin.isPending}
+        onClick={() => admin.mutate({ action: 'window' })}>Ouvrir le guichet <small>3 min entre deux matchs, pour les retardataires</small></button>)}
     <button type="button" className="fb-btn fb-btn--sm fb-admin-go" style={{ background: 'var(--fc-abysse)', color: 'var(--fc-craie)' }}
       disabled={admin.isPending} onClick={() => confirmed(step.action, state) && admin.mutate(step.action)}>{admin.isPending ? 'Un instant…' : <>{step.label} <small>{step.hint}</small></>}</button>
     {admin.isError && <p className="fb-error" role="alert">{admin.error.message}</p>}

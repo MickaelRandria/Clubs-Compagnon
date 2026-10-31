@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
-import { isBetsMode, type BetsState, type MarketId } from '../../shared/bets.js';
-import { openSession, type FormMatch, type FormPlayer } from '../../shared/bets-odds.js';
-import type { BetsGame, BetsSettings } from '../bets-http.js';
+import { isBetsMode, type BetSession, type BetsState, type Market, type MarketId } from '../../shared/bets.js';
+import { openSession, openWindow, type FormMatch, type FormPlayer, type LiveState } from '../../shared/bets-odds.js';
+import type { BetsGame, BetsSettings, PhotoStore } from '../bets-http.js';
 import { syncFromEa } from '../ea-sync.js';
 import { HttpError } from '../http.js';
 import { getDb } from './client.js';
@@ -66,7 +66,8 @@ const LOBBY = '10 minutes';
  * 20 derniers matchs EA. Les joueurs proposés sont ceux présents dans le salon à l'ouverture (au
  * moins deux) ; à défaut, ceux vus sur les 10 derniers matchs, sinon tout l'effectif actif.
  */
-export async function buildOpening() {
+/** La forme du club : les 20 derniers matchs, l'effectif, les présents du salon, les voix des votes passés. */
+async function loadForm() {
   const db = getDb();
   const [matchRows, memberRows, previousRows, lobbyRows, voteRows] = await Promise.all([
     db.execute(sql`select opponent_name, result, goals_for, goals_against, player_stats, opponent_quit from matches
@@ -116,7 +117,44 @@ export async function buildOpening() {
   const present = roster.filter((p) => lobby.has(p.memberId));
   const players: FormPlayer[] = present.length >= 2 ? present
     : roster.filter((p, _, all) => recent.size === 0 || recent.has(p.memberId) || all.every((q) => !recent.has(q.memberId)));
-  return openSession((previousRows.rows[0]?.markets ?? []) as MarketId[], history, players);
+  return { history, roster, lobby, players, previous: (previousRows.rows[0]?.markets ?? []) as MarketId[] };
+}
+
+export async function buildOpening() {
+  const form = await loadForm();
+  return openSession(form.previous, form.history, form.players);
+}
+
+const PLAYER_MARKETS = new Set(['crack', 'flop', 'scorer', 'clumsy']);
+
+/**
+ * Le guichet : les paris de la session recotés sur la soirée en cours. Les joueurs proposés : ceux
+ * du ticket, ceux qui ont joué ce soir et les retardataires présents dans le salon.
+ */
+export async function buildWindow() {
+  const db = getDb();
+  const [form, fixtureRows] = await Promise.all([loadForm(),
+    db.execute(sql`select id, markets, locked_at, bets_session(id) as s from bet_fixtures where status = 'locked' order by id desc limit 1`)]);
+  const row = fixtureRows.rows[0];
+  if (!row) return {};
+  const s = row.s as BetSession;
+  const markets = (row.markets ?? []) as Market[];
+  const results = await db.execute(sql`select result from matches where club_id = (select min(id) from clubs)
+    and played_at > ${row.locked_at} order by played_at desc`);
+  let run = 0;
+  for (const r of results.rows) { if (r.result !== 'win') break; run++; }
+  const ids = new Set([...markets.filter((m) => PLAYER_MARKETS.has(m.id)).flatMap((m) => m.options.map((o) => Number(o.id))),
+    ...form.lobby, ...s.players.map((p) => p.memberId)]);
+  // La note EA de la soirée prime sur la moyenne de la saison pour coter le Crack.
+  const players: FormPlayer[] = form.roster.filter((p) => ids.has(p.memberId))
+    .map((p) => ({ ...p, avgRating: s.players.find((x) => x.memberId === p.memberId)?.rating ?? p.avgRating }));
+  const live: LiveState = {
+    matches: s.matches, wins: s.wins, losses: s.losses, goalsFor: s.goalsFor, cleanSheets: s.cleanSheets, reds: s.reds,
+    ragequits: s.ragequits, bestStreak: s.bestStreak, run,
+    srDelta: s.srStart !== null && s.srNow !== null ? s.srNow - s.srStart : null,
+    goals: Object.fromEntries(s.players.map((p) => [p.memberId, p.goals])), missed: Object.fromEntries(s.players.map((p) => [p.memberId, p.missed])),
+  };
+  return { markets: openWindow(markets, live, form.history, players) };
 }
 
 export const betsGame: BetsGame = {
@@ -126,8 +164,29 @@ export const betsGame: BetsGame = {
   admin: async (accountId, action) => {
     // Fin de session ou suivi : on va chercher les derniers matchs chez EA tout de suite, sans
     // attendre les 5 minutes. `check` ne fait que ça, puis relit l'état.
-    if (action.action === 'end-session' || action.action === 'check') await syncFromEa({ force: true });
+    if (action.action === 'end-session' || action.action === 'check' || action.action === 'window') await syncFromEa({ force: true });
     if (action.action === 'check') return dispatch('state', accountId, {}, true);
+    if (action.action === 'window') return dispatch('window', accountId, await buildWindow(), true);
     return dispatch(action.action, accountId, action.action === 'open' ? await buildOpening() : action, true);
+  },
+};
+
+/** Photos des joueurs (player_photos, drizzle/0027) : une data URL WebP par joueur, envoyée depuis l'app. */
+export const photoStore: PhotoStore = {
+  list: async () => {
+    const rows = await getDb().execute(sql`select m.gamertag, p.member_id, floor(extract(epoch from p.updated_at))::bigint as v
+      from player_photos p join members m on m.id = p.member_id`);
+    return Object.fromEntries(rows.rows.map((r) => [String(r.gamertag), `/api/bets/photo?m=${r.member_id}&v=${r.v}`]));
+  },
+  get: async (memberId) => {
+    const rows = await getDb().execute(sql`select image from player_photos where member_id = ${memberId}`);
+    return rows.rows[0] ? String(rows.rows[0].image) : null;
+  },
+  save: async (accountId, image) => {
+    const claim = await getDb().execute(sql`select member_id from club_player_claims where account_id = ${accountId} and status = 'approved' limit 1`);
+    const memberId = claim.rows[0]?.member_id;
+    if (memberId === undefined) throw new HttpError(403, 'Relie d’abord ton compte à ton joueur (page Profil).');
+    await getDb().execute(sql`insert into player_photos(member_id, image, account_id) values (${memberId}, ${image}, ${accountId})
+      on conflict (member_id) do update set image = excluded.image, account_id = excluded.account_id, updated_at = now()`);
   },
 };

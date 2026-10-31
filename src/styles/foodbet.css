@@ -195,3 +195,10 @@ body.fb-open { overflow: hidden; }
 .fb-live em { font: 800 13px/1 var(--fc-display); font-style: normal; text-transform: uppercase; white-space: nowrap; opacity: .6; }
 .fb-live em.is-up { color: #7CF0A8; opacity: 1; }
 .fb-live em.is-down { color: #FF8A95; opacity: 1; }
+
+/* Le guichet des retardataires, pendant la session. */
+.fb-window { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #FFB547; color: var(--fc-abysse); }
+.fb-window p { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.fb-window b { font: italic 800 22px/1 var(--fc-display); text-transform: uppercase; }
+.fb-window span { font: 600 14px/1.35 var(--fc-text); }
+.fb-window .fb-btn--solid { background: var(--fc-abysse); color: var(--fc-craie); }

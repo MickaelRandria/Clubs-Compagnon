@@ -22,7 +22,7 @@ const matches = read<Match[]>('matches');
 const me = members[0];
 
 /** Étapes de FoodBet visibles en démo, choisies par `?scene=` dans l'URL de la page. */
-const SCENES = ['parier', 'joue', 'session', 'vote', 'vote-fait', 'gagnants', 'rien'] as const;
+const SCENES = ['parier', 'joue', 'session', 'guichet', 'vote', 'vote-fait', 'gagnants', 'rien'] as const;
 type Scene = typeof SCENES[number];
 
 const detailOf = (id: number) => (existsSync(fixture(`matches/${id}`)) ? read<MatchDetail>(`matches/${id}`) : null);
@@ -93,14 +93,16 @@ function betsState(scene: Scene, admin: boolean): BetsState {
   ];
   const mine = picks.filter((p) => p.me).map((p, i) => ({ id: i + 1, fixtureId: 1, market: p.market, option: p.option, stake: p.stake,
     odds: p.odds, status: p.status, payout: p.payout }));
-  const before = scene === 'parier' || scene === 'joue' || scene === 'session';
-  const fixtureSlips = scene === 'parier' ? [] : scene === 'joue' ? mine.slice(0, 3) : mine;
+  const before = scene === 'parier' || scene === 'joue' || scene === 'session' || scene === 'guichet';
+  const fixtureSlips = scene === 'parier' ? [] : scene === 'joue' || scene === 'guichet' ? mine.slice(0, 2) : mine;
   return {
     isAdmin: admin,
     myMemberId: me.id,
     wallet: { balance: settled ? 1345 : 1100, canBailout: false, bankrupt: false },
-    fixture: before ? { id: 1, status: scene === 'session' ? 'locked' : 'open', openedAt: new Date().toISOString(),
-      lockedAt: scene === 'session' ? session.startedAt : null, context: opening.context, session: scene === 'session' ? session : null,
+    fixture: before ? { id: 1, status: scene === 'session' || scene === 'guichet' ? 'locked' : 'open', openedAt: new Date().toISOString(),
+      lockedAt: scene === 'session' || scene === 'guichet' ? session.startedAt : null, context: opening.context,
+      session: scene === 'session' || scene === 'guichet' ? session : null,
+      window: scene === 'guichet' ? { until: new Date(Date.now() + 150_000).toISOString(), markets } : null,
       markets, bettors: 5, mySlips: fixtureSlips } : null,
     votes: scene === 'vote' || scene === 'vote-fait' ? [{ id: 1, openedAt: new Date().toISOString(), session: { ...session, endedAt: new Date().toISOString() },
       markets, mySlips: mine,
@@ -154,9 +156,10 @@ function answer(path: string, scene: Scene, admin: boolean): [number, unknown] |
   }
   if (path === '/api/profile') return [signedIn ? 404 : 401, { error: signedIn ? 'Profil indisponible en mode démo.' : 'Connecte-toi avec Discord pour retrouver ton joueur.' }];
   if (path === '/api/bets/status') {
-    const live = scene === 'session' ? 'locked' : scene.startsWith('vote') ? 'voting' : scene === 'parier' || scene === 'joue' ? 'open' : null;
+    const live = scene === 'session' || scene === 'guichet' ? 'locked' : scene.startsWith('vote') ? 'voting' : scene === 'parier' || scene === 'joue' ? 'open' : null;
     return [200, { mode: 'on', access: signedIn ? 'open' : 'locked', canConfigure: false, live } satisfies BetsStatus];
   }
+  if (path === '/api/bets/photos') return [200, {}];
   if (path === '/api/bets/state') return signedIn ? [200, betsState(scene, admin)] : [401, { error: 'Connecte-toi pour parier.' }];
   return undefined;
 }

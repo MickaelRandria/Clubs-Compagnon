@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { BetsAdminAction, BetsMode, BetsPlayAction, BetsState, BetsStatus } from '../../shared/bets';
 import { useMe } from './auth';
 import { apiRequest } from './client';
+import { setUploadedPhotos } from '../lib/player-photos';
 
 const LOCKED: BetsStatus = { mode: 'off', access: 'locked', canConfigure: false, live: null };
 
@@ -52,6 +53,22 @@ export function useBetsHistory(enabled: boolean) {
     queryFn: () => apiRequest<BetsState>('/api/bets/state?peek'),
     enabled,
     staleTime: 5 * 60_000,
+  });
+}
+
+/** Les photos envoyées par les joueurs. Les écrans qui affichent des visages s'y abonnent. */
+export function usePlayerPhotos() {
+  const query = useQuery({ queryKey: ['player-photos'], queryFn: () => apiRequest<Record<string, string>>('/api/bets/photos'), staleTime: 60_000 });
+  if (query.data) setUploadedPhotos(query.data);
+  return query.data;
+}
+
+/** Envoyer sa photo (data URL WebP déjà recadrée) : elle remplace la précédente. */
+export function useUploadPhoto() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (image: string) => apiRequest<Record<string, string>>('/api/bets/photo-upload', { method: 'POST', body: JSON.stringify({ image }) }),
+    onSuccess: (map) => { setUploadedPhotos(map); client.setQueryData(['player-photos'], map); },
   });
 }
 

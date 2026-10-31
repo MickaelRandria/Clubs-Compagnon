@@ -39,8 +39,8 @@ Branche : `lobby-spotify` (partie de `main` après le commit `0c9ba4a`).
 | 2. Client Spotify serveur : URL d'autorisation, échange du code, rafraîchissement du jeton, titre en cours + suivant, cache | `server/spotify.ts`, `server/db/lobby.ts`, `shared/lobby.ts` | fait |
 | 3. Routes de connexion `GET /api/auth/spotify` (admin connecté → Spotify) et `GET /api/auth/spotify-callback` | `server/auth-router.ts`, `server/spotify-http.ts`, `api/auth/[action].ts` | fait |
 | 4. Routes `GET /api/bets/lobby` (titre en cours, public) et `POST /api/bets/jam` (admin : lien de la Jam) | `server/bets-http.ts`, `api/bets/[action].ts` | fait |
-| 5. Front : composant `LobbyMusic` (complet / compact), interrogé toutes les 15 s ; accueil + salle d'attente FoodBet | `src/components/home/LobbyMusic.tsx`, `src/api/bets.ts`, styles | à faire |
-| 6. Admin : sur la page Profil (admins), « Connecter Spotify » et champ « Lien de la Jam » | `src/views/ProfileView.tsx` | à faire |
+| 5. Front : composant `LobbyMusic` (complet / compact), interrogé toutes les 15 s ; accueil + salle d'attente FoodBet | `src/components/home/LobbyMusic.tsx`, `src/styles/lobby.css`, `src/api/bets.ts` | fait |
+| 6. Admin : sur la page Profil (admins), « Connecter Spotify » et champ « Lien de la Jam » | `src/views/ProfileView.tsx` (`LobbyAdmin`) | fait |
 | 7. Démo : `/api/bets/lobby` simulé dans `demo/serve.ts` ; captures 390 px | `demo/` | à faire |
 | 8. Tests (`npm run test:fc27`), build (`npm run build`), commit sur la branche | — | à faire |
 | 9. Mise en prod : **demander l'accord**, appliquer 0028 en prod (Neon, projet `withered-boat-37348216`, branche `br-patient-rice-b2zco9zo`) puis pousser | — | à faire |

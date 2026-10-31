@@ -9,6 +9,7 @@ import { byOrder, fmt, isPlayerMarket, plural, record, sessionLead, titleOf, top
 import { useMe } from '../api/auth';
 import { useBetsAdmin, useBetsPlay, useBetsState, useBetsStatus } from '../api/bets';
 import { Recap, RecapRings, useNights, type Night } from '../components/bets/Recap';
+import { LobbyMusic } from '../components/home/LobbyMusic';
 import { SignInButton } from '../components/fc27/SignIn';
 import { frNum } from '../lib/format';
 import { usePageTitle } from '../lib/hooks';
@@ -192,6 +193,7 @@ function RoomBefore({ nights, onBoard, onReplay }: { nights: Night[]; onBoard: (
     who={here} whoTitle={`Dans la salle · ${here.length}`} doneLabel="là">
     {(last?.session || last?.match) && <p className="fb-note">Dernier FoodBet : {last.session ? record(last.session) : score(last.match!)}
       {last.mySlips.length > 0 && <> · <b className="fb-gain">{net > 0 ? '+' : ''}{fmt(net)} {CR}</b></>}</p>}
+    <LobbyMusic compact />
     <RecapRings nights={nights} title="Revoir les soirées" onOpen={onReplay} />
     <Bailout />
     <button type="button" className="fb-link" onClick={onBoard}>Voir le classement</button>
@@ -269,6 +271,7 @@ function RoomSession() {
       })}
     </div>
     {s?.last && <p className="fb-note">Dernier match : <b>{s.last.goalsFor}–{s.last.goalsAgainst} vs {s.last.opponent}</b></p>}
+    <LobbyMusic compact />
     {!state!.isAdmin && <p className="fb-tap fb-push">{fixture.mySlips.length < fixture.markets.length && !fixture.window
       ? 'Arrivé en retard ? L’admin peut ouvrir le guichet entre deux matchs' : 'Phase 3 : quand vous arrêtez de jouer, l’admin clôt la session et ouvre le vote'}</p>}
   </Screen>;

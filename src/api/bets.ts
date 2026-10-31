@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { BetsAdminAction, BetsMode, BetsPlayAction, BetsState, BetsStatus } from '../../shared/bets';
+import type { LobbyMusic } from '../../shared/lobby';
 import { useMe } from './auth';
 import { apiRequest } from './client';
 import { setUploadedPhotos } from '../lib/player-photos';
@@ -53,6 +54,20 @@ export function useBetsHistory(enabled: boolean) {
     queryFn: () => apiRequest<BetsState>('/api/bets/state?peek'),
     enabled,
     staleTime: 5 * 60_000,
+  });
+}
+
+/** La musique du lobby (titre Spotify en cours chez l'hôte), relue toutes les 15 s. */
+export function useLobbyMusic() {
+  return useQuery({ queryKey: ['lobby-music'], queryFn: () => apiRequest<LobbyMusic>('/api/bets/lobby'), refetchInterval: 15_000, staleTime: 10_000, retry: false });
+}
+
+/** Admins : coller (ou effacer) le lien de la Jam de la soirée. */
+export function useSaveJam() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (url: string) => apiRequest<LobbyMusic>('/api/bets/jam', { method: 'POST', body: JSON.stringify({ url }) }),
+    onSuccess: (music) => client.setQueryData(['lobby-music'], music),
   });
 }
 

@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import type { ClubProfile } from '../../shared/profile';
 import type { Account } from '../../server/auth-http';
 import { useMe } from '../api/auth';
-import { usePlayerPhotos } from '../api/bets';
+import { useLobbyMusic, usePlayerPhotos, useSaveJam } from '../api/bets';
 import { PhotoPicker } from '../components/bets/PhotoPicker';
 import { useProfile, useProfileAction } from '../api/profile';
 import { AccountChip, SignInButton, SignInNotice } from '../components/fc27/SignIn';
@@ -31,7 +31,36 @@ function PhotoPanel({ name }: { name: string }) {
   </section>;
 }
 
-function ProfileContent({ profile, account }: { profile: ClubProfile; account: Account }) {
+const SPOTIFY_RESULT: Record<string, string> = {
+  ok: 'Spotify est relié : le titre en cours s’affiche dans le lobby dès que la musique joue.',
+  refus: 'Connexion Spotify annulée.', etat: 'La connexion Spotify a expiré, recommence.',
+  indisponible: 'Spotify n’est pas configuré sur ce site.', erreur: 'Spotify a refusé la connexion. Vérifie que ton compte est ajouté à l’app Spotify.',
+};
+
+/** Admins : relier le Spotify de l'hôte et coller le lien de la Jam de la soirée. */
+function LobbyAdmin({ result }: { result: string | null }) {
+  const music = useLobbyMusic();
+  const save = useSaveJam();
+  const [jam, setJam] = useState<string | null>(null);
+  const value = jam ?? music.data?.jamUrl ?? '';
+  return <section className="profile-panel" aria-labelledby="lobby-admin-title">
+    <p className="profile-eyebrow">Admin · soirée</p>
+    <h2 id="lobby-admin-title">Musique du lobby</h2>
+    {result && SPOTIFY_RESULT[result] && <p className="profile-notice" role="status">{SPOTIFY_RESULT[result]}</p>}
+    <p>{music.data?.connected ? <>Spotify relié{music.data.host ? <> (hôte : <strong>{music.data.host}</strong>)</> : null}. Le titre en cours s’affiche sur l’accueil et
+      dans FoodBet pendant que la musique joue.</> : 'Relie le compte Spotify de celui qui met la musique : le titre en cours s’affichera sur l’accueil et dans FoodBet.'}</p>
+    <a className="profile-button" href="/api/auth/spotify">{music.data?.connected ? 'Relier un autre compte Spotify' : 'Connecter Spotify'}</a>
+    <form className="profile-form" onSubmit={(event) => { event.preventDefault(); save.mutate(value.trim(), { onSuccess: () => setJam(null) }); }}>
+      <label>Lien de la Jam<input type="url" value={value} onChange={(event) => setJam(event.target.value)} placeholder="https://spotify.link/…" /></label>
+      <button className="profile-button" disabled={save.isPending}>{save.isPending ? 'Enregistrement…' : value ? 'Enregistrer le lien' : 'Retirer le lien'}</button>
+      <p className="profile-muted">Dans Spotify : « Démarrer une Jam », puis « Partager » et copie le lien.</p>
+      {save.isError && <p role="alert">{save.error.message}</p>}
+      {save.isSuccess && <p role="status">Lien de la Jam enregistré.</p>}
+    </form>
+  </section>;
+}
+
+function ProfileContent({ profile, account, spotify }: { profile: ClubProfile; account: Account; spotify: string | null }) {
   const [memberId, setMemberId] = useState('');
   const [search, setSearch] = useState('');
   const mutation = useProfileAction();
@@ -70,6 +99,7 @@ function ProfileContent({ profile, account }: { profile: ClubProfile; account: A
       <ActionFeedback error={mutation.error} />
     </section>}
     <div className="profile-shortcuts"><Link to="/joueurs">L’effectif et ses statistiques ↗</Link><Link to="/fc27?vue=fiche">Préparer mon joueur FC 27 ↗</Link></div>
+    {profile.isAdmin && <LobbyAdmin result={spotify} />}
     {profile.isAdmin && <PlayerClaimAdmin claims={profile.adminClaims} />}
   </>;
 }
@@ -105,6 +135,6 @@ export function ProfileView() {
     <SignInNotice reason={params.get('connexion')} />
     {me.isLoading ? <p role="status">Chargement de ton compte…</p> : !account ? <section className="profile-panel"><h2>Retrouve ton joueur Club Pro</h2><p>Connecte-toi avec Discord, choisis ton joueur et fais valider la correspondance par un administrateur.</p><SignInButton /></section>
       : !profile.data ? <section className="profile-panel">{profile.isError ? <><p role="alert">{profile.error.message}</p><button className="profile-button" onClick={() => void profile.refetch()}>Réessayer</button></> : <p role="status">Chargement de ton profil…</p>}</section>
-        : <>{profile.isError && <p className="profile-notice" role="alert">Actualisation impossible. Les dernières informations restent affichées.</p>}<ProfileContent key={account.id} profile={profile.data} account={account} /></>}
+        : <>{profile.isError && <p className="profile-notice" role="alert">Actualisation impossible. Les dernières informations restent affichées.</p>}<ProfileContent key={account.id} profile={profile.data} account={account} spotify={params.get('spotify')} /></>}
   </div>);
 }

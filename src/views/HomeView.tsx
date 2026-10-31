@@ -1,6 +1,7 @@
 import { useClub, useMatches, useMembers } from '../api/queries';
 import { BetsLiveBanner } from '../components/bets/BetsLiveBanner';
 import { LastMatchTile } from '../components/home/LastMatchTile';
+import { LobbyMusic } from '../components/home/LobbyMusic';
 import { MotmTile } from '../components/home/MotmTile';
 import { NextNightTile } from '../components/home/NextNightTile';
 import { RecapsTile } from '../components/home/RecapsTile';
@@ -24,6 +25,7 @@ export function HomeView() {
     >
       {() => (
         <div className="fc-grid">
+          <LobbyMusic />
           <BetsLiveBanner />
           <RecapsTile />
           <div className="fc-row fc-row--top">

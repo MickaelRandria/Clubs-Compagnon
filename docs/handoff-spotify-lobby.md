@@ -178,7 +178,8 @@ Rafraîchir l'ancien jeton ne suffit pas. Les commandes et ajouts nécessitent u
 et un lecteur Spotify actif.
 
 **Le 1er novembre 2026, l'utilisateur a explicitement autorisé la migration 0029 en production ; elle
-est terminée et cet accord est acquis. Le push du nouveau code reste à autoriser.** Ne pas réappliquer
+est terminée et cet accord est acquis. L'utilisateur a ensuite autorisé le push sur `main` en répondant
+« oui je t'autorise » à la demande de publication. Cet accord est également acquis.** Ne pas réappliquer
 0029. Ne pas utiliser la connexion actuelle de `.env.local` pour la production (voir le contrôle de
 branche ci-dessus).
 
@@ -252,5 +253,12 @@ Références Spotify : [commandes et permission de lecture](https://developer.sp
   `a038569f488194cc5248f8777a540cb2613611f32cd11e1bfbd596cf0a00ea61`, `created_at=1791700000000` ;
   `visible boolean NOT NULL DEFAULT true` et `spotify_scope text NULL` conformes. La ligne existante
   conserve `visible=true`, `spotify_scope=NULL`. Aucun jeton n'a été lu dans les résultats de contrôle.
-- Le site public répond HTTP 200 après migration. **Aucun push ni nouveau déploiement applicatif**
-  n'a été effectué. Le nouveau code reste sur `spotify-commandes` en attendant l'accord de publication.
+- Le site public répond HTTP 200 après migration. À cette étape, aucun push ni nouveau déploiement
+  applicatif n'avait été effectué. La publication du code a été autorisée ensuite ; voir le bilan ci-dessous.
+
+## Publication de 0029 — autorisation acquise
+
+L'utilisateur a donné son accord explicite pour publier le code sur `main` le 1er novembre 2026.
+Le contrôle préalable à la publication confirme à nouveau 0029 et ses deux colonnes sur la branche
+Neon de production. Les 243 tests, les parcours navigateur et le build concernent le code applicatif
+`243b2f6`, inchangé depuis leur validation. Publication et contrôle Vercel en cours.

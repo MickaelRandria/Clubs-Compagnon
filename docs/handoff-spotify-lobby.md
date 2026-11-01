@@ -183,8 +183,8 @@ est terminée et cet accord est acquis. L'utilisateur a ensuite autorisé le pus
 0029. Ne pas utiliser la connexion actuelle de `.env.local` pour la production (voir le contrôle de
 branche ci-dessus).
 
-État de cette reprise : **réalisation locale terminée sur `spotify-commandes`, code non publié ;
-migration 0029 déjà appliquée en production**. Commit applicatif : `243b2f6`.
+État de cette reprise : **terminée et publiée sur `main` via la PR #2 ; migration 0029 appliquée
+avant le code**. Commit applicatif local : `243b2f6`, commit publié : `ad286d5`.
 
 - `/musique` : console privée de l'hôte, interrupteur, précédent/pause/reprise/suivant, recherche explicite
   de 2 à 100 caractères et dix résultats au maximum, ajout confirmé après réponse de Spotify.
@@ -228,9 +228,8 @@ en une transaction. Empreinte SHA-256 de 0029 en LF :
 `a038569f488194cc5248f8777a540cb2613611f32cd11e1bfbd596cf0a00ea61` ;
 `created_at` : `1791700000000`.
 
-Après accord explicite pour **la nouvelle publication** : vérifier que 0029 est toujours présente,
-pousser la branche de revue et ouvrir la PR avec les captures,
-retirer les captures avant fusion sur `main`, attendre Vercel READY et vérifier le parcours public.
+L'accord de publication est acquis et la publication est terminée : 0029 revérifiée, PR ouverte avec
+captures, captures retirées avant fusion sur `main`, Vercel READY et parcours public contrôlé.
 L'hôte ouvre ensuite Profil → « Relier un autre compte Spotify » (ou « Autoriser les commandes Spotify »
 sur `/musique`) puis lance un titre sur son appareil avant d'essayer les commandes et l'ajout à la file.
 
@@ -256,9 +255,29 @@ Références Spotify : [commandes et permission de lecture](https://developer.sp
 - Le site public répond HTTP 200 après migration. À cette étape, aucun push ni nouveau déploiement
   applicatif n'avait été effectué. La publication du code a été autorisée ensuite ; voir le bilan ci-dessous.
 
-## Publication de 0029 — autorisation acquise
+## Publication de 0029 terminée — 1er novembre 2026
 
 L'utilisateur a donné son accord explicite pour publier le code sur `main` le 1er novembre 2026.
 Le contrôle préalable à la publication confirme à nouveau 0029 et ses deux colonnes sur la branche
 Neon de production. Les 243 tests, les parcours navigateur et le build concernent le code applicatif
-`243b2f6`, inchangé depuis leur validation. Publication et contrôle Vercel en cours.
+`243b2f6`, inchangé depuis leur validation.
+
+- [PR #2](https://github.com/MickaelRandria/Clubs-Compagnon/pull/2) fusionnée sur `main` après succès
+  du contrôle Vercel de la branche de revue : commit `ad286d5ad6eb3de77e0d439d6b5aa940815fdf65`.
+- Captures avant/après liées à la PR depuis le commit `2cda220`, puis retirées de l'arbre avant fusion.
+  Aucun fichier `captures/` n'est versionné dans `main`.
+- Déploiement applicatif `dpl_BHBwUUvc1VTCaM7Zc4cP68w63eJ8`, projet `clubs-compagnon`, framework
+  Vite, environnement **Production**, état **READY**, compilation distante d'environ 45 s.
+  Alias [clubs-compagnon.vercel.app](https://clubs-compagnon.vercel.app) attribué sans erreur.
+- Vérifications Chrome sur l'alias publié : `/musique` et `/profil` HTTP 200 à 390/320 px, aucun
+  débordement horizontal, aucune exception JavaScript ni requête réseau échouée. Le module de la
+  nouvelle page Musique est effectivement chargé. Capture locale `captures/musique-production.png`.
+- Sans session Discord : `lobby-console`, `spotify-search?q=Daft` et `auth/spotify` HTTP 401 ;
+  `/api/bets/lobby` HTTP 200 avec schéma valide. Aucun compte, jeton ou succès d'écriture simulé en prod.
+- Journaux Vercel du déploiement : aucun événement de niveau erreur/fatal relevé dans la fenêtre
+  de dix minutes du contrôle.
+
+Le code est en ligne sur [Musique du lobby](https://clubs-compagnon.vercel.app/musique). L'hôte doit
+encore utiliser son compte personnel Discord et Spotify, cliquer « Autoriser les commandes Spotify »,
+puis lancer un morceau sur un appareil. Les commandes réelles et une Jam ne peuvent pas être validées
+sans cette connexion personnelle ; elles ont été vérifiées avec des réponses Spotify simulées en local.

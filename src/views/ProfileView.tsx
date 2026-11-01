@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import type { ClubProfile } from '../../shared/profile';
 import type { Account } from '../../server/auth-http';
 import { useMe } from '../api/auth';
-import { useDisconnectSpotify, useLobbyMusic, usePlayerPhotos, useSaveJam } from '../api/bets';
+import { useDisconnectSpotify, useLobbyConsole, usePlayerPhotos, useSaveJam } from '../api/bets';
 import { PhotoPicker } from '../components/bets/PhotoPicker';
 import { useProfile, useProfileAction } from '../api/profile';
 import { AccountChip, SignInButton, SignInNotice } from '../components/fc27/SignIn';
@@ -32,14 +32,15 @@ function PhotoPanel({ name }: { name: string }) {
 }
 
 const SPOTIFY_RESULT: Record<string, string> = {
-  ok: 'Spotify est relié : le titre en cours s’affiche dans le lobby dès que la musique joue.',
+  ok: 'Spotify est relié. Ouvre Musique du lobby pour choisir la visibilité et piloter ton lecteur.',
   refus: 'Connexion Spotify annulée.', etat: 'La connexion Spotify a expiré, recommence.',
   indisponible: 'Spotify n’est pas configuré sur ce site.', erreur: 'Spotify a refusé la connexion. Vérifie que ton compte est ajouté à l’app Spotify.',
 };
 
 /** Admins : relier le Spotify de l'hôte et coller le lien de la Jam de la soirée. */
 function LobbyAdmin({ result }: { result: string | null }) {
-  const music = useLobbyMusic();
+  const me = useMe();
+  const music = useLobbyConsole(me.data?.signedIn ? me.data.account.id : null);
   const save = useSaveJam();
   const disconnect = useDisconnectSpotify();
   const [jam, setJam] = useState<string | null>(null);
@@ -48,19 +49,18 @@ function LobbyAdmin({ result }: { result: string | null }) {
     <p className="profile-eyebrow">Admin · soirée</p>
     <h2 id="lobby-admin-title">Musique du lobby</h2>
     {result && SPOTIFY_RESULT[result] && <p className="profile-notice" role="status">{SPOTIFY_RESULT[result]}</p>}
-    {music.isPending ? <p role="status">Chargement de la musique du lobby…</p> : music.isError ? <div role="alert"><p>Impossible de vérifier la connexion Spotify et le lien de la Jam.</p><button className="profile-button profile-button--secondary" onClick={() => void music.refetch()}>Réessayer</button></div> : <p>{music.data?.connected ? <>Spotify relié{music.data.host ? <> (hôte : <strong>{music.data.host}</strong>)</> : null}. Le titre en cours s’affiche sur l’accueil et
-      dans FoodBet pendant que la musique joue.</> : 'Relie le compte Spotify de celui qui met la musique : le titre en cours s’affichera sur l’accueil et dans FoodBet.'}</p>
+    {music.isPending ? <p role="status">Chargement de la musique du lobby…</p> : music.isError ? <div role="alert"><p>Impossible de vérifier la connexion Spotify et le lien de la Jam.</p><button className="profile-button profile-button--secondary" onClick={() => void music.refetch()}>Réessayer</button></div> : <p>{music.data?.connected ? <>Spotify relié{music.data.host ? <> (hôte : <strong>{music.data.host}</strong>)</> : null}. L’hôte choisit la visibilité du lecteur depuis <Link to="/musique">Musique du lobby</Link>.</> : 'Relie le compte Spotify de celui qui met la musique : le titre en cours s’affichera sur l’accueil et dans FoodBet.'}</p>
     }
     <a className="profile-button" href="/api/auth/spotify">{music.data?.connected ? 'Relier un autre compte Spotify' : 'Connecter Spotify'}</a>
     {music.data?.connected && <p><button type="button" className="profile-button profile-button--secondary" disabled={disconnect.isPending || save.isPending} onClick={() => disconnect.mutate()}>{disconnect.isPending ? 'Déconnexion…' : 'Déconnecter Spotify'}</button></p>}
     {disconnect.isError && <p role="alert">{disconnect.error.message}</p>}
     {disconnect.isSuccess && <p role="status">Spotify déconnecté.</p>}
-    <form className="profile-form" onSubmit={(event) => { event.preventDefault(); save.mutate(value.trim(), { onSuccess: () => setJam(null) }); }}>
+    <form className="profile-form" onSubmit={(event) => { event.preventDefault(); const submitted = value.trim(); save.mutate(submitted, { onSuccess: () => setJam(submitted) }); }}>
       <label>Lien de la Jam<input type="url" value={value} maxLength={300} autoComplete="off" autoCapitalize="none" spellCheck={false} disabled={music.isPending || music.isError || save.isPending || disconnect.isPending} onChange={(event) => { setJam(event.target.value); save.reset(); }} placeholder="https://spotify.link/…" /></label>
       <button className="profile-button" disabled={music.isPending || music.isError || save.isPending || disconnect.isPending}>{save.isPending ? 'Enregistrement…' : value ? 'Enregistrer le lien' : 'Retirer le lien'}</button>
       <p className="profile-muted">Dans Spotify : « Démarrer une Jam », puis « Partager » et copie le lien.</p>
       {save.isError && <p role="alert">{save.error.message}</p>}
-      {save.isSuccess && <p role="status">{save.data.jamUrl ? 'Lien de la Jam enregistré.' : 'Lien de la Jam retiré.'}</p>}
+      {save.isSuccess && <p role="status">{save.variables ? 'Lien de la Jam enregistré.' : 'Lien de la Jam retiré.'}</p>}
     </form>
   </section>;
 }
@@ -103,7 +103,7 @@ function ProfileContent({ profile, account, spotify }: { profile: ClubProfile; a
       </>}
       <ActionFeedback error={mutation.error} />
     </section>}
-    <div className="profile-shortcuts"><Link to="/joueurs">L’effectif et ses statistiques ↗</Link><Link to="/fc27?vue=fiche">Préparer mon joueur FC 27 ↗</Link></div>
+    <div className="profile-shortcuts"><Link to="/musique">Musique du lobby · rechercher et ajouter un morceau ↗</Link><Link to="/joueurs">L’effectif et ses statistiques ↗</Link><Link to="/fc27?vue=fiche">Préparer mon joueur FC 27 ↗</Link></div>
     {profile.isAdmin && <LobbyAdmin result={spotify} />}
     {profile.isAdmin && <PlayerClaimAdmin claims={profile.adminClaims} />}
   </>;

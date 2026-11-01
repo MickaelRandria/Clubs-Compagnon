@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { useLobbyMusic } from '../../api/bets';
 import { initials } from '../../lib/player-photos';
 import '../../styles/lobby.css';
@@ -35,6 +36,7 @@ export function LobbyMusic({ compact = false }: { compact?: boolean }) {
       {cover}
       <div className="lb-info">{live}<a className="lb-track" href={trackUrl} title={trackLabel} target="_blank" rel="noreferrer"><strong className="lb-title">{playing.title}</strong><span className="lb-artist">{playing.artist}</span></a>{spotify}</div>
       {jam && <a className="lb-jam" href={jam} target="_blank" rel="noreferrer" aria-label="Rejoindre la Jam">Jam</a>}
+      <Link className="lb-console" to="/musique">Rechercher un morceau · musique du lobby ↗</Link>
     </section>;
   }
   return <section className="lb" aria-label="Musique du lobby">
@@ -49,5 +51,6 @@ export function LobbyMusic({ compact = false }: { compact?: boolean }) {
     {music.data?.host && <p className="lb-host"><span className="lb-host-av" aria-hidden="true">{initials(music.data.host)}</span>Mis par {music.data.host}</p>}
     {jam && <a className="lb-jam lb-jam--wide" href={jam} target="_blank" rel="noreferrer">Rejoindre la Jam <small>· s’ouvre dans Spotify</small></a>}
     {music.data?.next && <p className="lb-next">Ensuite : <a href={music.data.next.url ?? `https://open.spotify.com/search/${encodeURIComponent(`${music.data.next.title} ${music.data.next.artist}`)}`} target="_blank" rel="noreferrer"><b>{music.data.next.title}</b> — {music.data.next.artist}</a></p>}
+    <Link className="lb-console" to="/musique">Rechercher un morceau · musique du lobby ↗</Link>
   </section>;
 }

@@ -16,6 +16,7 @@ export const router = createBrowserRouter([
       // Stats a rejoint la page Club ; l'ancienne adresse y mène toujours.
       { path: '/stats', element: <Navigate to="/club#bilan" replace /> },
       { path: '/profil', lazy: async () => ({ Component: (await import('./views/ProfileView')).ProfileView }) },
+      { path: '/musique', lazy: async () => ({ Component: (await import('./views/MusicView')).MusicView }) },
       { path: '/matchs', lazy: async () => ({ Component: (await import('./views/MatchesView')).MatchesView }) },
       { path: '/matchs/:id', lazy: async () => ({ Component: (await import('./views/MatchDetailView')).MatchDetailView }) },
       { path: '/playoffs', lazy: async () => ({ Component: (await import('./views/PlayoffsView')).PlayoffsView }) },

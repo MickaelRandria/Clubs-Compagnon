@@ -16,6 +16,7 @@ function crumbsFor(pathname: string): Crumb[] {
     case '/club': return [{ label: 'Club' }];
     case '/playoffs': return [{ label: 'Club', to: '/club' }, { label: 'Nuit Inhouse 1' }];
     case '/profil': return [{ label: 'Mon profil' }];
+    case '/musique': return [{ label: 'Musique du lobby' }];
     case '/paris': return [{ label: 'FoodBet' }];
     case '/fc27': return [{ label: 'Saison' }, { label: 'FC 27' }];
     default: return [];

@@ -1,0 +1,29 @@
+[
+  {
+    "uri": "spotify:track:2Foc5Q5nqNiosCNqttzHof",
+    "title": "Get Lucky (Radio Edit)",
+    "artist": "Daft Punk, Pharrell Williams, Nile Rodgers",
+    "album": "Get Lucky",
+    "cover": "/demo/fixtures/lobby-cover.svg",
+    "url": "https://open.spotify.com/track/2Foc5Q5nqNiosCNqttzHof",
+    "durationMs": 248413
+  },
+  {
+    "uri": "spotify:track:2cGxRwrMyEAp8dEbuZaVv6",
+    "title": "Instant Crush",
+    "artist": "Daft Punk, Julian Casablancas",
+    "album": "Random Access Memories",
+    "cover": "/demo/fixtures/lobby-cover.svg",
+    "url": "https://open.spotify.com/track/2cGxRwrMyEAp8dEbuZaVv6",
+    "durationMs": 337560
+  },
+  {
+    "uri": "spotify:track:0DiWol3AO6WpXZgp0goxAV",
+    "title": "One More Time",
+    "artist": "Daft Punk",
+    "album": "Discovery",
+    "cover": "/demo/fixtures/lobby-cover.svg",
+    "url": "https://open.spotify.com/track/0DiWol3AO6WpXZgp0goxAV",
+    "durationMs": 320357
+  }
+]

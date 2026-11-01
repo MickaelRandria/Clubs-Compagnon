@@ -6,7 +6,8 @@ import { createBetsRouter } from '../server/bets-http.js';
 import { createSpotifyHandlers } from '../server/spotify-http.js';
 import { createToken } from '../server/session.js';
 import {
-  exchangeSpotifyCode, fetchNowPlaying, refreshSpotifyToken, spotifyAuthorizeUrl, spotifyConfig,
+  addSpotifyTrackToQueue, exchangeSpotifyCode, fetchNowPlaying, fetchSpotifyPlayback, refreshSpotifyToken,
+  searchSpotifyTracks, sendSpotifyCommand, spotifyAuthorizeUrl, spotifyConfig,
   SpotifyUnavailable, type SpotifyTokens,
 } from '../server/spotify.js';
 import { jamUrlSchema, type LobbyMusic } from '../shared/lobby.js';
@@ -43,7 +44,7 @@ test('Spotify : configuration absente, portée minimale et adresse de retour exa
   assert.equal(url.origin, 'https://accounts.spotify.com');
   assert.equal(url.searchParams.get('state'), 'state-test');
   assert.equal(url.searchParams.get('redirect_uri'), config.redirectUri);
-  assert.equal(url.searchParams.get('scope'), 'user-read-currently-playing user-read-playback-state');
+  assert.equal(url.searchParams.get('scope'), 'user-read-currently-playing user-read-playback-state user-modify-playback-state');
   assert.equal(url.searchParams.has('client_secret'), false);
 });
 
@@ -130,6 +131,145 @@ test('Spotify : Retry-After est respecté pour le lecteur et la file', async () 
     await assert.rejects(fetchNowPlaying('acces', async () => ++calls === 1 && rateLimitQueue ? Response.json(playback)
       : new Response(null, { status: 429, headers: { 'Retry-After': '120' } })),
     (error: unknown) => error instanceof SpotifyUnavailable && error.status === 429 && error.retryAfterMs === 120_000);
+  }
+});
+
+test('Spotify : seules les portées réellement accordées sont conservées dans les jetons', async () => {
+  const granted = await exchangeSpotifyCode(config, 'code', async () => Response.json({
+    access_token: 'acces', refresh_token: 'refresh', expires_in: 3600, scope: 'user-read-playback-state',
+  }));
+  assert.equal(granted.scope, 'user-read-playback-state', 'ne pas déduire la portée de contrôle de la demande OAuth');
+  const withoutScope = await refreshSpotifyToken(config, 'refresh', async () => Response.json({ access_token: 'neuf', expires_in: 3600 }));
+  assert.equal(Object.hasOwn(withoutScope, 'scope'), false, 'l’absence de scope permet au store de conserver la portée précédente');
+  const withScope = await refreshSpotifyToken(config, 'refresh', async () => Response.json({
+    access_token: 'neuf', expires_in: 3600, scope: 'user-modify-playback-state',
+  }));
+  assert.equal(withScope.scope, 'user-modify-playback-state');
+});
+
+const catalogue = { ...track, uri: 'spotify:track:4uLU6hMCjMI75M1A2tKUQC',
+  external_urls: { spotify: 'https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC' } };
+
+test('Spotify : le lecteur privé conserve le morceau en pause et borne sa progression', async () => {
+  for (const [value, expected] of [[-15, 0], [NaN, 0], [999_999, catalogue.duration_ms], [84_000, 84_000]]) {
+    let calls = 0;
+    const result = await fetchSpotifyPlayback('acces', async (input, init) => {
+      calls++;
+      assert.equal(String(input), 'https://api.spotify.com/v1/me/player/currently-playing');
+      assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer acces');
+      assert.ok(init?.signal instanceof AbortSignal);
+      return Response.json({ ...playback, is_playing: false, item: catalogue, progress_ms: value });
+    });
+    assert.equal(result.track?.uri, catalogue.uri);
+    assert.equal(result.track?.title, 'Le morceau');
+    assert.equal(result.track?.cover, 'https://i.scdn.co/image/moyenne');
+    assert.equal(result.isPlaying, false);
+    assert.equal(result.progressMs, expected);
+    assert.ok(Number.isFinite(Date.parse(result.at)));
+    assert.equal(calls, 1, 'la vue privée ne relit pas la file pour reprendre le morceau');
+  }
+});
+
+test('Spotify : la vue privée ignore publicité, podcast, URI malformée et absence de lecteur', async () => {
+  for (const response of [new Response(null, { status: 204 }), Response.json({ ...playback, currently_playing_type: 'ad' }),
+    Response.json({ ...playback, currently_playing_type: 'episode' }), Response.json({ ...playback, item: track }),
+    Response.json({ ...playback, item: { ...catalogue, uri: 'spotify:episode:4uLU6hMCjMI75M1A2tKUQC' } })]) {
+    const result = await fetchSpotifyPlayback('acces', async () => response);
+    assert.equal(result.track, null);
+    assert.equal(result.isPlaying, false);
+    assert.equal(result.progressMs, 0);
+  }
+});
+
+test('Spotify : recherche encodée, dix résultats maximum, métadonnées bornées aux morceaux', async () => {
+  let calls = 0;
+  const found = await searchSpotifyTracks('acces', '  Daft Punk & Nile  ', async (input, init) => {
+    calls++;
+    const url = new URL(String(input));
+    assert.equal(url.origin + url.pathname, 'https://api.spotify.com/v1/search');
+    assert.equal(url.searchParams.get('q'), 'Daft Punk & Nile');
+    assert.equal(url.searchParams.get('type'), 'track');
+    assert.equal(url.searchParams.get('limit'), '10');
+    assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer acces');
+    assert.ok(init?.signal instanceof AbortSignal);
+    return Response.json({ tracks: { items: [catalogue, null, { ...catalogue, type: 'episode' },
+      ...Array.from({ length: 10 }, () => catalogue)] } });
+  });
+  assert.equal(calls, 1);
+  assert.equal(found.length, 8, 'les dix premières entrées sont filtrées, pas les suivantes');
+  assert.deepEqual(found[0], { uri: catalogue.uri, title: catalogue.name, artist: 'Artiste', album: 'Album',
+    cover: 'https://i.scdn.co/image/moyenne', url: catalogue.external_urls.spotify, durationMs: catalogue.duration_ms });
+  for (const query of ['', 'a', ' '.repeat(4), 'a'.repeat(101)]) {
+    await assert.rejects(searchSpotifyTracks('acces', query, async () => { throw new Error('réseau interdit'); }),
+      (error: unknown) => error instanceof SpotifyUnavailable && error.status === 400);
+  }
+  await assert.rejects(searchSpotifyTracks('acces', 'titre', async () => Response.json({ tracks: null })), SpotifyUnavailable);
+});
+
+test('Spotify : lecture, pause et sauts utilisent les méthodes et routes attendues, sans nouvelle lecture', async () => {
+  const methods = { play: 'PUT', pause: 'PUT', next: 'POST', previous: 'POST' } as const;
+  for (const action of ['play', 'pause', 'next', 'previous'] as const) {
+    let calls = 0;
+    await sendSpotifyCommand('acces', action, async (input, init) => {
+      calls++;
+      assert.equal(String(input), `https://api.spotify.com/v1/me/player/${action}`);
+      assert.equal(init?.method, methods[action]);
+      assert.equal(init?.body, undefined, 'reprendre ne remplace pas la file par une liste de titres');
+      assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer acces');
+      assert.ok(init?.signal instanceof AbortSignal);
+      return new Response(null, { status: 204 });
+    });
+    assert.equal(calls, 1);
+  }
+});
+
+test('Spotify : l’ajout à la file encode uniquement une URI de morceau valide', async () => {
+  let calls = 0;
+  await addSpotifyTrackToQueue('acces', catalogue.uri, async (input, init) => {
+    calls++;
+    const url = new URL(String(input));
+    assert.equal(url.origin + url.pathname, 'https://api.spotify.com/v1/me/player/queue');
+    assert.deepEqual([...url.searchParams], [['uri', catalogue.uri]]);
+    assert.equal(init?.method, 'POST');
+    assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer acces');
+    assert.ok(init?.signal instanceof AbortSignal);
+    return new Response(null, { status: 204 });
+  });
+  assert.equal(calls, 1);
+  for (const uri of ['spotify:track:abc', 'spotify:episode:4uLU6hMCjMI75M1A2tKUQC',
+    'https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC', `${catalogue.uri}&device_id=autre`, '__proto__']) {
+    await assert.rejects(addSpotifyTrackToQueue('acces', uri, async () => { throw new Error('réseau interdit'); }),
+      (error: unknown) => error instanceof SpotifyUnavailable && error.status === 400);
+  }
+});
+
+test('Spotify : une mutation échouée ou incertaine ne part jamais deux fois et ne divulgue aucun secret', async () => {
+  const actions = [
+    (fetch: typeof globalThis.fetch) => sendSpotifyCommand('acces-secret', 'next', fetch),
+    (fetch: typeof globalThis.fetch) => sendSpotifyCommand('acces-secret', 'previous', fetch),
+    (fetch: typeof globalThis.fetch) => addSpotifyTrackToQueue('acces-secret', catalogue.uri, fetch),
+  ];
+  for (const action of actions) {
+    for (const status of [401, 403, 404, 429, 500]) {
+      let calls = 0;
+      await assert.rejects(action(async () => {
+        calls++;
+        return Response.json({ error: 'acces-secret', detail: 'secret-test' }, { status, headers: { 'Retry-After': '45' } });
+      }), (error: unknown) => {
+        assert.ok(error instanceof SpotifyUnavailable);
+        assert.equal(error.status, status);
+        assert.doesNotMatch(error.message, /acces-secret|secret-test/);
+        if (status === 403) assert.match(error.message, /autorisations.*Premium/);
+        if (status === 404) assert.match(error.message, /lecteur Spotify actif/);
+        if (status === 429) assert.equal(error.retryAfterMs, 45_000);
+        return true;
+      });
+      assert.equal(calls, 1);
+    }
+    let calls = 0;
+    await assert.rejects(action(async () => { calls++; throw new Error('secret-test acces-secret'); }),
+      (error: unknown) => error instanceof SpotifyUnavailable && error.status === undefined && !error.message.includes('secret'));
+    assert.equal(calls, 1);
   }
 });
 

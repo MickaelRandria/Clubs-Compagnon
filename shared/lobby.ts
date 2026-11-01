@@ -12,6 +12,31 @@ export interface LobbyMusic {
   connected: boolean;
 }
 
+/** Morceau issu du catalogue Spotify, sans extrait audio intégré. */
+export interface LobbyTrack {
+  uri: string; title: string; artist: string; album: string;
+  cover: string | null; url: string | null; durationMs: number;
+}
+
+/** État du lecteur de l'hôte, conservé pendant une pause pour permettre la reprise. */
+export interface LobbyPlayback {
+  track: LobbyTrack | null; isPlaying: boolean; progressMs: number; at: string;
+}
+
+/** Vue réservée aux comptes connectés ; les commandes restent propres à l'hôte. */
+export interface LobbyConsole {
+  connected: boolean; visible: boolean; isHost: boolean;
+  canControl: boolean; canSearch: boolean; canQueue: boolean; needsReconnect: boolean;
+  host: string | null; jamUrl: string | null; playback: LobbyPlayback | null;
+}
+
+export type SpotifyCommand = 'play' | 'pause' | 'next' | 'previous';
+
+export const spotifyCommandSchema = z.object({ action: z.enum(['play', 'pause', 'next', 'previous']) }).strict();
+export const lobbyVisibilitySchema = z.object({ visible: z.boolean() }).strict();
+export const spotifyQueueSchema = z.object({ uri: z.string().regex(/^spotify:track:[a-zA-Z0-9]{22}$/) }).strict();
+export const spotifySearchSchema = z.string().trim().min(2).max(100);
+
 /** Un lien de Jam Spotify : spotify.link ou open.spotify.com, en https. */
 export const jamUrlSchema = z.object({
   url: z.union([z.literal(''), z.string().max(300).refine((value) => {

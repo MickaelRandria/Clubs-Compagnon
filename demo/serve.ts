@@ -2,7 +2,7 @@
 // Aucune base, aucun appel EA, aucun secret : marche hors ligne et en session cloud.
 // `npm run demo` (visiteur non connecté) ou `npm run demo -- --connecte` (compte démo, FoodBet ouvert).
 // FoodBet : l'étape se choisit dans l'URL, `/paris?scene=vote` (voir SCENES), `&admin` pour la vue admin.
-// Musique : `?musique=pause|absente|indisponible|sans-jam` ; `/profil?admin` avec `--connecte` pour les réglages.
+// Musique : `?musique=pause|absente|indisponible|sans-jam|masquee|reconnexion` ; `/musique?hote` pour les commandes.
 //
 // Pour maquetter une donnée que l'API ne renvoie pas encore, l'ajouter à la main dans les
 // fixtures : le front l'affiche comme si le serveur la renvoyait déjà.
@@ -13,7 +13,7 @@ import type { BetSession, BetsState, BetsStatus, MarketId } from '../shared/bets
 import { openSession, type FormMatch } from '../shared/bets-odds.js';
 import type { Match, MatchDetail, Member } from '../shared/types.js';
 import type { ClubProfile } from '../shared/profile.js';
-import type { LobbyMusic } from '../shared/lobby.js';
+import type { LobbyConsole, LobbyMusic, LobbyTrack } from '../shared/lobby.js';
 
 const PORT = Number(process.env.DEMO_PORT ?? 5175);
 const signedIn = process.argv.includes('--connecte');
@@ -27,12 +27,13 @@ const me = members[0];
 /** Étapes de FoodBet visibles en démo, choisies par `?scene=` dans l'URL de la page. */
 const SCENES = ['parier', 'joue', 'session', 'guichet', 'vote', 'vote-fait', 'gagnants', 'rien'] as const;
 type Scene = typeof SCENES[number];
-const MUSIC_SCENES = ['lecture', 'pause', 'absente', 'indisponible', 'sans-jam'] as const;
+const MUSIC_SCENES = ['lecture', 'pause', 'absente', 'indisponible', 'sans-jam', 'masquee', 'reconnexion'] as const;
 type MusicScene = typeof MUSIC_SCENES[number];
 
 /** Une musique fictivement en direct : aucune requête Spotify, pochette locale, mesure toujours fraîche. */
 function lobbyMusic(scene: MusicScene, admin: boolean): [number, LobbyMusic | { error: string }] {
   if (scene === 'indisponible') return [503, { error: 'La musique du lobby est momentanément indisponible.' }];
+  if (scene === 'masquee') return [200, { playing: null, next: null, host: null, jamUrl: null, connected: false }];
   const music = read<LobbyMusic>('lobby');
   const playing = scene === 'pause' || scene === 'absente' || !music.playing
     ? null : { ...music.playing, at: new Date().toISOString() };
@@ -40,6 +41,29 @@ function lobbyMusic(scene: MusicScene, admin: boolean): [number, LobbyMusic | { 
     host: scene === 'absente' ? null : music.host,
     jamUrl: scene === 'sans-jam' || scene === 'absente' ? null : music.jamUrl,
     connected: signedIn && admin && scene !== 'absente' }];
+}
+
+/** Les membres cherchent et ajoutent ; seul `?hote` peut piloter le lecteur et sa visibilité. */
+function lobbyConsole(scene: MusicScene, host: boolean): [number, LobbyConsole | { error: string }] {
+  if (!signedIn) return [401, { error: 'Connecte-toi avec Discord pour choisir la musique.' }];
+  if (scene === 'indisponible') return [503, { error: 'La musique du lobby est momentanément indisponible.' }];
+  const music = read<LobbyMusic>('lobby');
+  const connected = scene !== 'absente';
+  const visible = scene !== 'masquee';
+  const allowed = connected && scene !== 'reconnexion';
+  const seePlayback = connected && (host || visible);
+  const playing = seePlayback ? music.playing : null;
+  return [200, {
+    connected, visible, isHost: host && connected, canControl: host && allowed,
+    canSearch: connected, canQueue: allowed, needsReconnect: host && connected && !allowed,
+    host: seePlayback ? music.host : null,
+    jamUrl: seePlayback && scene !== 'sans-jam' ? music.jamUrl : null,
+    playback: playing ? {
+      track: { uri: `spotify:track:${playing.url?.split('/').at(-1)}`, title: playing.title, artist: playing.artist,
+        album: playing.album, cover: playing.cover, url: playing.url, durationMs: playing.durationMs },
+      isPlaying: scene !== 'pause', progressMs: playing.progressMs, at: new Date().toISOString(),
+    } : null,
+  }];
 }
 
 /** Profil rattaché pour inspecter la carte joueur et les réglages admin sans base ni connexion réelle. */
@@ -165,7 +189,7 @@ function betsState(scene: Scene, admin: boolean): BetsState {
 }
 
 /** Réponse de chaque route GET de /api. `undefined` : route inconnue en démo. */
-function answer(path: string, scene: Scene, admin: boolean, music: MusicScene): [number, unknown] | undefined {
+function answer(path: string, scene: Scene, admin: boolean, music: MusicScene, host: boolean, query: URLSearchParams): [number, unknown] | undefined {
   if (path === '/api/club') return [200, read('club')];
   if (path === '/api/members') return [200, members];
   if (path === '/api/matches') return [200, matches];
@@ -186,6 +210,15 @@ function answer(path: string, scene: Scene, admin: boolean, music: MusicScene): 
   }
   if (path === '/api/bets/photos') return [200, {}];
   if (path === '/api/bets/lobby') return lobbyMusic(music, admin);
+  if (path === '/api/bets/lobby-console') return lobbyConsole(music, host);
+  if (path === '/api/bets/spotify-search') {
+    if (!signedIn) return [401, { error: 'Connecte-toi avec Discord pour choisir la musique.' }];
+    if (music === 'absente') return [409, { error: 'Aucun compte Spotify n’est relié au lobby.' }];
+    if (music === 'indisponible') return [503, { error: 'Spotify est momentanément indisponible.' }];
+    const search = query.get('q')?.trim().toLocaleLowerCase('fr') ?? '';
+    return search.length < 2 || search.length > 100 ? [400, { error: 'Saisis entre 2 et 100 caractères.' }]
+      : [200, { tracks: read<LobbyTrack[]>('lobby-tracks').filter(track => `${track.title} ${track.artist}`.toLocaleLowerCase('fr').includes(search)) }];
+  }
   if (path === '/api/bets/state') return signedIn ? [200, betsState(scene, admin)] : [401, { error: 'Connecte-toi pour parier.' }];
   return undefined;
 }
@@ -195,7 +228,8 @@ const demoApi: Plugin = {
   configureServer(vite) {
     vite.middlewares.use((req, res, next) => {
       if (!req.url?.startsWith('/api/')) return next();
-      const path = new URL(req.url, 'http://localhost').pathname;
+      const apiUrl = new URL(req.url, 'http://localhost');
+      const path = apiUrl.pathname;
       // L'étape FoodBet suit l'URL de la page qui appelle l'API (`/paris?scene=vote`).
       // `&admin` : la même étape vue par un admin (panneau de la phase suivante).
       let page = new URLSearchParams();
@@ -204,7 +238,7 @@ const demoApi: Plugin = {
       const admin = page.has('admin');
       const music: MusicScene = MUSIC_SCENES.find((s) => s === page.get('musique')) ?? 'lecture';
       const [status, body] = req.method === 'GET'
-        ? answer(path, scene, admin, music) ?? [404, { error: `Route absente du mode démo : ${path}` }]
+        ? answer(path, scene, admin, music, page.has('hote'), apiUrl.searchParams) ?? [404, { error: `Route absente du mode démo : ${path}` }]
         : [409, { error: 'Mode démo : rien n’est enregistré.' }];
       res.statusCode = status;
       res.setHeader('Content-Type', 'application/json');

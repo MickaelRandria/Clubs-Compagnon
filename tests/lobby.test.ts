@@ -4,15 +4,19 @@ import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { setDbForTests } from '../server/db/client.js';
-import { disconnectSpotifyHost, lobbyMusic, saveJamUrl, saveSpotifyHost } from '../server/db/lobby.js';
+import { controlLobbySpotify, disconnectSpotifyHost, lobbyConsole, lobbyMusic, queueLobbyTrack, saveJamUrl,
+  saveSpotifyHost, searchLobbyTracks, setLobbyVisibility } from '../server/db/lobby.js';
 import * as schema from '../server/db/schema.js';
 import type { SpotifyTokens } from '../server/spotify.js';
+import { createBetsRouter } from '../server/bets-http.js';
+import { createToken } from '../server/session.js';
 
 // Les vraies migrations et requêtes SQL s'exécutent uniquement dans une base en mémoire.
 const pg = new PGlite();
 const origin = 'https://club.test';
-const previous = { SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET };
-const track = { type: 'track', name: 'Le morceau', artists: [{ name: 'Artiste' }], duration_ms: 198_000,
+const previous = { SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+  SESSION_SECRET: process.env.SESSION_SECRET };
+const track = { type: 'track', uri: 'spotify:track:2Foc5Q5nqNiosCNqttzHof', name: 'Le morceau', artists: [{ name: 'Artiste' }], duration_ms: 198_000,
   album: { name: 'Album', images: [] }, external_urls: { spotify: 'https://open.spotify.com/track/abc123' } };
 const playback = { is_playing: true, currently_playing_type: 'track', progress_ms: 84_000, item: track };
 const credentials = (suffix = 'ancien', expired = false): SpotifyTokens => ({ accessToken: `acces-${suffix}`, refreshToken: `refresh-${suffix}`,
@@ -20,7 +24,8 @@ const credentials = (suffix = 'ancien', expired = false): SpotifyTokens => ({ ac
 const row = async () => (await pg.query<Record<string, unknown>>('select * from lobby_music where id = 1')).rows[0];
 
 before(async () => {
-  Object.assign(process.env, { SPOTIFY_CLIENT_ID: 'identifiant-test', SPOTIFY_CLIENT_SECRET: 'secret-test' });
+  Object.assign(process.env, { SPOTIFY_CLIENT_ID: 'identifiant-test', SPOTIFY_CLIENT_SECRET: 'secret-test',
+    SESSION_SECRET: 'secret-session-des-tests-spotify-assez-long' });
   const journal = JSON.parse(await readFile(new URL('../drizzle/meta/_journal.json', import.meta.url), 'utf8'));
   for (const entry of journal.entries) await pg.exec(await readFile(new URL(`../drizzle/${entry.tag}.sql`, import.meta.url), 'utf8'));
   setDbForTests(drizzle({ client: pg, schema }));
@@ -239,4 +244,202 @@ test('supprimer le compte hôte coupe la lecture sans appeler Spotify', async (t
   const fetch = t.mock.method(globalThis, 'fetch', async () => { throw new Error('réseau interdit'); });
   assert.equal((await lobbyMusic(origin)).connected, false);
   assert.equal(fetch.mock.callCount(), 0);
+});
+
+const authorized = (expired = false): SpotifyTokens => ({ ...credentials('hote', expired),
+  scope: 'user-read-currently-playing user-read-playback-state user-modify-playback-state' });
+
+test('migration 0029 : lecteur visible par défaut et aucune portée inventée', async () => {
+  assert.equal((await row()).visible, true);
+  assert.equal((await row()).spotify_scope, null);
+  await saveSpotifyHost(1, authorized());
+  assert.match(String((await row()).spotify_scope), /user-modify-playback-state/);
+  await saveSpotifyHost(2, credentials('autre'));
+  assert.equal((await row()).spotify_scope, null, 'un nouvel OAuth remplace entièrement les portées');
+});
+
+test('un masquage sur une autre instance interdit même les métadonnées déjà en cache', async (t) => {
+  await saveJamUrl('https://spotify.link/privee');
+  await saveSpotifyHost(1, authorized());
+  const fetch = t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) =>
+    Response.json(String(input).endsWith('/queue') ? { queue: [] } : playback));
+  assert.equal((await lobbyMusic(origin)).playing?.title, 'Le morceau');
+  const calls = fetch.mock.callCount();
+  await pg.exec('update lobby_music set visible = false where id = 1');
+  assert.deepEqual(await lobbyMusic(origin), { playing: null, next: null, host: null, jamUrl: null, connected: false });
+  const member = await lobbyConsole(origin, 2);
+  assert.equal(member.playback, null); assert.equal(member.host, null); assert.equal(member.jamUrl, null);
+  assert.equal(member.canSearch, true); assert.equal(member.canQueue, true); assert.equal(member.canControl, false);
+  assert.equal(fetch.mock.callCount(), calls, 'aucun appel Spotify pour le lecteur masqué des membres');
+});
+
+test('un masquage interinstance pendant la lecture supprime la réponse déjà en vol', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  let release!: () => void; let entered!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const started = new Promise<void>((resolve) => { entered = resolve; });
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => {
+    if (String(input).endsWith('/queue')) return Response.json({ queue: [] });
+    entered(); await gate; return Response.json(playback);
+  });
+  const pending = lobbyMusic(origin);
+  await started; await pg.exec('update lobby_music set visible = false where id = 1'); release();
+  assert.deepEqual(await pending, { playing: null, next: null, host: null, jamUrl: null, connected: false });
+});
+
+test('l’hôte garde son morceau en pause et son lecteur privé ; un autre admin ne peut pas le piloter', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ ...playback, is_playing: false }));
+  const hidden = await setLobbyVisibility(origin, 1, false);
+  assert.equal(hidden.isHost, true); assert.equal(hidden.canControl, true); assert.equal(hidden.playback?.isPlaying, false);
+  assert.equal(hidden.playback?.track?.title, 'Le morceau');
+  await assert.rejects(setLobbyVisibility(origin, 2, true), { status: 403 });
+  await assert.rejects(controlLobbySpotify(origin, 2, 'pause'), { status: 403 });
+  assert.equal((await row()).visible, false);
+});
+
+test('dix membres partagent une mesure privée et le masquage reste vérifié hors cache', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  const fetch = t.mock.method(globalThis, 'fetch', async () => Response.json(playback));
+  const values = await Promise.all(Array.from({ length: 10 }, () => lobbyConsole(origin, 2)));
+  assert.equal(fetch.mock.callCount(), 1);
+  assert.equal(values[0].playback?.track?.title, 'Le morceau');
+  await pg.exec('update lobby_music set visible = false where id = 1');
+  assert.equal((await lobbyConsole(origin, 2)).playback, null);
+  assert.equal(fetch.mock.callCount(), 1);
+});
+
+test('le masquage pendant la mesure privée ne transmet ni morceau ni hôte au membre', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  let release!: () => void; let entered!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const started = new Promise<void>((resolve) => { entered = resolve; });
+  t.mock.method(globalThis, 'fetch', async () => { entered(); await gate; return Response.json(playback); });
+  const pending = lobbyConsole(origin, 2);
+  await started; await pg.exec('update lobby_music set visible = false where id = 1'); release();
+  const value = await pending;
+  assert.equal(value.playback, null); assert.equal(value.host, null); assert.equal(value.jamUrl, null);
+});
+
+test('une ancienne connexion doit être réautorisée avant commandes et ajout, mais la recherche reste ouverte', async (t) => {
+  await saveSpotifyHost(1, credentials());
+  const fetch = t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) =>
+    String(input).includes('/search?') ? Response.json({ tracks: { items: [track] } }) : Response.json(playback));
+  const console = await lobbyConsole(origin, 1);
+  assert.equal(console.needsReconnect, true); assert.equal(console.canControl, false); assert.equal(console.canQueue, false);
+  const calls = fetch.mock.callCount();
+  await assert.rejects(controlLobbySpotify(origin, 1, 'next'), { status: 409 });
+  await assert.rejects(queueLobbyTrack(origin, 2, track.uri), { status: 409 });
+  assert.equal(fetch.mock.callCount(), calls, 'aucune mutation ne part sans portée de modification');
+  assert.equal((await searchLobbyTracks(origin, 2, 'Artiste'))[0].title, 'Le morceau');
+});
+
+test('rotation sans portée renvoyée conserve les droits, déconnexion les efface', async (t) => {
+  await saveSpotifyHost(1, authorized(true));
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => String(input).includes('/api/token')
+    ? Response.json({ access_token: 'frais', expires_in: 3600 }) : Response.json(playback));
+  assert.equal((await lobbyConsole(origin, 1)).canControl, true);
+  assert.match(String((await row()).spotify_scope), /user-modify-playback-state/);
+  await disconnectSpotifyHost();
+  assert.equal((await row()).spotify_scope, null);
+});
+
+test('une rotation qui retire les droits est prise en compte immédiatement', async (t) => {
+  await saveSpotifyHost(1, authorized(true));
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => String(input).includes('/api/token')
+    ? Response.json({ access_token: 'frais', expires_in: 3600, scope: 'user-read-currently-playing' }) : Response.json(playback));
+  const console = await lobbyConsole(origin, 1);
+  assert.equal(console.canControl, false); assert.equal(console.canQueue, false); assert.equal(console.needsReconnect, true);
+});
+
+test('une commande réussie reste réussie quand la lecture de confirmation échoue', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  const mutations: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request, init?: RequestInit) => {
+    if (init?.method === 'POST') { mutations.push(String(input)); return new Response(null, { status: 204 }); }
+    return new Response(null, { status: 503 });
+  });
+  const result = await controlLobbySpotify(origin, 1, 'next');
+  assert.equal(result.isHost, true); assert.equal(result.playback, null); assert.equal(mutations.length, 1);
+  assert.equal((await setLobbyVisibility(origin, 1, false)).visible, false);
+});
+
+test('une panne du lecteur laisse le réglage de visibilité accessible et respecte Retry-After', async (t) => {
+  let now = Date.now(); t.mock.method(Date, 'now', () => now);
+  await saveSpotifyHost(1, authorized());
+  const fetch = t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 429, headers: { 'Retry-After': '120' } }));
+  assert.equal((await lobbyConsole(origin, 1)).isHost, true);
+  now += 11_000;
+  assert.equal((await lobbyConsole(origin, 1)).playback, null);
+  assert.equal(fetch.mock.callCount(), 1);
+});
+
+test('les mutations ne sont jamais répétées après une panne réseau ou une réponse 5xx', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  const fetch = t.mock.method(globalThis, 'fetch', async () => { throw new Error('réseau coupé'); });
+  await assert.rejects(controlLobbySpotify(origin, 1, 'next'));
+  assert.equal(fetch.mock.callCount(), 1);
+  fetch.mock.mockImplementation(async () => new Response(null, { status: 503 }));
+  await assert.rejects(queueLobbyTrack(origin, 2, track.uri));
+  assert.equal(fetch.mock.callCount(), 2);
+});
+
+test('un 401 explicite sur l’ajout autorise une seule rotation et un nouvel essai', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  const authorizations: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request, init?: RequestInit) => {
+    if (String(input).includes('/api/token')) return Response.json({ access_token: 'frais', expires_in: 3600 });
+    const authorization = new Headers(init?.headers).get('authorization')!;
+    authorizations.push(authorization);
+    return new Response(null, { status: authorization === 'Bearer frais' ? 204 : 401 });
+  });
+  await queueLobbyTrack(origin, 2, track.uri);
+  assert.deepEqual(authorizations, ['Bearer acces-hote', 'Bearer frais']);
+});
+
+function musicRouter() {
+  return createBetsRouter({ mode: async () => 'off', setMode: async () => {} }, async (id) => id === 2,
+    undefined, undefined, { now: lobbyMusic, saveJam: saveJamUrl, disconnect: disconnectSpotifyHost,
+      accountExists: async (id) => Boolean((await pg.query('select id from club_accounts where id = $1', [id])).rows[0]),
+      console: lobbyConsole, setVisibility: setLobbyVisibility, control: controlLobbySpotify, search: searchLobbyTracks, queue: queueLobbyTrack });
+}
+function musicRequest(route: string, id: number | null, body?: unknown, source = origin) {
+  return new Request(`${origin}/api/bets/${route}`, { method: body === undefined ? 'GET' : 'POST',
+    headers: { ...(id === null ? {} : { cookie: `dommage_session=${createToken(id)}` }), origin: source },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+}
+
+test('HTTP : compte existant requis, recherche et ajout permis au membre, commandes réservées à l’hôte', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request, init?: RequestInit) => {
+    if (init?.method) return new Response(null, { status: 204 });
+    return String(input).includes('/search?') ? Response.json({ tracks: { items: [track] } }) : Response.json(playback);
+  });
+  const router = musicRouter();
+  for (const id of [null, 999]) assert.equal((await router.GET(musicRequest('lobby-console', id))).status, 401);
+  assert.equal((await router.GET(musicRequest('spotify-search?q=Artiste', 2))).status, 200);
+  assert.equal((await router.POST(musicRequest('spotify-queue', 2, { uri: track.uri }))).status, 200);
+  assert.equal((await router.POST(musicRequest('spotify-control', 2, { action: 'pause' }))).status, 403, 'admin non hôte refusé');
+  assert.equal((await router.POST(musicRequest('lobby-visibility', 2, { visible: false }))).status, 403);
+  assert.equal((await router.POST(musicRequest('spotify-control', 1, { action: 'pause' }))).status, 200, 'hôte non admin accepté');
+  assert.equal((await router.POST(musicRequest('lobby-visibility', 1, { visible: false }))).status, 200);
+  const hidden = await router.GET(musicRequest('lobby-console', 2));
+  assert.match(hidden.headers.get('cache-control')!, /no-store/);
+  const data = await hidden.json(); assert.equal(data.playback, null); assert.equal(data.host, null);
+  assert.ok(!JSON.stringify(data).includes('acces-hote'));
+});
+
+test('HTTP : origine, schémas et limites sont vérifiés avant les appels Spotify', async (t) => {
+  await saveSpotifyHost(1, authorized());
+  const fetch = t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 204 }));
+  const router = musicRouter();
+  assert.equal((await router.POST(musicRequest('spotify-queue', 2, { uri: track.uri }, 'https://autre.test'))).status, 403);
+  assert.equal((await router.POST(musicRequest('spotify-queue', 2, { uri: 'https://intrus.test' }))).status, 400);
+  assert.equal((await router.POST(musicRequest('spotify-control', 1, { action: 'volume' }))).status, 400);
+  assert.equal((await router.POST(musicRequest('lobby-visibility', 1, { visible: 'false' }))).status, 400);
+  assert.equal((await router.GET(musicRequest('spotify-search?q=x', 2))).status, 400);
+  assert.equal(fetch.mock.callCount(), 0);
+  for (let i = 0; i < 6; i++) assert.equal((await router.POST(musicRequest('spotify-queue', 2, { uri: track.uri }))).status, 200);
+  assert.equal((await router.POST(musicRequest('spotify-queue', 2, { uri: track.uri }))).status, 429);
+  assert.equal(fetch.mock.callCount(), 6);
 });

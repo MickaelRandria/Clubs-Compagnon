@@ -45,7 +45,8 @@ export const persistOptions = {
       // Paris : un solde ou un statut restauré du disque peut être faux (match réglé entre-temps).
       && query.queryKey[0] !== 'bets-state' && query.queryKey[0] !== 'bets-status'
       // La musique est en direct : un morceau d'hier ne doit jamais revenir au lancement.
-      && query.queryKey[0] !== 'lobby-music',
+      && query.queryKey[0] !== 'lobby-music' && query.queryKey[0] !== 'lobby-console'
+      && query.queryKey[0] !== 'spotify-search',
   },
 };
 

@@ -38,4 +38,6 @@
 .lb--compact .lb-cover { width: 52px; height: 52px; font-size: 16px; }
 .lb--compact .lb-title { font-size: 18px; }
 .lb--compact .lb-jam { min-height: 44px; }
+.lb-console { grid-column: 1 / -1; color: #6FC8FF; font: 700 12px/1.4 var(--fc-text); text-decoration: none; overflow-wrap: anywhere; }
+.lb-console:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .lb-eq i { animation: none; height: 7px; } .lb-bar i { transition: none; } }

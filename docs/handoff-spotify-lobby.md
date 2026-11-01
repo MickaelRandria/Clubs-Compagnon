@@ -153,3 +153,112 @@ Activation restante par l'hôte : ouvrir [Mon profil](https://clubs-compagnon.ve
 compte Discord admin, cliquer « Connecter Spotify », autoriser l'app, coller le lien de la Jam puis lancer
 un morceau. La carte apparaît sur l'accueil et dans FoodBet quand un titre joue. Cette connexion réelle
 et l'ouverture de la Jam nécessitent le compte personnel de l'hôte et restent à effectuer par lui.
+
+## Commandes, visibilité et recherche — reprise du 1er novembre 2026
+
+Branche de travail : `spotify-commandes`, depuis `main` après la publication de 0028.
+
+Demande de l'utilisateur et répartition des droits confirmée :
+
+- **Hôte Spotify uniquement** : masquer/afficher la musique aux autres, pause, reprise, morceau suivant
+  et précédent. Un autre admin n'obtient pas ces commandes par son seul rôle admin.
+- **Tous les membres connectés avec Discord** : rechercher des morceaux et les ajouter à la file de
+  l'hôte, sans relier chacun un compte Spotify.
+- Masquer coupe aussi la transmission du morceau, de l'hôte et du lien Jam aux autres par l'API.
+  L'hôte conserve son lecteur privé, y compris pendant une pause.
+
+Une page `/musique` est ajoutée, accessible depuis la carte et les profils connectés. La maquette
+390 px se trouve dans `captures/spotify-commandes-maquette.html` (ignoré par git). Les scènes de démo
+utilisent `--connecte` : `/musique?hote`, `/musique`, `&musique=masquee|pause|reconnexion|absente`.
+Les écritures restent refusées en démo ; les succès des mutations sont simulés dans les tests navigateur.
+
+Migration `0029_lobby_controls` appliquée en production le 1er novembre 2026, avec visibilité et portées OAuth réellement accordées.
+La portée `user-modify-playback-state` exige que l'hôte **autorise à nouveau Spotify** depuis l'app.
+Rafraîchir l'ancien jeton ne suffit pas. Les commandes et ajouts nécessitent un compte hôte Premium
+et un lecteur Spotify actif.
+
+**Le 1er novembre 2026, l'utilisateur a explicitement autorisé la migration 0029 en production ; elle
+est terminée et cet accord est acquis. L'utilisateur a ensuite autorisé le push sur `main` en répondant
+« oui je t'autorise » à la demande de publication. Cet accord est également acquis.** Ne pas réappliquer
+0029. Ne pas utiliser la connexion actuelle de `.env.local` pour la production (voir le contrôle de
+branche ci-dessus).
+
+État de cette reprise : **réalisation locale terminée sur `spotify-commandes`, code non publié ;
+migration 0029 déjà appliquée en production**. Commit applicatif : `243b2f6`.
+
+- `/musique` : console privée de l'hôte, interrupteur, précédent/pause/reprise/suivant, recherche explicite
+  de 2 à 100 caractères et dix résultats au maximum, ajout confirmé après réponse de Spotify.
+- Routes ajoutées au routeur existant `/api/bets/` : `lobby-console`, `lobby-visibility`, `spotify-control`,
+  `spotify-search` et `spotify-queue`. Le budget reste de **12/12 fonctions**.
+- Droits vérifiés en base : compte Discord existant pour chaque nouvelle route ; identité de l'hôte pour
+  les commandes et la visibilité. Les droits ne sont pas déduits du seul rôle admin dans le navigateur.
+- La visibilité contourne les caches à chaque lecture et après les appels Spotify. Les mesures privées
+  sont partagées dix secondes entre requêtes simultanées ; les anciens morceaux disparaissent sur panne.
+- Une panne de Spotify laisse l'hôte accéder au réglage de visibilité. Une commande déjà acceptée
+  reste réussie même si la lecture de confirmation échoue. Aucun nouvel essai de mutation après délai
+  réseau/5xx ; un seul nouvel essai après un 401 explicite et rotation du jeton.
+- Les anciennes autorisations affichent une demande de reconnexion. Les portées ne sont jamais inventées :
+  une reconnexion les remplace, une rotation les conserve uniquement si Spotify ne les renvoie pas.
+- Console et recherches ne sont pas persistées sur disque. Limites par compte et instance serveur :
+  12 recherches, 6 ajouts et 20 commandes/réglages par minute.
+- Validation : **243/243 tests**, dont 22 nouveaux ; tests navigateur du lobby et de la console verts,
+  aucun débordement à 390/320 px ni exception JavaScript. Build réussi, avec les avertissements Zod
+  et poids du bundle principal déjà connus. Les appels Spotify sont simulés ; la connexion et l'écoute
+  réelles sur le compte personnel de l'hôte restent à vérifier après déploiement autorisé.
+
+Commandes de vérification :
+
+```powershell
+npm run test:fc27
+npm run test:lobby:browser
+npm run test:music:browser
+npm run build
+npm run captures -- --connecte '/musique?hote' '/musique' '/musique?hote&musique=masquee' '/musique?musique=masquee' '/profil?admin' '/'
+```
+
+Captures locales dans `captures/` : `musique-hote-connecte.png`, `musique-connecte.png`, variantes
+masquées, pause et reconnexion ; `musique-avant-carte.png` restitue la carte publiée avec 0028 depuis
+le commit `07c12eb`, `lobby-accueil.png` montre la nouvelle entrée vers la recherche. Aucune capture
+n'est ajoutée à l'arbre versionné avant l'accord de push et la préparation de la PR de revue.
+
+Transaction de production préparée dans `captures/deploiement-spotify-0029.sql`, puis **exécutée via
+Neon et vérifiée après validation de la transaction le 1er novembre 2026** :
+contrôle du projet et de la branche, vérification de 0028, ajout des deux colonnes et écriture au journal
+en une transaction. Empreinte SHA-256 de 0029 en LF :
+`a038569f488194cc5248f8777a540cb2613611f32cd11e1bfbd596cf0a00ea61` ;
+`created_at` : `1791700000000`.
+
+Après accord explicite pour **la nouvelle publication** : vérifier que 0029 est toujours présente,
+pousser la branche de revue et ouvrir la PR avec les captures,
+retirer les captures avant fusion sur `main`, attendre Vercel READY et vérifier le parcours public.
+L'hôte ouvre ensuite Profil → « Relier un autre compte Spotify » (ou « Autoriser les commandes Spotify »
+sur `/musique`) puis lance un titre sur son appareil avant d'essayer les commandes et l'ajout à la file.
+
+Références Spotify : [commandes et permission de lecture](https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback),
+[ajout à la file](https://developer.spotify.com/documentation/web-api/reference/add-to-queue),
+[recherche](https://developer.spotify.com/documentation/web-api/reference/search).
+
+## Migration 0029 terminée — 1er novembre 2026
+
+- Accord explicite de l'utilisateur : « j'autorise la migration 0029 en production ». Cet accord porte
+  sur la base ; il ne constitue pas encore un accord de push sur `main`.
+- Contrôle préalable sur `withered-boat-37348216` / `br-patient-rice-b2zco9zo` / `neondb` : 0028 présente
+  avec l'empreinte attendue, 0029 absente et aucune des deux nouvelles colonnes.
+- Test sur une nouvelle branche issue de la production, `verification-0029-20261101`
+  (`br-small-block-b2vg9dur`) : transaction réussie sur les données existantes et valeurs par défaut
+  conformes. Expiration automatique configurée au `2026-11-01T14:15:00Z` ; aucun identifiant local modifié.
+- Transaction de production exécutée avec projet/branche explicites, contrôle des prérequis,
+  `lock_timeout=5s` et `statement_timeout=30s`. Ajout des colonnes et entrée du journal atomiques.
+- Lecture indépendante après transaction : **une** entrée de journal pour 0029, empreinte LF
+  `a038569f488194cc5248f8777a540cb2613611f32cd11e1bfbd596cf0a00ea61`, `created_at=1791700000000` ;
+  `visible boolean NOT NULL DEFAULT true` et `spotify_scope text NULL` conformes. La ligne existante
+  conserve `visible=true`, `spotify_scope=NULL`. Aucun jeton n'a été lu dans les résultats de contrôle.
+- Le site public répond HTTP 200 après migration. À cette étape, aucun push ni nouveau déploiement
+  applicatif n'avait été effectué. La publication du code a été autorisée ensuite ; voir le bilan ci-dessous.
+
+## Publication de 0029 — autorisation acquise
+
+L'utilisateur a donné son accord explicite pour publier le code sur `main` le 1er novembre 2026.
+Le contrôle préalable à la publication confirme à nouveau 0029 et ses deux colonnes sur la branche
+Neon de production. Les 243 tests, les parcours navigateur et le build concernent le code applicatif
+`243b2f6`, inchangé depuis leur validation. Publication et contrôle Vercel en cours.

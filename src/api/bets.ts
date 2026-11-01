@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { BetsAdminAction, BetsMode, BetsPlayAction, BetsState, BetsStatus } from '../../shared/bets';
-import type { LobbyMusic } from '../../shared/lobby';
+import type { LobbyConsole, LobbyMusic, LobbyTrack, SpotifyCommand } from '../../shared/lobby';
 import { useMe } from './auth';
 import { apiRequest } from './client';
 import { setUploadedPhotos } from '../lib/player-photos';
@@ -80,6 +80,7 @@ export function useSaveJam() {
     onSuccess: async (music) => {
       await client.cancelQueries({ queryKey: ['lobby-music'] });
       client.setQueryData(['lobby-music', accountId], music);
+      await client.invalidateQueries({ queryKey: ['lobby-console'] });
     },
   });
 }
@@ -92,7 +93,72 @@ export function useDisconnectSpotify() {
     onSuccess: async (music) => {
       await client.cancelQueries({ queryKey: ['lobby-music'] });
       client.setQueriesData({ queryKey: ['lobby-music'] }, music);
+      await client.invalidateQueries({ queryKey: ['lobby-console'] });
     },
+  });
+}
+
+/** Console privée : chaque identité reçoit uniquement les informations autorisées par le serveur. */
+export function useLobbyConsole(accountId: number | null) {
+  return useQuery({
+    queryKey: ['lobby-console', accountId],
+    queryFn: () => apiRequest<LobbyConsole>('/api/bets/lobby-console'),
+    enabled: accountId !== null,
+    staleTime: 0,
+    refetchInterval: 15_000,
+    gcTime: 0,
+    retry: false,
+  });
+}
+
+/** La saisie devient une recherche uniquement lors de la soumission du formulaire. */
+export function useLobbySearch(accountId: number, search: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['spotify-search', accountId, search],
+    queryFn: () => apiRequest<{ tracks: LobbyTrack[] }>(`/api/bets/spotify-search?q=${encodeURIComponent(search)}`),
+    enabled: enabled && search.length >= 2,
+    staleTime: 30_000,
+    gcTime: 0,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+function useLobbyConsoleMutation<T>(accountId: number, path: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: T) => apiRequest<LobbyConsole>(path, { method: 'POST', body: JSON.stringify(body) }),
+    // Une répétition automatique pourrait passer deux morceaux ou annuler un choix de visibilité.
+    retry: false,
+    onSuccess: async (console) => {
+      await client.cancelQueries({ queryKey: ['lobby-console', accountId] });
+      client.setQueryData(['lobby-console', accountId], console);
+      if (!console.visible) {
+        await client.cancelQueries({ queryKey: ['lobby-music'] });
+        client.setQueriesData({ queryKey: ['lobby-music'] }, { playing: null, next: null, host: null, jamUrl: null, connected: false } satisfies LobbyMusic);
+      }
+      await client.invalidateQueries({ queryKey: ['lobby-music'] });
+    },
+    onError: () => { void client.invalidateQueries({ queryKey: ['lobby-console', accountId] }); },
+  });
+}
+
+export const useSpotifyControl = (accountId: number) =>
+  useLobbyConsoleMutation<{ action: SpotifyCommand }>(accountId, '/api/bets/spotify-control');
+export const useLobbyVisibility = (accountId: number) =>
+  useLobbyConsoleMutation<{ visible: boolean }>(accountId, '/api/bets/lobby-visibility');
+
+export function useSpotifyQueue(accountId: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (uri: string) => {
+      const result = await apiRequest<{ queued: true }>('/api/bets/spotify-queue', { method: 'POST', body: JSON.stringify({ uri }) });
+      if (result.queued !== true) throw new Error('Spotify n’a pas confirmé l’ajout à la file.');
+      return result;
+    },
+    retry: false,
+    onSuccess: () => { void client.invalidateQueries({ queryKey: ['lobby-music'] }); },
+    onError: () => { void client.invalidateQueries({ queryKey: ['lobby-console', accountId] }); },
   });
 }
 

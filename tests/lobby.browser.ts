@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { chromium, type Locator, type Page } from 'playwright-core';
-import type { LobbyMusic } from '../shared/lobby.js';
+import type { LobbyConsole, LobbyMusic } from '../shared/lobby.js';
 
 const PORT = Number(process.env.LOBBY_TEST_PORT ?? 5177);
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -156,6 +156,12 @@ try {
   // Les réponses d'écriture sont simulées pour vérifier les confirmations et les données du cache navigateur.
   const submissions: string[] = [];
   let savedMusic = { ...fixture, connected: true };
+  // Le panneau admin lit désormais la console privée : le masquage public ne doit pas le déconnecter.
+  await page.route('**/api/bets/lobby-console', (route) => route.fulfill({ json: {
+    connected: savedMusic.connected, visible: true, isHost: savedMusic.connected,
+    canControl: savedMusic.connected, canSearch: savedMusic.connected, canQueue: savedMusic.connected,
+    needsReconnect: false, host: savedMusic.host, jamUrl: savedMusic.jamUrl, playback: null,
+  } satisfies LobbyConsole }));
   await page.route('**/api/bets/jam', async (route) => {
     const { url } = route.request().postDataJSON() as { url: string };
     submissions.push(url);
@@ -190,6 +196,7 @@ try {
   assert.equal(await input.inputValue(), '');
   assert.deepEqual(submissions, ['https://spotify.link/soiree-validee', '']);
   await page.unroute('**/api/bets/jam');
+  await page.unroute('**/api/bets/lobby-console');
   await visit('/profil');
   assert.equal(await page.getByRole('heading', { name: 'Musique du lobby', exact: true }).count(), 0);
   await visit('/profil?admin&musique=indisponible');

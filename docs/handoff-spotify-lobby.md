@@ -172,17 +172,18 @@ Une page `/musique` est ajoutée, accessible depuis la carte et les profils conn
 utilisent `--connecte` : `/musique?hote`, `/musique`, `&musique=masquee|pause|reconnexion|absente`.
 Les écritures restent refusées en démo ; les succès des mutations sont simulés dans les tests navigateur.
 
-Migration à venir : `0029_lobby_controls`, avec visibilité et portées OAuth réellement accordées.
+Migration `0029_lobby_controls` appliquée en production le 1er novembre 2026, avec visibilité et portées OAuth réellement accordées.
 La portée `user-modify-playback-state` exige que l'hôte **autorise à nouveau Spotify** depuis l'app.
 Rafraîchir l'ancien jeton ne suffit pas. Les commandes et ajouts nécessitent un compte hôte Premium
 et un lecteur Spotify actif.
 
-**L'autorisation de production précédente concernait 0028 et son code, déjà publiés. Aucune nouvelle
-migration ni publication de ce chantier ne doit être exécutée sans accord explicite.** Appliquer 0029
-sur la bonne branche Neon de production avant de pousser le code qui lit ses colonnes ; ne pas utiliser
-la connexion actuelle de `.env.local` (voir le contrôle de branche ci-dessus).
+**Le 1er novembre 2026, l'utilisateur a explicitement autorisé la migration 0029 en production ; elle
+est terminée et cet accord est acquis. Le push du nouveau code reste à autoriser.** Ne pas réappliquer
+0029. Ne pas utiliser la connexion actuelle de `.env.local` pour la production (voir le contrôle de
+branche ci-dessus).
 
-État de cette reprise : **réalisation locale terminée sur `spotify-commandes`, non déployée**.
+État de cette reprise : **réalisation locale terminée sur `spotify-commandes`, code non publié ;
+migration 0029 déjà appliquée en production**. Commit applicatif : `243b2f6`.
 
 - `/musique` : console privée de l'hôte, interrupteur, précédent/pause/reprise/suivant, recherche explicite
   de 2 à 100 caractères et dix résultats au maximum, ajout confirmé après réponse de Spotify.
@@ -219,14 +220,15 @@ masquées, pause et reconnexion ; `musique-avant-carte.png` restitue la carte pu
 le commit `07c12eb`, `lobby-accueil.png` montre la nouvelle entrée vers la recherche. Aucune capture
 n'est ajoutée à l'arbre versionné avant l'accord de push et la préparation de la PR de revue.
 
-Transaction de production **préparée, non exécutée** dans `captures/deploiement-spotify-0029.sql` :
+Transaction de production préparée dans `captures/deploiement-spotify-0029.sql`, puis **exécutée via
+Neon et vérifiée après validation de la transaction le 1er novembre 2026** :
 contrôle du projet et de la branche, vérification de 0028, ajout des deux colonnes et écriture au journal
 en une transaction. Empreinte SHA-256 de 0029 en LF :
 `a038569f488194cc5248f8777a540cb2613611f32cd11e1bfbd596cf0a00ea61` ;
 `created_at` : `1791700000000`.
 
-Après accord explicite pour **0029 et la nouvelle publication** : appliquer/vérifier cette migration
-sur la branche prod indiquée ci-dessus, pousser la branche de revue et ouvrir la PR avec les captures,
+Après accord explicite pour **la nouvelle publication** : vérifier que 0029 est toujours présente,
+pousser la branche de revue et ouvrir la PR avec les captures,
 retirer les captures avant fusion sur `main`, attendre Vercel READY et vérifier le parcours public.
 L'hôte ouvre ensuite Profil → « Relier un autre compte Spotify » (ou « Autoriser les commandes Spotify »
 sur `/musique`) puis lance un titre sur son appareil avant d'essayer les commandes et l'ajout à la file.
@@ -234,3 +236,21 @@ sur `/musique`) puis lance un titre sur son appareil avant d'essayer les command
 Références Spotify : [commandes et permission de lecture](https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback),
 [ajout à la file](https://developer.spotify.com/documentation/web-api/reference/add-to-queue),
 [recherche](https://developer.spotify.com/documentation/web-api/reference/search).
+
+## Migration 0029 terminée — 1er novembre 2026
+
+- Accord explicite de l'utilisateur : « j'autorise la migration 0029 en production ». Cet accord porte
+  sur la base ; il ne constitue pas encore un accord de push sur `main`.
+- Contrôle préalable sur `withered-boat-37348216` / `br-patient-rice-b2zco9zo` / `neondb` : 0028 présente
+  avec l'empreinte attendue, 0029 absente et aucune des deux nouvelles colonnes.
+- Test sur une nouvelle branche issue de la production, `verification-0029-20261101`
+  (`br-small-block-b2vg9dur`) : transaction réussie sur les données existantes et valeurs par défaut
+  conformes. Expiration automatique configurée au `2026-11-01T14:15:00Z` ; aucun identifiant local modifié.
+- Transaction de production exécutée avec projet/branche explicites, contrôle des prérequis,
+  `lock_timeout=5s` et `statement_timeout=30s`. Ajout des colonnes et entrée du journal atomiques.
+- Lecture indépendante après transaction : **une** entrée de journal pour 0029, empreinte LF
+  `a038569f488194cc5248f8777a540cb2613611f32cd11e1bfbd596cf0a00ea61`, `created_at=1791700000000` ;
+  `visible boolean NOT NULL DEFAULT true` et `spotify_scope text NULL` conformes. La ligne existante
+  conserve `visible=true`, `spotify_scope=NULL`. Aucun jeton n'a été lu dans les résultats de contrôle.
+- Le site public répond HTTP 200 après migration. **Aucun push ni nouveau déploiement applicatif**
+  n'a été effectué. Le nouveau code reste sur `spotify-commandes` en attendant l'accord de publication.

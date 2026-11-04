@@ -1,0 +1,21 @@
+# Synchro EA régulière : EA ne garde que les 10 derniers matchs de ligue. Si personne n'ouvre
+# l'app pendant une longue session, des matchs sortaient de la liste avant d'arriver en base,
+# et les points et chances de la division devenaient faux. Lire /api/club suffit à lancer la
+# synchro (au plus une toutes les 5 minutes, voir server/ea-sync.ts).
+# GitHub peut décaler un créneau de quelques minutes et suspend les crons après 60 jours sans commit.
+name: Synchro EA
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Lire /api/club
+        run: curl --fail --silent --show-error --max-time 60 --output /dev/null https://clubs-compagnon.vercel.app/api/club

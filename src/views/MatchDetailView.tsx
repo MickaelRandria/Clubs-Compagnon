@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { ApiError } from '../api/client';
 import { useMatchDetail, useMembers } from '../api/queries';
+import { DivisionImpact } from '../components/division/DivisionImpact';
 import { MatchCoachDebrief } from '../components/matches/MatchCoachDebrief';
 import { MatchDuel } from '../components/matches/MatchDuel';
 import { MatchLineup } from '../components/matches/MatchLineup';
@@ -53,6 +54,7 @@ export function MatchDetailView() {
           return (
             <div className="fc-detail">
               <MatchSheet match={match} minutes={opponent?.minutes ?? null} />
+              <DivisionImpact matchId={match.id} />
               <OpponentCard detail={detail.data!} />
               <MatchDuel ours={players ?? []} theirs={opponent?.players ?? []} opponent={match.opponent} color={opponent?.kitColor} />
               <div className="fc-lineups">

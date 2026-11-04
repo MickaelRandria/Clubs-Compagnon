@@ -33,6 +33,8 @@ import './styles/responsive.css';
 import './styles/club-pages.css';
 // Thème FIFA 17 : ne touche qu'à la matière (couleurs, fonds, éclats), d'où sa place après responsive.css.
 import './styles/fifa17.css';
+// Progression en division et célébration de montée : s'appuie sur la matière FIFA 17.
+import './styles/division.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

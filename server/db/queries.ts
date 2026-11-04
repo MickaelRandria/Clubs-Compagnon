@@ -3,6 +3,7 @@ import type { ClubMatch } from 'proclubs-sdk';
 import type { NewMatchNote } from '../../shared/notes.js';
 import { opponentStrength } from '../../shared/skill-rating.js';
 import type { Club, Match, MatchDetail, MatchNote, Member } from '../../shared/types.js';
+import { fetchDivision } from '../division.js';
 import { syncFromEa, toPlayers } from '../ea-sync.js';
 import { clubExtras, kitColor, memberExtras, opponentClubSheet } from './ea-fields.js';
 import { HttpError } from '../http.js';
@@ -78,6 +79,7 @@ export async function fetchClub(): Promise<Club> {
     playoffApps: club.playoffApps,
     ...clubExtras(club.eaRaw),
     opponents: await opponentsSummary(club.id),
+    ...await fetchDivision(club.id, club.eaRaw),
   };
 }
 

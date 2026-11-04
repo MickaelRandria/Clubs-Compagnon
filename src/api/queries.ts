@@ -19,6 +19,15 @@ export const useMatchDetail = (matchId: number) =>
     retry: (count, error) => !notFound(error) && count < 1,
   });
 
+/** Admin : premier match joué dans la division actuelle (null : aucun encore), pour démarrer le suivi. */
+export function useDivisionStart() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (matchId: number | null) => apiRequest<{ ok: true }>('/api/club', { method: 'POST', body: JSON.stringify({ matchId }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['club'] }),
+  });
+}
+
 export function useAddMatchNote(matchId: number) {
   const queryClient = useQueryClient();
   return useMutation({

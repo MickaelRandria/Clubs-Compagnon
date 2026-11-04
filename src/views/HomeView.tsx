@@ -1,5 +1,6 @@
 import { useClub, useMatches, useMembers } from '../api/queries';
 import { BetsLiveBanner } from '../components/bets/BetsLiveBanner';
+import { RelegationAlert } from '../components/division/RelegationAlert';
 import { LastMatchTile } from '../components/home/LastMatchTile';
 import { LobbyMusic } from '../components/home/LobbyMusic';
 import { MotmTile } from '../components/home/MotmTile';
@@ -25,6 +26,9 @@ export function HomeView() {
     >
       {() => (
         <div className="fc-grid">
+          {club.data!.progress?.status === 'tracking' && club.data!.progress.relegationMatchNext && (
+            <RelegationAlert progress={club.data!.progress} />
+          )}
           <LobbyMusic />
           <BetsLiveBanner />
           <RecapsTile />

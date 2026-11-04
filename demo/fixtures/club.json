@@ -78,5 +78,40 @@
         "losses": 0
       }
     }
-  }
+  },
+  "progress": {
+    "division": 4,
+    "status": "tracking",
+    "target": 21,
+    "targetSource": "rules",
+    "points": 14,
+    "chances": 3,
+    "relegationMatchNext": false,
+    "record": { "wins": 4, "draws": 2, "losses": 0 },
+    "steps": [
+      { "matchId": 151, "result": "win", "points": 3, "chances": 3, "relegationMatch": false },
+      { "matchId": 215, "result": "win", "points": 6, "chances": 3, "relegationMatch": false },
+      { "matchId": 214, "result": "win", "points": 9, "chances": 3, "relegationMatch": false },
+      { "matchId": 213, "result": "draw", "points": 10, "chances": 3, "relegationMatch": false },
+      { "matchId": 212, "result": "win", "points": 13, "chances": 3, "relegationMatch": false },
+      { "matchId": 211, "result": "draw", "points": 14, "chances": 3, "relegationMatch": false }
+    ],
+    "targetReached": false,
+    "missingMatches": 0,
+    "verifiedSince": "2026-10-26T22:30:00.000Z",
+    "pointsPerMatch": 2.2
+  },
+  "divisionEvents": [
+    {
+      "id": 1,
+      "kind": "promotion",
+      "fromDivision": 5,
+      "toDivision": 4,
+      "at": "2026-10-26T22:26:18.000Z",
+      "match": { "id": 131, "opponent": "LaEsquina", "goalsFor": 3, "goalsAgainst": 0 },
+      "points": 21,
+      "record": { "wins": 6, "draws": 3, "losses": 1 },
+      "exact": true
+    }
+  ]
 }

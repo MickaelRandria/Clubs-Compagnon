@@ -2,13 +2,16 @@ import { ProClubsClient, resolveReputationLabel, type ClubMatch, type Platform }
 import { and, asc, desc, eq, isNotNull, isNull, notInArray, sql } from 'drizzle-orm';
 import type { MatchPlayer, Position } from '../shared/types.js';
 import { getDb } from './db/client.js';
+import { recordSeason } from './division.js';
 import { clubRatingSnapshots, clubs, matches, members, opponentClubs } from './db/schema.js';
 
 // Synchronisation du club depuis l'API publique Pro Clubs d'EA (via proclubs-sdk).
 //
-// Pas de cron : la limite de 12 fonctions Vercel Hobby est atteinte et un cron Hobby
+// Pas de cron Vercel : la limite de 12 fonctions Hobby est atteinte et un cron Hobby
 // ne tourne qu'une fois par jour. La synchro part donc des lectures (/api/club,
-// /api/members, /api/matches) au plus une fois toutes les 5 minutes. Le verrou est
+// /api/members, /api/matches) au plus une fois toutes les 5 minutes ; une action GitHub
+// lit /api/club toutes les 15 minutes pour qu'aucun match ne sorte des 10 que garde EA
+// (.github/workflows/ea-sync.yml). Le verrou est
 // en base : la première requête qui fait avancer `ea_synced_at` synchronise, les
 // requêtes parallèles servent les données déjà en base.
 //
@@ -185,6 +188,8 @@ async function syncClub(target: { id: number; eaClubId: string; platform: Platfo
         opponentQuit: sql`excluded.opponent_quit`,
       } });
   }
+  // Après les matchs : un changement de division se date par le match décisif, qui doit déjà être en base.
+  await recordSeason(target.id, season).catch((error) => console.error('[ea-sync] relevé de saison impossible :', error));
   await rateOpponents(ea, target.id, overall ? int(overall.skillRating) : null)
     .catch((error) => console.error('[ea-sync] niveau des adversaires indisponible :', error));
   // Un nouveau match peut régler les paris en attente (Vestiaire Bets).

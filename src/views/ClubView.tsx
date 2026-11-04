@@ -5,6 +5,7 @@ import { levelDivision, SR_DIVISIONS, SR_SURVEY_DATE, SR_TOP100, SR_WORLD_BEST, 
 import type { Club } from '../../shared/types';
 import { useClub, useMatches } from '../api/queries';
 import { AveragesTile } from '../components/stats/AveragesTile';
+import { ProgressionSection } from '../components/division/ProgressionSection';
 import { CareerTile } from '../components/stats/CareerTile';
 import { GoalsChart } from '../components/stats/GoalsChart';
 import { DataGate } from '../components/ui/DataGate';
@@ -15,6 +16,7 @@ import { formatShortDate } from '../lib/format';
 import { usePageTitle } from '../lib/hooks';
 
 const SECTIONS = [
+  ['progression', 'Progression'],
   ['niveau', 'Niveau'],
   ['classement', 'Classement'],
   ['adversaires', 'Adversaires'],
@@ -23,7 +25,7 @@ const SECTIONS = [
   ['identite', 'Identité'],
 ] as const;
 
-/** Club : niveau (skill rating expliqué), classement EA, adversaires, palmarès, bilan et identité. Remplace Stats et Playoffs. */
+/** Club : progression en division, niveau (skill rating expliqué), classement EA, adversaires, palmarès, bilan et identité. Remplace Stats et Playoffs. */
 export function ClubView() {
   usePageTitle('Club');
   const club = useClub();
@@ -51,6 +53,7 @@ export function ClubView() {
               ))}
             </nav>
 
+            <ProgressionSection club={c} matches={matches.data!} />
             <Level club={c} />
             <Ranking club={c} />
             <Rivals club={c} />

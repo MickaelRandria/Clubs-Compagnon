@@ -65,6 +65,42 @@ export const clubRatingSnapshots = pgTable(
   (t) => [index('club_rating_snapshots_club_taken_idx').on(t.clubId, t.takenAt.desc())],
 );
 
+// Compteurs de la saison EA, relevés quand ils bougent : changements de division et matchs manquants.
+export const clubSeasonSnapshots = pgTable(
+  'club_season_snapshots',
+  {
+    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    clubId: integer('club_id').notNull().references(() => clubs.id, { onDelete: 'cascade' }),
+    division: smallint('division').notNull(),
+    gamesPlayed: integer('games_played').notNull(),
+    wins: integer('wins').notNull(),
+    draws: integer('draws').notNull(),
+    losses: integer('losses').notNull(),
+    promotions: integer('promotions').notNull(),
+    relegations: integer('relegations').notNull(),
+    takenAt: timestamp('taken_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('club_season_snapshots_club_taken_idx').on(t.clubId, t.takenAt.desc())],
+);
+
+// Montées, descentes et débuts de suivi (voir drizzle/0030_division_progress.sql).
+export const clubDivisionEvents = pgTable(
+  'club_division_events',
+  {
+    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    clubId: integer('club_id').notNull().references(() => clubs.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: ['promotion', 'relegation', 'anchor', 'season'] }).notNull(),
+    fromDivision: smallint('from_division'),
+    toDivision: smallint('to_division').notNull(),
+    startsAfter: timestamp('starts_after', { withTimezone: true }).notNull(),
+    matchId: bigint('match_id', { mode: 'number' }),
+    points: smallint('points'),
+    exact: boolean('exact').notNull().default(false),
+    detectedAt: timestamp('detected_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('club_division_events_club_idx').on(t.clubId, t.startsAfter.desc())],
+);
+
 export const members = pgTable(
   'members',
   {

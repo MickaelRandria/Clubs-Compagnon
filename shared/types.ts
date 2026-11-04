@@ -47,6 +47,50 @@ export interface Club {
     /** Bilan selon le niveau de l'adversaire, sur tous les matchs où il est connu. */
     record: Record<Strength, { wins: number; draws: number; losses: number }>;
   };
+  /** Où on en est dans la division (voir shared/division-progress.ts). null : division EA inconnue. */
+  progress: DivisionProgress | null;
+  /** Montées, descentes et débuts de suivi, du plus récent au plus ancien. */
+  divisionEvents: DivisionEvent[];
+}
+
+export interface DivisionProgress {
+  /** Division EA (1 = Élite, voir shared/division.ts). */
+  division: number;
+  /** calibrating : on ne sait pas encore depuis quel match on joue dans cette division. */
+  status: 'tracking' | 'calibrating';
+  target: number;
+  /** rules : seuil donné par le club ; observed : recalé sur une montée détectée. */
+  targetSource: 'rules' | 'observed';
+  points: number;
+  chances: number;
+  relegationMatchNext: boolean;
+  record: { wins: number; draws: number; losses: number };
+  /** Matchs de la division, du plus ancien au plus récent, avec points et chances après chacun. */
+  steps: { matchId: number; result: MatchResult; points: number; chances: number; relegationMatch: boolean }[];
+  /** Le seuil est atteint mais EA n'a pas (encore) fait monter le club : seuil à recaler ou synchro en retard. */
+  targetReached: boolean;
+  /** Matchs comptés par EA depuis `verifiedSince` mais absents de la base (synchro ratée) : les chiffres sont alors faux. */
+  missingMatches: number;
+  /** Début du contrôle des matchs manquants (premier relevé de saison EA de la division). */
+  verifiedSince: string | null;
+  /** Points par match sur les 10 derniers matchs de ligue. */
+  pointsPerMatch: number | null;
+}
+
+export interface DivisionEvent {
+  id: number;
+  /** anchor : début de suivi posé par un admin ; season : nouvelle saison EA. */
+  kind: 'promotion' | 'relegation' | 'anchor' | 'season';
+  fromDivision: number | null;
+  toDivision: number;
+  at: string;
+  /** Match décisif (montée, descente) ou premier match de la division (début de suivi). */
+  match: { id: number; opponent: string; goalsFor: number; goalsAgainst: number } | null;
+  /** Points au match décisif, et bilan dans la division quittée (montées et descentes suivies depuis leur début). */
+  points: number | null;
+  record: { wins: number; draws: number; losses: number } | null;
+  /** false : le match décisif est déduit (plusieurs matchs entre deux synchros). */
+  exact: boolean;
 }
 
 export interface Member {

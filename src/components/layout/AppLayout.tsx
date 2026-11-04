@@ -1,5 +1,6 @@
 import { Outlet, ScrollRestoration } from 'react-router';
 import { CoachProvider } from '../coach/CoachContext';
+import { PromotionCelebration } from '../division/PromotionCelebration';
 import { TourHost } from '../tour/TourHost';
 import { BottomNav } from './BottomNav';
 import { Breadcrumb } from './Breadcrumb';
@@ -22,6 +23,7 @@ export function AppLayout() {
             <Footer />
           </div>
           <BottomNav />
+          <PromotionCelebration />
           <ScrollRestoration />
         </div>
       </TourHost>

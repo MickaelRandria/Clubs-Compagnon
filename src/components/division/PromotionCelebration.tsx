@@ -3,15 +3,20 @@ import { createPortal } from 'react-dom';
 import { divisionLabel } from '../../../shared/division';
 import type { DivisionEvent } from '../../../shared/types';
 import { useClub } from '../../api/queries';
+import { CinematicCelebration, cinematicFor } from './CinematicCelebration';
 
 // Célébration d'une montée : jouée une fois par appareil à l'ouverture de l'app, rejouable depuis
 // Club › Progression. Un écran d'accroche demande un tap : les navigateurs ne laissent jouer le son
 // qu'après un geste. Sons générés avec ElevenLabs (public/sons/), calés sur la timeline CSS.
 
-const SEEN_KEY = 'foodball.celebration.seen';
+// v2 : la séquence de la montée en D1 remplace la célébration courte ; ceux qui ont vu
+// l'ancienne version la reçoivent une fois.
+const SEEN_KEY = 'foodball.celebration.seen.v2';
 const MUTE_KEY = 'foodball.celebration.muted';
 /** Au-delà, une montée n'est plus une nouvelle : pas de célébration à l'ouverture. */
 const FRESH_MS = 3 * 24 * 3_600_000;
+/** Une séquence avec voix off reste à l'affiche plus longtemps : tout le club doit la voir. */
+const FRESH_CINEMATIC_MS = 7 * 24 * 3_600_000;
 const REPLAY_EVENT = 'foodball:celebrate';
 const CUES = [
   { at: 0, src: '/sons/whoosh.mp3', volume: 0.7 },
@@ -49,15 +54,19 @@ export function PromotionCelebration() {
   const [skipped, setSkipped] = useState(false);
   const [muted, setMuted] = useState(() => read(MUTE_KEY) === '1');
   const [shared, setShared] = useState<string | null>(null);
+  const [autoplay, setAutoplay] = useState(false);
   const audio = useRef<HTMLAudioElement[]>([]);
   const timers = useRef<number[]>([]);
 
   // Ouverture automatique : la montée la plus récente, encore fraîche, pas encore vue sur cet appareil.
   useEffect(() => {
     const latest = events?.[0];
-    if (!latest || latest.kind !== 'promotion' || Date.now() - Date.parse(latest.at) > FRESH_MS) return;
+    if (!latest || latest.kind !== 'promotion') return;
+    const fresh = cinematicFor(latest) ? FRESH_CINEMATIC_MS : FRESH_MS;
+    if (Date.now() - Date.parse(latest.at) > fresh) return;
     if (read(SEEN_KEY) === String(latest.id)) return;
     setEvent(latest);
+    setAutoplay(false);
     setPhase('intro');
   }, [events]);
 
@@ -85,6 +94,7 @@ export function PromotionCelebration() {
       const found = events?.find((x) => x.id === (e as CustomEvent<number>).detail);
       if (!found) return;
       setEvent(found);
+      if (cinematicFor(found)) { setAutoplay(true); return; }
       start(!muted);
     };
     window.addEventListener(REPLAY_EVENT, onReplay);
@@ -108,7 +118,7 @@ export function PromotionCelebration() {
 
   useEffect(() => stopSounds, [stopSounds]);
 
-  if (!event || event.fromDivision === null) return null;
+  if (!event) return null;
   const to = divisionLabel(event.toDivision);
 
   const toggleMute = () => {
@@ -132,6 +142,25 @@ export function PromotionCelebration() {
     }
   };
 
+  const script = cinematicFor(event);
+  if (script) {
+    return (
+      <CinematicCelebration
+        key={event.id}
+        club={club.data}
+        event={event}
+        script={script}
+        muted={muted}
+        autoplay={autoplay}
+        onToggleMute={toggleMute}
+        onClose={close}
+        onShare={() => void share()}
+        shareLabel={shared}
+      />
+    );
+  }
+  if (event.fromDivision === null) return null;
+
   const points = event.points;
   const cells = points === null ? 0 : Math.max(1, Math.ceil(points / 3));
 
@@ -141,7 +170,24 @@ export function PromotionCelebration() {
         <button type="button" className="fc-celeb-intro" onClick={() => start(!muted)} autoFocus>
           <span className="fc-celeb-intro-crest" aria-hidden="true"><span className="fc-celeb-shield" /><b>?</b></span>
           <span className="fc-celeb-intro-kicker">Une nouvelle t'attend</span>
-          <span className="fc-celeb-intro-cta">Touche pour découvrir</span>
+          <span className="fc-celeb-intro-btn">
+            <span className="fc-celeb-intro-ripple" aria-hidden="true"><i /><i /></span>
+            <span className="fc-celeb-intro-cta">Touche pour découvrir</span>
+          </span>
+          {muted ? (
+            <span className="fc-celeb-intro-sound is-muted">Son coupé · réactive-le en haut à droite</span>
+          ) : (
+            <span className="fc-celeb-intro-sound">
+              <svg className="fc-celeb-spk" viewBox="0 0 32 24" aria-hidden="true">
+                <path className="body" d="M2 8h6l8-6v20l-8-6H2z" />
+                <path className="w1" d="M20 8a5 5 0 0 1 0 8" />
+                <path className="w2" d="M23.5 4.5a10 10 0 0 1 0 15" />
+                <path className="w3" d="M27 1a15 15 0 0 1 0 22" />
+              </svg>
+              <span className="fc-celeb-eq" aria-hidden="true">{[0, 1, 2, 3, 4].map((i) => <i key={i} />)}</span>
+              <span className="fc-celeb-intro-sound-txt"><b>Avec le son</b><small>Monte le volume</small></span>
+            </span>
+          )}
         </button>
       ) : (
         <div key={run} className={`fc-celeb-stage${skipped ? ' is-skip' : ''}`}>

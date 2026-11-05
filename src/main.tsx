@@ -35,6 +35,7 @@ import './styles/club-pages.css';
 import './styles/fifa17.css';
 // Progression en division et célébration de montée : s'appuie sur la matière FIFA 17.
 import './styles/division.css';
+import './styles/cinematic.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

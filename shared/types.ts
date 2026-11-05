@@ -66,8 +66,14 @@ export interface DivisionProgress {
   relegationMatchNext: boolean;
   record: { wins: number; draws: number; losses: number };
   /** Matchs de la division, du plus ancien au plus récent, avec points et chances après chacun. */
-  steps: { matchId: number; result: MatchResult; points: number; chances: number; relegationMatch: boolean }[];
-  /** Le seuil est atteint mais EA n'a pas (encore) fait monter le club : seuil à recaler ou synchro en retard. */
+  steps: { matchId: number; result: MatchResult; points: number; chances: number; relegationMatch: boolean; series: boolean; streak: number }[];
+  /** Victoires d'affilée exigées une fois le seuil atteint (5 pour l'Élite). 0 : montée au seuil. */
+  streakNeeded: number;
+  /** Victoires d'affilée en cours dans la série finale. */
+  streak: number;
+  /** Seuil atteint, la série finale est en cours. */
+  seriesStarted: boolean;
+  /** La montée est acquise selon nos règles mais EA n'a pas (encore) fait monter le club : règle à recaler ou synchro en retard. */
   targetReached: boolean;
   /** Matchs comptés par EA depuis `verifiedSince` mais absents de la base (synchro ratée) : les chiffres sont alors faux. */
   missingMatches: number;

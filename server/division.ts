@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gt, sql } from 'drizzle-orm';
-import { promotionTarget, replayDivision } from '../shared/division-progress.js';
+import { promotionStreak, promotionTarget, replayDivision } from '../shared/division-progress.js';
 import type { Club, DivisionEvent, DivisionProgress, MatchResult } from '../shared/types.js';
 import { isAdminAccount } from './db/accounts.js';
 import { getDb } from './db/client.js';
@@ -98,7 +98,7 @@ export async function recordSeason(clubId: number, season: unknown) {
   if (period) {
     // Division suivie depuis son début : les règles désignent le match décisif parmi les nouveaux.
     const target = promotionTarget(last.division, observedTargets(events, last.division)).points;
-    const replay = replayDivision(await leagueMatches(clubId, period.startsAfter), target);
+    const replay = replayDivision(await leagueMatches(clubId, period.startsAfter), target, promotionStreak(last.division));
     const hit = kind === 'promotion' ? replay.promotedAfter : replay.relegatedAfter;
     decisive = window.find((m) => m.id === hit) ?? null;
     const at = decisive ?? window.at(-1);
@@ -158,11 +158,12 @@ export async function fetchDivision(clubId: number, eaRaw: unknown): Promise<Pic
     division, status: 'calibrating', target: target.points, targetSource: target.source,
     points: 0, chances: 3, relegationMatchNext: false, record: blankRecord(), steps: [],
     targetReached: false, missingMatches: 0, verifiedSince: null, pointsPerMatch,
+    streakNeeded: promotionStreak(division), streak: 0, seriesStarted: false,
   };
   if (!period) return { progress: base, divisionEvents: history };
 
   const inDivision = played.filter((m) => m.playedAt > period.startsAfter);
-  const replay = replayDivision(inDivision, target.points);
+  const replay = replayDivision(inDivision, target.points, base.streakNeeded);
 
   // Matchs manquants : EA en a compté plus que la base n'en a reçu depuis le premier relevé de la division.
   const [first] = await db.select().from(clubSeasonSnapshots)
@@ -184,7 +185,10 @@ export async function fetchDivision(clubId: number, eaRaw: unknown): Promise<Pic
       relegationMatchNext: replay.relegationMatchNext,
       record: replay.record,
       steps: replay.steps,
-      targetReached: replay.points >= target.points,
+      // Montée acquise selon nos règles (seuil, puis série finale s'il y en a une) : EA doit suivre.
+      targetReached: replay.promotedAfter !== null,
+      streak: replay.streak,
+      seriesStarted: replay.seriesStarted,
       missingMatches,
       verifiedSince: first ? first.takenAt.toISOString() : null,
     },

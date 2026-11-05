@@ -1,6 +1,6 @@
 import { divisionLabel } from '../../../shared/division';
 import type { Club } from '../../../shared/types';
-import { ChanceShields, DivisionGauge, nextDivisionLabel, winsLabel } from '../division/DivisionBits';
+import { ChanceShields, DivisionGauge, SeriesPips, nextDivisionLabel, promotionGap, winsLabel } from '../division/DivisionBits';
 import { Tile } from '../ui/Tile';
 
 /** C · Division EA et progression : points vers la montée, chances avant le match de relégation. */
@@ -23,7 +23,9 @@ export function RankTile({ club }: { club: Club }) {
     );
   }
 
-  const remaining = Math.max(0, p.target - p.points);
+  const gap = promotionGap(p);
+  const remaining = gap.points;
+  const then = p.streakNeeded > 0 ? `, puis ${p.streakNeeded} victoires d'affilée` : " et c'est la montée";
   return (
     <Tile className="fc-card fc-card--small fc-card--rank fc-dv-tile" to="/club#progression" delay={140}>
       <span className="fc-dv-shine" aria-hidden="true" />
@@ -39,11 +41,12 @@ export function RankTile({ club }: { club: Club }) {
             <span className="fc-dv-label">points</span>
           </span>
         </span>
-        <DivisionGauge points={p.points} target={p.target} />
+        {p.seriesStarted ? <SeriesPips streak={p.streak} needed={p.streakNeeded} /> : <DivisionGauge points={p.points} target={p.target} />}
         <span className="fc-dv-line">
           {p.relegationMatchNext ? <><b>Match de relégation.</b> Ne pas perdre le prochain match.</>
             : p.targetReached ? <><b>Objectif atteint.</b> La montée arrive à la prochaine synchro EA.</>
-              : <><b>Encore {remaining} pt{remaining > 1 ? 's' : ''}.</b> {winsLabel(Math.ceil(remaining / 3))} et c'est la montée.</>}
+              : p.seriesStarted ? <><b>Série finale : {p.streak}/{p.streakNeeded}.</b> Encore {winsLabel(gap.seriesWins)} d'affilée pour la {nextDivisionLabel(p.division)}.</>
+                : <><b>Encore {remaining} pt{remaining > 1 ? 's' : ''}.</b> {winsLabel(Math.ceil(remaining / 3))}{then}.</>}
         </span>
         <span className="fc-dv-chances">
           <ChanceShields chances={p.chances} />

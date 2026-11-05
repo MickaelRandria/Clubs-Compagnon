@@ -1,9 +1,9 @@
-import type { Match, MatchNote, Member } from '../shared/types.js';
+import type { MatchDetail, MatchNote, Member } from '../shared/types.js';
 import {
   MATCH_DEBRIEF_JSON_SCHEMA,
   MATCH_DEBRIEF_SYSTEM,
   buildMatchDebriefPrompt,
-  matchDebriefSchema,
+  draftedDebriefSchema,
   sanitizeMatchDebrief,
   type MatchDebrief,
 } from '../shared/match-debrief.js';
@@ -14,49 +14,26 @@ export interface DebriefResult {
   model: string;
 }
 
-// Cache en mémoire pour éviter de re-générer inutilement un débrief d'un match identique
-const debriefCache = new Map<number, { debrief: MatchDebrief; model: string; generatedAt: number }>();
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 heure
-
+/** Un débrief par appel : le cache durable (Neon, par empreinte) est géré par match-debrief-http. */
 export async function generateMatchDebrief(
-  match: Match,
+  detail: MatchDetail,
   members: Member[],
   notes: MatchNote[],
-  options: {
-    apiKey?: string;
-    fetchImpl?: typeof fetch;
-    model?: string;
-    timeoutMs?: number;
-    forceFresh?: boolean;
-  } = {},
+  options: { apiKey?: string; fetchImpl?: typeof fetch; model?: string; timeoutMs?: number } = {},
 ): Promise<DebriefResult> {
-  const cached = debriefCache.get(match.id);
-  if (!options.forceFresh && cached && Date.now() - cached.generatedAt < CACHE_TTL_MS) {
-    return { debrief: cached.debrief, model: cached.model };
-  }
-
-  const { parsed, raw: content, model } = await mistralJson({
+  const { parsed, raw, model } = await mistralJson({
     ...options,
     system: MATCH_DEBRIEF_SYSTEM,
-    user: buildMatchDebriefPrompt(match, members, notes),
+    user: buildMatchDebriefPrompt(detail, notes),
     schema: MATCH_DEBRIEF_JSON_SCHEMA,
     schemaName: 'debrief_match',
-    maxTokens: 1000,
+    maxTokens: 1600,
   });
 
-  const parsedResult = matchDebriefSchema.safeParse(parsed);
-  if (!parsedResult.success) {
-    const issues = parsedResult.error.issues
-      .map((issue) => `${issue.path.join('.') || '(racine)'} : ${issue.message}`)
-      .join(' | ');
-    throw new StaffUnavailable(
-      'Le modèle n’a pas respecté le format de débrief attendu.',
-      `${issues}\n--- brut ---\n${content.slice(0, 1500)}`,
-    );
+  const result = draftedDebriefSchema.safeParse(parsed);
+  if (!result.success) {
+    const issues = result.error.issues.map((issue) => `${issue.path.join('.') || '(racine)'} : ${issue.message}`).join(' | ');
+    throw new StaffUnavailable('Le modèle n’a pas respecté le format de débrief attendu.', `${issues}\n--- brut ---\n${raw.slice(0, 1500)}`);
   }
-
-  const sanitized = sanitizeMatchDebrief(parsedResult.data, members);
-  debriefCache.set(match.id, { debrief: sanitized, model, generatedAt: Date.now() });
-
-  return { debrief: sanitized, model };
+  return { debrief: sanitizeMatchDebrief(result.data, detail, notes, members), model };
 }

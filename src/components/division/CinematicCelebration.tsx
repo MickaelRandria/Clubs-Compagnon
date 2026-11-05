@@ -18,6 +18,8 @@ type Line = { text: string; start: number; end: number; big?: boolean };
 
 export interface CinematicScript {
   audio: string;
+  /** MP4 vertical de la séquence, à partager (rendu par scripts/render-celebration-video.ts). */
+  video?: string;
   lines: Line[];
 }
 
@@ -28,6 +30,7 @@ const SCRIPTS: { toDivision: number; date: string; script: CinematicScript }[] =
     date: '2026-11-04',
     script: {
       audio: '/sons/celebration/montee-d1.mp3',
+      video: '/videos/montee-d1.mp4',
       lines: [
         { text: 'Il y a ceux qui rêvent de la Division 1.', start: 3.0, end: 7.4 },
         { text: 'Et il y a ceux… qui vont la chercher.', start: 8.5, end: 12.7 },
@@ -320,7 +323,7 @@ export function CinematicCelebration({ club, event, script, muted, autoplay, onT
               </div>
             )}
             <div className="fcq-pact">
-              <button type="button" className="fcq-cta" onClick={onShare}>{shareLabel ?? 'Partager la montée'}</button>
+              <button type="button" className="fcq-cta" onClick={onShare}>{shareLabel ?? (script.video ? 'Partager la vidéo' : 'Partager la montée')}</button>
               <div>
                 <button type="button" className="fcq-ghost" onClick={start}>Rejouer</button>
                 <button type="button" className="fcq-ghost" onClick={close}>Continuer</button>

@@ -34,9 +34,25 @@ test('la montée tombe au match qui atteint le seuil', () => {
   assert.equal(r.promotedAfter, 6); // 5 V = 15, le nul suivant fait 16
 });
 
+test('Élite : 22 points, puis 5 victoires d’affilée ; un nul ou une défaite remet la série à zéro', () => {
+  // 8 V = 24 pts : le seuil tombe au 8e match, la série commence au 9e.
+  const reached = replayDivision(seq('VVVVVVVV'), 22, 5);
+  assert.deepEqual([reached.seriesStarted, reached.streak, reached.promotedAfter], [true, 0, null]);
+  const broken = replayDivision(seq('VVVVVVVV' + 'VVVN' + 'VVVV'), 22, 5);
+  assert.deepEqual([broken.streak, broken.promotedAfter], [4, null]);
+  assert.equal(broken.steps[11].series, true);
+  assert.equal(broken.steps[11].streak, 0);
+  const done = replayDivision(seq('VVVVVVVV' + 'VVDVVVVV'), 22, 5);
+  assert.equal(done.promotedAfter, 16);
+  assert.equal(done.chances, 2); // la défaite de la série coûte quand même une chance
+  // Sans série exigée, la montée tombe toujours au seuil.
+  assert.equal(replayDivision(seq('VVVVVVVV'), 22).promotedAfter, 8);
+});
+
 test('seuil : règles du club, recalées par une montée observée', () => {
   assert.deepEqual(promotionTarget(4), { points: 21, source: 'rules' });
-  assert.deepEqual(promotionTarget(2), { points: 16, source: 'rules' });
+  assert.deepEqual(promotionTarget(2), { points: 22, source: 'rules' });
+  assert.deepEqual(promotionTarget(2, [37]), { points: 22, source: 'rules' }); // série finale : la montée ne recale pas le seuil
   assert.deepEqual(promotionTarget(4, [22]), { points: 21, source: 'observed' }); // 19 → 22 en une victoire : cohérent
   assert.deepEqual(promotionTarget(4, [18]), { points: 18, source: 'observed' }); // monté avant 21 : le seuil est plus bas
 });

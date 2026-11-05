@@ -54,6 +54,7 @@ export function MatchDetailView() {
           return (
             <div className="fc-detail">
               <MatchSheet match={match} minutes={opponent?.minutes ?? null} />
+              <MatchCoachDebrief match={match} players={players ?? []} />
               <DivisionImpact matchId={match.id} />
               <OpponentCard detail={detail.data!} />
               <MatchDuel ours={players ?? []} theirs={opponent?.players ?? []} opponent={match.opponent} color={opponent?.kitColor} />
@@ -61,7 +62,6 @@ export function MatchDetailView() {
                 <MatchLineup players={players ?? []} />
                 <MatchLineup players={opponent?.players ?? []} title={match.opponent} id="fc-lineup-opponent" />
               </div>
-              <MatchCoachDebrief matchId={matchId} />
               <NoteForm matchId={matchId} members={members.data!} />
               <NoteList notes={notes} />
             </div>

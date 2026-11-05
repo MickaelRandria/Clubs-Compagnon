@@ -1,7 +1,7 @@
 import { POINTS } from '../../../shared/division-progress';
 import { divisionLabel } from '../../../shared/division';
 import { useClub } from '../../api/queries';
-import { DivisionGauge, nextDivisionLabel } from './DivisionBits';
+import { DivisionGauge, SeriesPips, nextDivisionLabel } from './DivisionBits';
 
 /** Fiche match : ce que ce match a changé dans la division (points, chances), s'il compte dans la division en cours. */
 export function DivisionImpact({ matchId }: { matchId: number }) {
@@ -35,8 +35,13 @@ export function DivisionImpact({ matchId }: { matchId: number }) {
   if (step.relegationMatch) {
     line = step.result === 'loss' ? `Match de relégation perdu : retour en ${divisionLabel(p.division + 1)}.`
       : 'Match de relégation tenu : maintien assuré, les 3 chances reviennent.';
+  } else if (step.series) {
+    line = step.streak >= p.streakNeeded ? `Série finale bouclée : montée en ${nextDivisionLabel(p.division)}.`
+      : step.result === 'win' ? `Série finale : ${step.streak}/${p.streakNeeded} victoires d'affilée.`
+        : `Série finale cassée : retour à 0/${p.streakNeeded}${step.result === 'loss' ? `, et une chance perdue (il en reste ${step.chances})` : ''}.`;
   } else if (step.points >= p.target) {
-    line = `Objectif atteint : montée en ${nextDivisionLabel(p.division)}.`;
+    line = p.streakNeeded > 0 ? `${p.target} points atteints : place à la série finale, ${p.streakNeeded} victoires d'affilée pour la ${nextDivisionLabel(p.division)}.`
+      : `Objectif atteint : montée en ${nextDivisionLabel(p.division)}.`;
   } else if (step.result === 'loss') {
     line = step.chances === 0 ? 'Plus aucune chance : le match suivant est un match de relégation.'
       : `Une chance perdue, il en reste ${step.chances}.`;
@@ -54,9 +59,13 @@ export function DivisionImpact({ matchId }: { matchId: number }) {
         <b className="fc-dv-plus">+{gained}</b>
         <span><b>{step.points}</b> / {p.target} pts</span>
       </span>
-      <DivisionGauge points={step.points} target={p.target} fresh={step.points - before.points} />
+      {step.series ? <SeriesPips streak={step.streak} needed={p.streakNeeded} />
+        : <DivisionGauge points={step.points} target={p.target} fresh={step.points - before.points} />}
       <p>{line}</p>
-      {isLatest && !step.relegationMatch && remaining > 0 && remaining <= 3 && step.chances > 0 && (
+      {isLatest && step.series && step.streak === p.streakNeeded - 1 && step.chances > 0 && (
+        <span className="fc-dv-ball"><b>Balle de montée</b> Une {p.streakNeeded}e victoire d'affilée au prochain match et c'est la {nextDivisionLabel(p.division)}.</span>
+      )}
+      {isLatest && p.streakNeeded === 0 && !step.relegationMatch && remaining > 0 && remaining <= 3 && step.chances > 0 && (
         <span className="fc-dv-ball"><b>Balle de montée</b> Une victoire au prochain match et c'est la {nextDivisionLabel(p.division)}.</span>
       )}
     </section>

@@ -1,9 +1,13 @@
+import { useState } from 'react';
+import type { MatchDebrief } from '../../../shared/match-debrief';
+import type { Match, MatchPlayer } from '../../../shared/types';
 import { useMatchDebrief } from '../../api/match-debrief';
+import { DebriefStory } from './DebriefStory';
 import { SignInButton } from '../fc27/SignIn';
-import { CornerShardLg } from '../ui/CornerShardLg';
 import { Glyph } from '../ui/Glyph';
 
-export function MatchCoachDebrief({ matchId }: { matchId: number }) {
+export function MatchCoachDebrief({ match, players }: { match: Match; players: MatchPlayer[] }) {
+  const matchId = match.id;
   const query = useMatchDebrief(matchId);
 
   if (query.isLoading) {
@@ -41,49 +45,30 @@ export function MatchCoachDebrief({ matchId }: { matchId: number }) {
   }
   if (!data?.available) return null;
 
-  const { debrief } = data;
-
-  return (
-    <section className="fc-block fc-marine fc-coach-debrief" aria-labelledby="coach-debrief-title">
-      <CornerShardLg />
-      <div className="fc-coach-debrief-head">
-        <span className="fc-coach-chip">
-          <Glyph name="bolt" size={14} />
-          <span>L'ŒIL DU COACH IA</span>
-        </span>
-        <span className="fc-coach-meta" title={`Débrief tactique produit par ${data.model}`}>
-          Analyse tactique · {data.model}
-        </span>
-      </div>
-
-      <h2 id="coach-debrief-title" className="fc-coach-headline">
-        {debrief.headline}
-      </h2>
-
-      <p className="fc-coach-summary">{debrief.summary}</p>
-
-      <div className="fc-coach-advice-box">
-        <span className="fc-coach-advice-label">
-          <Glyph name="cross" size={14} /> Le mot du coach
-        </span>
-        <p className="fc-coach-advice">{debrief.advice}</p>
-      </div>
-
-      {(debrief.suggestedTags.length > 0 || debrief.suggestedMotm) && (
-        <div className="fc-coach-footer-pills">
-          {debrief.suggestedMotm && (
-            <span className="fc-coach-pill fc-coach-pill--motm" title="Homme du match suggéré par l'analyse">
-              ★ MOTM suggéré : <strong>{debrief.suggestedMotm}</strong>
-            </span>
-          )}
-          {debrief.suggestedTags.map((tag) => (
-            <span key={tag} className="fc-coach-pill">
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
-    </section>
-  );
+  return <DebriefTeaser debrief={data.debrief} match={match} players={players} />;
 }
 
+/** Carte courte dans la fiche match : le titre, puis la story plein écran au tap. */
+function DebriefTeaser({ debrief, match, players }: { debrief: MatchDebrief; match: Match; players: MatchPlayer[] }) {
+  const [open, setOpen] = useState(false);
+  const screens = 2 + debrief.keys.length + (debrief.players.length > 0 ? 1 : 0);
+  const writeNote = () => {
+    setOpen(false);
+    document.getElementById('note-form-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  return (
+    <>
+      <button type="button" className={`fc-block fc-story-teaser is-${match.result}`} onClick={() => setOpen(true)} aria-haspopup="dialog">
+        <span className="fc-story-teaser-ring" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
+        </span>
+        <span className="fc-story-teaser-copy">
+          <span className="fc-coach-chip"><Glyph name="bolt" size={14} /><span>L'œil du coach IA</span></span>
+          <b>{debrief.headline}</b>
+          <small>{screens} écrans · environ {Math.round((screens * 8) / 10) * 10} s · touche pour lancer</small>
+        </span>
+      </button>
+      {open && <DebriefStory debrief={debrief} match={match} players={players} onClose={() => setOpen(false)} onWriteNote={writeNote} />}
+    </>
+  );
+}

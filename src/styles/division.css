@@ -382,3 +382,28 @@ body.fc-celeb-open { overflow: hidden; }
   .fc-celeb-stage * { animation-duration: .01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
   .fc-celeb-parts, .fc-celeb-rays, .fc-celeb-wipe, .fc-celeb-ticker, .fc-celeb-shard, .fc-celeb-flash, .fc-celeb-sparks, .fc-celeb-ring, .fc-celeb-twinkles, .fc-celeb-beam { display: none; }
 }
+
+/* ---------- Série finale : 5 victoires d'affilée pour l'Élite ---------- */
+.fc-dv-series { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; width: 100%; }
+.fc-dv-series i { display: flex; align-items: center; justify-content: center; height: 26px; font: 800 13px/1 var(--fc-display); font-style: normal;
+  color: var(--fc-acier); background: rgba(195,204,223,.1); box-shadow: inset 0 0 0 1px rgba(195,204,223,.22);
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+.fc-dv-series i.is-on { color: var(--fc-abysse); background: linear-gradient(90deg, var(--fc-glacier), var(--fc-craie)); box-shadow: 0 0 12px rgba(111,200,255,.55); }
+.fc-dv-series i.is-next { color: var(--fc-glacier); box-shadow: inset 0 0 0 1px var(--fc-glacier); animation: fc-dv-pulse 1.6s ease-in-out infinite; }
+.fc-dv-series--lg i { height: 44px; font-size: 20px; }
+.fc-dv-series-block { display: flex; flex-direction: column; gap: 10px; padding: 14px; }
+.fc-dv-series-block p { margin: 0; font: 500 14px/1.4 var(--fc-text); color: var(--fc-brume); }
+.fc-dv-series-block p b { color: var(--fc-craie); }
+.fc-dv-replay-hero { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 48px; margin: 0 0 12px;
+  border: 0; cursor: pointer; font: 800 16px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; color: #1a1205;
+  background: linear-gradient(100deg, #b8892c, #f3d58a 45%, #c99a3b); clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+.fc-dv-replay-hero:hover, .fc-dv-replay-hero:focus-visible { filter: brightness(1.08); }
+.fc-dv-replay-hero svg { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: reduce) { .fc-dv-series i.is-next { animation: none; } }
+.fc-dv-replay-row { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
+.fc-dv-replay-row .fc-dv-replay-hero { margin: 0; }
+.fc-dv-share { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid rgba(243,213,138,.5);
+  background: rgba(243,213,138,.06); cursor: pointer; font: 700 14px/1 var(--fc-display); letter-spacing: .08em; text-transform: uppercase; color: #f3d58a; }
+.fc-dv-share:hover, .fc-dv-share:focus-visible { background: rgba(243,213,138,.14); }
+.fc-dv-share svg { width: 18px; height: 18px; }
+@media (min-width: 768px) { .fc-dv-replay-row { flex-direction: row; } .fc-dv-replay-row > * { flex: 1; } }

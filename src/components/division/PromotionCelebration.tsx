@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { divisionLabel } from '../../../shared/division';
 import type { DivisionEvent } from '../../../shared/types';
 import { useClub } from '../../api/queries';
+import { SHARE_LABEL, preloadVideo, shareVideo } from '../../lib/share-video';
 import { CinematicCelebration, cinematicFor } from './CinematicCelebration';
 
 // Célébration d'une montée : jouée une fois par appareil à l'ouverture de l'app, rejouable depuis
@@ -118,6 +119,10 @@ export function PromotionCelebration() {
 
   useEffect(() => stopSounds, [stopSounds]);
 
+  // La vidéo se charge pendant la séquence : au tap sur « Partager », le fichier est prêt.
+  const video = event ? cinematicFor(event)?.video : undefined;
+  useEffect(() => { if (video) void preloadVideo(video).catch(() => {}); }, [video]);
+
   if (!event) return null;
   const to = divisionLabel(event.toDivision);
 
@@ -130,6 +135,11 @@ export function PromotionCelebration() {
 
   const share = async () => {
     const text = `${club.data?.name ?? 'Le club'} monte en ${to} !`;
+    if (video) {
+      setShared('Préparation…');
+      setShared(SHARE_LABEL[await shareVideo(video, { title: 'Promus !', text })]);
+      return;
+    }
     try {
       if (navigator.share) {
         await navigator.share({ title: 'Promus !', text, url: window.location.origin });

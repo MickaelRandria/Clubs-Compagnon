@@ -21,6 +21,7 @@ import './styles/stats.css';
 import './styles/playoffs.css';
 import './styles/states.css';
 import './styles/match-detail.css';
+import './styles/debrief-story.css';
 import './styles/fc27.css';
 import './styles/fc27-player.css';
 import './styles/fc27-visuals.css';

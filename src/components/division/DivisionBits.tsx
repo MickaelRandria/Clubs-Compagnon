@@ -53,3 +53,21 @@ export const nextDivisionLabel = (division: number) => divisionLabel(division - 
 
 /** « 2 victoires », « 1 victoire ». */
 export const winsLabel = (n: number) => `${n} victoire${n > 1 ? 's' : ''}`;
+
+/** Série finale (Élite) : une case par victoire d'affilée exigée, les victoires déjà enchaînées allumées. */
+export function SeriesPips({ streak, needed, size = 'md', locked = false }: { streak: number; needed: number; size?: 'md' | 'lg'; locked?: boolean }) {
+  return (
+    <span className={`fc-dv-series fc-dv-series--${size}`} role="img" aria-label={`${streak} victoire${streak > 1 ? 's' : ''} d'affilée sur ${needed}`}>
+      {Array.from({ length: needed }, (_, i) => (
+        <i key={i} className={i < streak ? 'is-on' : i === streak && !locked ? 'is-next' : ''}>{i < streak ? 'V' : i + 1}</i>
+      ))}
+    </span>
+  );
+}
+
+/** Ce qu'il reste pour monter : points jusqu'au seuil, puis victoires d'affilée de la série finale. */
+export function promotionGap(p: { target: number; points: number; streakNeeded: number; streak: number; seriesStarted: boolean }) {
+  const points = Math.max(0, p.target - p.points);
+  const seriesWins = p.streakNeeded > 0 ? p.streakNeeded - (p.seriesStarted ? p.streak : 0) : 0;
+  return { points, seriesWins, fastestWins: Math.ceil(points / 3) + seriesWins };
+}

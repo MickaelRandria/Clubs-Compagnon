@@ -7,7 +7,9 @@ import type { Club, DivisionEvent, DivisionProgress, Match } from '../../../shar
 import { useIsAdmin } from '../../api/profile';
 import { useDivisionStart } from '../../api/queries';
 import { formatShortDate } from '../../lib/format';
-import { ChanceShields, ResultChip, nextDivisionLabel } from './DivisionBits';
+import { ChanceShields, ResultChip, SeriesPips, nextDivisionLabel, promotionGap } from './DivisionBits';
+import { SHARE_LABEL, shareVideo } from '../../lib/share-video';
+import { cinematicFor } from './CinematicCelebration';
 import { replayCelebration } from './PromotionCelebration';
 
 /** Club › Progression : où on en est dans la division, ce qu'il manque, nos chances et le parcours. */
@@ -18,6 +20,7 @@ export function ProgressionSection({ club, matches }: { club: Club; matches: Mat
   return (
     <section id="progression" className="fc-club-section" aria-label="Progression en division">
       <h2 className="fc-section-head">Progression <small>{divisionLabel(p.division)} · saison EA</small></h2>
+      <ReplayLastPromotion events={events} />
       {p.division <= 1 ? (
         <div className="fc-block fc-marine fc-dv-note"><p>On joue en Élite, la plus haute division : il n'y a plus de montée, seulement des chances à garder.</p></div>
       ) : p.status === 'calibrating' ? (
@@ -30,10 +33,39 @@ export function ProgressionSection({ club, matches }: { club: Club; matches: Mat
   );
 }
 
+/** Bouton bien visible pour revoir la séquence de la dernière montée, quand on veut. */
+function ReplayLastPromotion({ events }: { events: DivisionEvent[] }) {
+  const [label, setLabel] = useState<string | null>(null);
+  const last = events.find((e) => e.kind === 'promotion');
+  if (!last || last.fromDivision === null) return null;
+  const video = cinematicFor(last)?.video;
+  const to = divisionLabel(last.toDivision);
+  const share = async () => {
+    setLabel('Préparation de la vidéo…');
+    setLabel(SHARE_LABEL[await shareVideo(video!, { title: 'Promus !', text: `Le FoodBall Club monte en ${to} !` })]);
+  };
+  return (
+    <div className="fc-dv-replay-row">
+      <button type="button" className="fc-dv-replay-hero" onClick={() => replayCelebration(last.id)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z" fill="currentColor" /></svg>
+        Revoir la montée en {to}
+      </button>
+      {video && (
+        <button type="button" className="fc-dv-share" onClick={() => void share()} aria-live="polite">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+          {label ?? 'Partager la vidéo'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Tracking({ club, progress: p }: { club: Club; progress: DivisionProgress }) {
-  const remaining = Math.max(0, p.target - p.points);
-  const paths = promotionPaths(remaining, p.chances);
+  const gap = promotionGap(p);
+  const remaining = gap.points;
+  const paths = p.seriesStarted ? [] : promotionPaths(remaining, p.chances);
   const pace = matchesToPromotion(remaining, p.pointsPerMatch);
+  const series = p.streakNeeded > 0;
   const nextSr = SR_DIVISIONS.find((d) => d.division === p.division - 1)?.sr ?? null;
   return (
     <>
@@ -50,9 +82,21 @@ function Tracking({ club, progress: p }: { club: Club; progress: DivisionProgres
         </span>
         <span className="fc-dv-hero-foot">
           <span>{p.record.wins} V · {p.record.draws} N · {p.record.losses} D dans la division</span>
-          <span>{p.targetSource === 'observed' ? 'Seuil vu à la dernière montée' : 'Seuil à confirmer'}</span>
+          <span>{series ? `Règle du club : ${p.target} pts puis ${p.streakNeeded} V d'affilée` : p.targetSource === 'observed' ? 'Seuil vu à la dernière montée' : 'Seuil à confirmer'}</span>
         </span>
       </div>
+
+      {series && (
+        <div className={`fc-block ${p.seriesStarted ? 'fc-dv-hero' : 'fc-marine'} fc-dv-series-block`}>
+          <h3 className="fc-dv-subhead">Série finale <span>{p.seriesStarted ? `${p.streak} / ${p.streakNeeded}` : 'à débloquer'}</span></h3>
+          <SeriesPips streak={p.seriesStarted ? p.streak : 0} needed={p.streakNeeded} size="lg" locked={!p.seriesStarted} />
+          <p>{p.seriesStarted
+            ? <>Les {p.target} points sont faits. Il faut maintenant <b>{gap.seriesWins} victoire{gap.seriesWins > 1 ? 's' : ''} d'affilée</b> pour la {nextDivisionLabel(p.division)}.
+              Un nul ou une défaite remet la série à zéro, et une défaite coûte toujours une chance.</>
+            : <>Une fois les {p.target} points atteints, il faudra encore <b>gagner {p.streakNeeded} matchs d'affilée</b> pour monter en {nextDivisionLabel(p.division)}.
+              Un nul ou une défaite remet la série à zéro.</>}</p>
+        </div>
+      )}
 
       {p.missingMatches > 0 && (
         <div className="fc-block fc-dv-missing" role="status">
@@ -65,26 +109,28 @@ function Tracking({ club, progress: p }: { club: Club; progress: DivisionProgres
         <div className="fc-block fc-dv-missing" role="status"><b>Match de relégation au prochain match.</b> Une victoire ou un nul et on reste ; une défaite et on redescend.</div>
       ) : (
         <div className="fc-dv-kpis">
-          <span className="fc-dv-kpi"><b>{remaining} pts</b><span>à prendre</span></span>
-          <span className="fc-dv-kpi"><b>{Math.ceil(remaining / 3)} V</b><span>au plus court</span></span>
-          <span className="fc-dv-kpi"><b>{pace === null ? '—' : `≈ ${pace}`}</b><span>matchs à ce rythme</span></span>
+          {p.seriesStarted
+            ? <span className="fc-dv-kpi"><b>{gap.seriesWins} V</b><span>d'affilée à faire</span></span>
+            : <span className="fc-dv-kpi"><b>{remaining} pts</b><span>{series ? 'avant la série' : 'à prendre'}</span></span>}
+          <span className="fc-dv-kpi"><b>{gap.fastestWins} V</b><span>au plus court</span></span>
+          <span className="fc-dv-kpi"><b>{p.seriesStarted || pace === null ? '—' : `≈ ${pace + gap.seriesWins}`}</b><span>matchs à ce rythme</span></span>
         </div>
       )}
 
       {paths.length > 0 && !p.relegationMatchNext && (
         <div className="fc-block fc-marine fc-dv-paths">
-          <h3 className="fc-dv-subhead">Les chemins vers la montée</h3>
+          <h3 className="fc-dv-subhead">{series ? `Les chemins vers les ${p.target} points` : 'Les chemins vers la montée'}</h3>
           {paths.map((path, i) => (
             <div key={i} className="fc-dv-path">
               <span className="fc-dv-chips">{path.results.map((r, j) => <ResultChip key={j} result={r} />)}</span>
               <span className="fc-dv-path-copy">
-                <b>Montée en {path.results.length} match{path.results.length > 1 ? 's' : ''}</b>
+                <b>{series ? `${p.target} pts` : 'Montée'} en {path.results.length} match{path.results.length > 1 ? 's' : ''}</b>
                 <small>{i === 0 ? 'le plus rapide' : path.chancesLeft < p.chances ? `mais il ne resterait que ${path.chancesLeft} chance${path.chancesLeft > 1 ? 's' : ''}` : 'sans perdre'}</small>
               </span>
             </div>
           ))}
           {p.pointsPerMatch !== null && (
-            <p className="fc-dv-pace">Rythme des 10 derniers matchs : {String(p.pointsPerMatch).replace('.', ',')} pt par match{pace ? `, soit la montée dans environ ${pace} match${pace > 1 ? 's' : ''}` : ''}.</p>
+            <p className="fc-dv-pace">Rythme des 10 derniers matchs : {String(p.pointsPerMatch).replace('.', ',')} pt par match{pace ? `, soit les ${p.target} points dans environ ${pace} match${pace > 1 ? 's' : ''}` : ''}{series ? `, puis la série de ${p.streakNeeded} victoires` : ''}.</p>
           )}
         </div>
       )}
@@ -152,7 +198,6 @@ function Calibrating({ progress: p, matches }: { progress: DivisionProgress; mat
 const EVENT_TITLE: Record<DivisionEvent['kind'], string> = { promotion: 'Montée', relegation: 'Descente', anchor: 'Début du suivi', season: 'Nouvelle saison' };
 
 function Journey({ events }: { events: DivisionEvent[] }) {
-  const lastPromotion = events.find((e) => e.kind === 'promotion');
   return (
     <div className="fc-block fc-marine fc-dv-journey">
       <h3 className="fc-dv-subhead">Parcours du club</h3>
@@ -172,9 +217,6 @@ function Journey({ events }: { events: DivisionEvent[] }) {
           </li>
         ))}
       </ol>
-      {lastPromotion && (
-        <button type="button" className="fc-dv-replay" onClick={() => replayCelebration(lastPromotion.id)}>Revoir la célébration de la dernière montée</button>
-      )}
     </div>
   );
 }

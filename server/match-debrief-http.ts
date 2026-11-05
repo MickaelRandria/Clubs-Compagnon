@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { matchDebriefSchema, type MatchDebrief } from '../shared/match-debrief.js';
-import type { Match, MatchNote, Member } from '../shared/types.js';
+import type { MatchDetail, MatchNote, Member } from '../shared/types.js';
 import { fetchMatchDetail, fetchMembers } from './db/queries.js';
 import { handle, idAfter } from './http.js';
 import { generateMatchDebrief } from './match-debrief-mistral.js';
@@ -18,16 +18,18 @@ export interface DebriefCache {
 }
 
 /** À incrémenter quand le format du débrief change : les anciens ne sont plus relus. */
-const DEBRIEF_VERSION = 'debrief-v1';
+// v2 : feuilles de match dans le prompt, nouveau format (chapô, clés, verdicts) : les v1 sont régénérés.
+const DEBRIEF_VERSION = 'debrief-v2';
 
 /**
  * Tout ce qui change le débrief, et rien d'autre : les stats du match et ses notes.
  * Une note ajoutée ou corrigée donne une nouvelle empreinte, donc une nouvelle lecture ;
  * un rechargement de la page retombe sur la même, donc sur le cache.
  */
-export function debriefInputHash(match: Match, notes: MatchNote[]): string {
+export function debriefInputHash(detail: Pick<MatchDetail, 'match' | 'players' | 'opponent'>, notes: MatchNote[]): string {
+  const { match } = detail;
   const stats = [match.id, match.type, match.opponent, match.goalsFor, match.goalsAgainst,
-    match.result, match.possessionPct, match.shots];
+    match.result, match.possessionPct, match.shots, detail.players.length, detail.opponent?.players.length ?? 0];
   const lignes = [...notes]
     .sort((a, b) => a.id - b.id)
     .map((n) => [n.id, n.body, [...n.tags].sort().join('+'), n.motm?.id ?? '', n.videoUrl ?? '']);
@@ -37,11 +39,11 @@ export function debriefInputHash(match: Match, notes: MatchNote[]): string {
     .slice(0, 40);
 }
 
-type Loaded = { match: Match; notes: MatchNote[]; members: Member[] };
+type Loaded = { detail: MatchDetail; members: Member[] };
 
 const loadFromDb = async (matchId: number): Promise<Loaded> => {
-  const [{ match, notes }, members] = await Promise.all([fetchMatchDetail(matchId), fetchMembers()]);
-  return { match, notes, members };
+  const [detail, members] = await Promise.all([fetchMatchDetail(matchId), fetchMembers()]);
+  return { detail, members };
 };
 
 export function createMatchDebriefHandler(cache: DebriefCache, options: {
@@ -62,8 +64,9 @@ export function createMatchDebriefHandler(cache: DebriefCache, options: {
         const headers = { 'Cache-Control': 'no-store' };
         const reply = (body: MatchDebriefResponse) => Response.json(body, { headers });
 
-        const { match, notes, members } = await load(matchId);
-        const hash = debriefInputHash(match, notes);
+        const { detail, members } = await load(matchId);
+        const { notes } = detail;
+        const hash = debriefInputHash(detail, notes);
 
         // Un débrief déjà rédigé ne coûte plus rien : il reste lisible par tout le monde,
         // connecté ou non. Une ligne illisible (format changé) est simplement ignorée.
@@ -81,7 +84,7 @@ export function createMatchDebriefHandler(cache: DebriefCache, options: {
         if (session(request) === null) return reply({ available: false, reason: 'sign-in' });
 
         try {
-          const { debrief, model } = await generate(match, members, notes);
+          const { debrief, model } = await generate(detail, members, notes);
           // Écriture non bloquante : un cache en panne ne doit pas priver du débrief.
           await cache.write(matchId, hash, debrief, model).catch((error) => {
             console.warn(`[debrief] cache non écrit pour le match #${matchId} :`, error);

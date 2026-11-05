@@ -88,3 +88,5 @@
 .fc-detail-panel { display: flex; flex-direction: column; gap: 6px; min-height: 40vh; }
 .fc-detail-panel .fc-note-form { position: static; }
 .fc-detail-write { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; }
+.fc-lineup-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fc-lineup-switch .fc-tab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

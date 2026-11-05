@@ -1,5 +1,6 @@
 import { useClub, useMatches, useMembers } from '../api/queries';
 import { BetsLiveBanner } from '../components/bets/BetsLiveBanner';
+import { PromotionVideoTile } from '../components/division/PromotionVideoTile';
 import { RelegationAlert } from '../components/division/RelegationAlert';
 import { LastMatchTile } from '../components/home/LastMatchTile';
 import { LobbyMusic } from '../components/home/LobbyMusic';
@@ -31,6 +32,7 @@ export function HomeView() {
           )}
           <LobbyMusic />
           <BetsLiveBanner />
+          <PromotionVideoTile club={club.data!} />
           <RecapsTile />
           <div className="fc-row fc-row--top">
             <StreakTile club={club.data!} last={matches.data![0]} />

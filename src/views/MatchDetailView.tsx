@@ -33,6 +33,7 @@ export function MatchDetailView() {
   const [params, setParams] = useSearchParams();
   const tab: Tab = TABS.find((t) => t.id === params.get('onglet'))?.id ?? 'notes';
   const [writing, setWriting] = useState(false);
+  const [side, setSide] = useState<'ours' | 'theirs'>('ours');
   usePageTitle(detail.data ? `vs ${detail.data.match.opponent}` : 'Match');
 
   const showTab = (id: Tab) => setParams((p) => { const next = new URLSearchParams(p); if (id === 'notes') next.delete('onglet'); else next.set('onglet', id); return next; }, { replace: true });
@@ -98,9 +99,16 @@ export function MatchDetailView() {
                 {tab === 'compos' && (
                   <>
                     <MatchDuel ours={players ?? []} theirs={opponent?.players ?? []} opponent={match.opponent} color={opponent?.kitColor} />
+                    {(opponent?.players.length ?? 0) > 0 && (
+                      <div className="fc-tabs fc-tabs--sm fc-lineup-switch" role="group" aria-label="Feuille de match affichée">
+                        <button type="button" className="fc-tab" aria-pressed={side === 'ours'} onClick={() => setSide('ours')}>FoodBall Club</button>
+                        <button type="button" className="fc-tab" aria-pressed={side === 'theirs'} onClick={() => setSide('theirs')}>{match.opponent}</button>
+                      </div>
+                    )}
                     <div className="fc-lineups">
-                      <MatchLineup players={players ?? []} />
-                      <MatchLineup players={opponent?.players ?? []} title={match.opponent} id="fc-lineup-opponent" />
+                      {side === 'ours' || !opponent?.players.length
+                        ? <MatchLineup players={players ?? []} />
+                        : <MatchLineup players={opponent.players} title={match.opponent} id="fc-lineup-opponent" />}
                     </div>
                   </>
                 )}

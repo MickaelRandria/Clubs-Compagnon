@@ -45,6 +45,10 @@ export function MatchCoachDebrief({ match, players }: { match: Match; players: M
   }
   if (!data?.available) return null;
 
+  // Garde-fou : un débrief à un autre format (vieux cache, réponse tronquée) ne doit jamais
+  // faire planter la fiche du match. Il est simplement masqué.
+  const d = data.debrief as Partial<MatchDebrief> | undefined;
+  if (!d || !Array.isArray(d.keys) || !Array.isArray(d.players) || typeof d.headline !== 'string') return null;
   return <DebriefTeaser debrief={data.debrief} match={match} players={players} />;
 }
 

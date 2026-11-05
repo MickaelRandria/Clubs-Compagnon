@@ -17,7 +17,10 @@ const CLE = 'dommage.query.v1';
  * À incrémenter quand la forme des réponses de l'API change : un cache restauré dans
  * l'ancien format ferait planter le rendu avant même le premier rafraîchissement.
  */
-const VERSION = '3'; // 3 : progression en division sur /api/club (progress, divisionEvents).
+// 3 : progression en division sur /api/club (progress, divisionEvents).
+// 4 : débrief v2 (lede, keys, players) et série finale de division (streak). Oublié au
+//     déploiement de c636eb3 : les téléphones relisaient un débrief v1 et la fiche match plantait.
+const VERSION = '4';
 
 /** Au-delà, on préfère un squelette à des données franchement périmées. */
 const DUREE = 24 * 60 * 60 * 1000;

@@ -4,7 +4,8 @@ import { apiRequest } from './client';
 
 export function useMatchDebrief(matchId: number, enabled = true) {
   return useQuery({
-    queryKey: ['match-debrief', matchId],
+    // « v2 » dans la clé : un débrief à l'ancien format resté en cache n'est jamais relu.
+    queryKey: ['match-debrief', 'v2', matchId],
     queryFn: () => apiRequest<MatchDebriefResponse>(`/api/matches/${matchId}/debrief`),
     enabled: enabled && Number.isInteger(matchId) && matchId > 0,
     // Un débrief rédigé ne change plus ; un refus (« connecte-toi ») dépend de qui regarde

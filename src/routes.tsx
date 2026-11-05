@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import { AppLayout } from './components/layout/AppLayout';
+import { RouteError } from './components/layout/RouteError';
 import { HomeView } from './views/HomeView';
 import { NotFoundView } from './views/NotFoundView';
 
@@ -8,6 +9,7 @@ export const router = createBrowserRouter([
   { path: '/fc27/nom', element: <Navigate to="/fc27" replace /> },
   {
     element: <AppLayout />,
+    errorElement: <RouteError />,
     children: [
       { path: '/', element: <HomeView /> },
       { path: '/joueurs', lazy: async () => ({ Component: (await import('./views/PlayersView')).PlayersView }) },

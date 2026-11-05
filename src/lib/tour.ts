@@ -87,11 +87,11 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'club',
     route: '/club',
-    target: '#classement',
+    target: '.fc-club-hub',
     placement: 'bottom',
     optional: true,
     title: 'Le Club',
-    body: 'Division et points de la saison, montées, palmarès des nuits Inhouse et des playoffs EA, bilan complet et maillots.',
+    body: 'Un sommaire en tuiles : progression vers la division du dessus, niveau (skill rating, classement, adversaires), bilan et palmarès, identité du club.',
   },
   {
     id: 'profil',

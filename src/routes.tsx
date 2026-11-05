@@ -15,8 +15,9 @@ export const router = createBrowserRouter([
       { path: '/joueurs', lazy: async () => ({ Component: (await import('./views/PlayersView')).PlayersView }) },
       { path: '/joueurs/:id', lazy: async () => ({ Component: (await import('./views/PlayerView')).PlayerView }) },
       { path: '/club', lazy: async () => ({ Component: (await import('./views/ClubView')).ClubView }) },
+      { path: '/club/:section', lazy: async () => ({ Component: (await import('./views/ClubView')).ClubView }) },
       // Stats a rejoint la page Club ; l'ancienne adresse y mène toujours.
-      { path: '/stats', element: <Navigate to="/club#bilan" replace /> },
+      { path: '/stats', element: <Navigate to="/club/bilan" replace /> },
       { path: '/profil', lazy: async () => ({ Component: (await import('./views/ProfileView')).ProfileView }) },
       { path: '/musique', lazy: async () => ({ Component: (await import('./views/MusicView')).MusicView }) },
       { path: '/matchs', lazy: async () => ({ Component: (await import('./views/MatchesView')).MatchesView }) },

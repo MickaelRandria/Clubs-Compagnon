@@ -52,13 +52,16 @@ export function MatchCoachDebrief({ match, players }: { match: Match; players: M
   return <DebriefTeaser debrief={data.debrief} match={match} players={players} />;
 }
 
+/** Demande à la fiche match d'ouvrir le formulaire de note (bouton de fin de la story). */
+export const WRITE_NOTE_EVENT = 'foodball:write-note';
+
 /** Carte courte dans la fiche match : le titre, puis la story plein écran au tap. */
 function DebriefTeaser({ debrief, match, players }: { debrief: MatchDebrief; match: Match; players: MatchPlayer[] }) {
   const [open, setOpen] = useState(false);
   const screens = 2 + debrief.keys.length + (debrief.players.length > 0 ? 1 : 0);
   const writeNote = () => {
     setOpen(false);
-    document.getElementById('note-form-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.dispatchEvent(new Event(WRITE_NOTE_EVENT));
   };
   return (
     <>

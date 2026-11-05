@@ -7,7 +7,7 @@ const ECG = 'M0 30 H120 L132 30 L140 8 L150 54 L160 18 L168 30 H200 L210 30 L216
 /** Zone rouge de l'accueil : plus aucune chance, le prochain match décide du maintien. */
 export function RelegationAlert({ progress }: { progress: DivisionProgress }) {
   return (
-    <Link to="/club#progression" className="fc-dv-alert" aria-label={`Match de relégation : ne pas perdre pour rester en ${divisionLabel(progress.division)}`}>
+    <Link to="/club/progression" className="fc-dv-alert" aria-label={`Match de relégation : ne pas perdre pour rester en ${divisionLabel(progress.division)}`}>
       <span className="fc-dv-alert-top">
         <span>Prochain match</span>
         <span>0 / 3 chances</span>

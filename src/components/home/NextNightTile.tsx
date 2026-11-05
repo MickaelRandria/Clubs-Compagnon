@@ -14,7 +14,7 @@ export function NextNightTile() {
   const when = days <= 0 ? 'Ce soir' : `J-${days}`;
 
   return (
-    <Tile className="fc-card fc-card--night" to="/club#palmares" delay={280}>
+    <Tile className="fc-card fc-card--night" to="/club/bilan#palmares" delay={280}>
       <span className="fc-card-copy">
         <span className="fc-title fc-title--md">Nuit Inhouse {NEXT_NIGHT.number}</span>
         <span className="fc-mention">{formatShortDate(NEXT_NIGHT.date)} · toute la squad en LAN</span>

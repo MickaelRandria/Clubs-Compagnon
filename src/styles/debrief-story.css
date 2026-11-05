@@ -80,3 +80,11 @@
   .fc-view .fc-detail { grid-template-columns: minmax(0, 1fr); grid-template-rows: none;
     grid-template-areas: "sheet" "story" "impact" "rival" "duel" "lineup" "notes" "form"; }
 }
+
+/* ---------- Fiche match en onglets : une colonne, le détail sous les onglets ---------- */
+.fc-view .fc-detail.fc-detail--tabs { display: flex; flex-direction: column; gap: 6px; max-width: 960px; }
+.fc-detail--tabs > * { grid-area: auto; }
+.fc-detail-tabs { position: sticky; top: 0; z-index: 5; margin-top: 8px; }
+.fc-detail-panel { display: flex; flex-direction: column; gap: 6px; min-height: 40vh; }
+.fc-detail-panel .fc-note-form { position: static; }
+.fc-detail-write { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; }

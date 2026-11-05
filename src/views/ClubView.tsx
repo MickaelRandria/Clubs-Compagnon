@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, Navigate, useLocation, useParams } from 'react-router';
 import { divisionLabel } from '../../shared/division';
 import { levelDivision, SR_DIVISIONS, SR_SURVEY_DATE, SR_TOP100, SR_WORLD_BEST, type Strength } from '../../shared/skill-rating';
-import type { Club } from '../../shared/types';
+import type { Club, Match } from '../../shared/types';
 import { useClub, useMatches } from '../api/queries';
 import { AveragesTile } from '../components/stats/AveragesTile';
 import { ProgressionSection } from '../components/division/ProgressionSection';
@@ -15,69 +15,116 @@ import { NEXT_NIGHT, PLAYOFF_NIGHT } from '../content/playoffs';
 import { formatShortDate } from '../lib/format';
 import { usePageTitle } from '../lib/hooks';
 
-const SECTIONS = [
-  ['progression', 'Progression'],
-  ['niveau', 'Niveau'],
-  ['classement', 'Classement'],
-  ['adversaires', 'Adversaires'],
-  ['palmares', 'Palmarès'],
-  ['bilan', 'Bilan'],
-  ['identite', 'Identité'],
+/** Sous-pages du club. Le sommaire (/club) les présente en tuiles ; chacune tient en peu d'écrans. */
+export const CLUB_SECTIONS = [
+  { id: 'progression', label: 'Progression' },
+  { id: 'niveau', label: 'Niveau' },
+  { id: 'bilan', label: 'Bilan' },
+  { id: 'identite', label: 'Identité' },
 ] as const;
+type SectionId = (typeof CLUB_SECTIONS)[number]['id'];
 
-/** Club : progression en division, niveau (skill rating expliqué), classement EA, adversaires, palmarès, bilan et identité. Remplace Stats et Playoffs. */
+/** Anciennes ancres de la page unique (liens partagés, /stats) → sous-page qui les contient. */
+const LEGACY: Record<string, SectionId> = {
+  progression: 'progression', niveau: 'niveau', classement: 'niveau', adversaires: 'niveau',
+  bilan: 'bilan', palmares: 'bilan', identite: 'identite',
+};
+
+/** Club : un sommaire en tuiles, puis une sous-page par thème (progression, niveau, bilan, identité). */
 export function ClubView() {
-  usePageTitle('Club');
+  const { section } = useParams();
+  const { hash } = useLocation();
   const club = useClub();
   const matches = useMatches();
-  const { hash } = useLocation();
+  const current = CLUB_SECTIONS.find((s) => s.id === section);
+  usePageTitle(current ? `Club · ${current.label}` : 'Club');
 
-  // L'ancienne page Stats redirige vers #bilan : on y descend une fois la page chargée.
+  // Une ancre dans la sous-page (#palmares) : on y descend une fois les données là.
   useEffect(() => {
-    if (hash && club.data) document.getElementById(hash.slice(1))?.scrollIntoView();
-  }, [hash, club.data]);
+    if (current && hash && club.data) document.getElementById(hash.slice(1))?.scrollIntoView();
+  }, [current, hash, club.data]);
+
+  const legacy = !section && hash ? LEGACY[hash.slice(1)] : undefined;
+  if (legacy) return <Navigate to={`/club/${legacy}${hash === '#palmares' ? hash : ''}`} replace />;
+  if (section && !current) return <Navigate to="/club" replace />;
 
   return (
-    <DataGate queries={[club, matches]} skeleton={<Skeleton rows={[[[1.55, 1, 1, 1], 150], [[1], 260], [[1.55, 1], 380]]} />}>
+    <DataGate queries={[club, matches]} skeleton={<Skeleton rows={[[[1, 1], 180], [[1, 1], 180]]} />}>
       {() => {
         const c = club.data!;
+        if (!current) return <ClubHub club={c} />;
         return (
           <div className="fc-view">
-            <div className="fc-club-head">
-              <h1 className="fc-title fc-title--lg">{c.name}</h1>
-              <span className="fc-muted">{[c.region, c.reputation, c.stadium].filter(Boolean).join(' · ')}</span>
-            </div>
             <nav className="fc-tabs fc-tabs--sm fc-club-tabs" aria-label="Sections du club">
-              {SECTIONS.map(([id, label]) => (
-                <a key={id} href={`#${id}`} className="fc-tab">{label}</a>
+              {CLUB_SECTIONS.filter((s) => s.id !== 'identite' || hasIdentity(c)).map((s) => (
+                <Link key={s.id} to={`/club/${s.id}`} className={`fc-tab${s.id === current.id ? ' is-active' : ''}`}
+                  aria-current={s.id === current.id ? 'page' : undefined}>{s.label}</Link>
               ))}
             </nav>
-
-            <ProgressionSection club={c} matches={matches.data!} />
-            <Level club={c} />
-            <Ranking club={c} />
-            <Rivals club={c} />
-            <Honours club={c} />
-
-            <section id="bilan" className="fc-club-section" aria-label="Bilan">
-              <h2 className="fc-section-head">Bilan <small>{c.gamesPlayed} matchs</small></h2>
-              <div className="fc-stats-top">
-                <CareerTile club={c} />
-                <AveragesTile club={c} />
-              </div>
-              <GoalsChart matches={matches.data!} />
-              <div className="fc-stats-bottom">
-                <StatTile label="Ligue" value={c.leagueApps} sub="apparitions" delay={200} />
-                <StatTile label="Playoff" value={c.playoffApps} sub="apparitions" delay={250} />
-                <StatTile label="Réputation" value={c.reputation} text tone="discret" delay={300} />
-              </div>
-            </section>
-
-            <Identity club={c} />
+            {current.id === 'progression' && <ProgressionSection club={c} matches={matches.data!} />}
+            {current.id === 'niveau' && <><Level club={c} /><Ranking club={c} /><Rivals club={c} /></>}
+            {current.id === 'bilan' && <><Record club={c} matches={matches.data!} /><Honours club={c} /></>}
+            {current.id === 'identite' && <Identity club={c} />}
           </div>
         );
       }}
     </DataGate>
+  );
+}
+
+const hasIdentity = (c: Club) => Boolean(c.kits || c.stadium);
+
+/** Sommaire : une tuile par sous-page, avec le chiffre qui donne envie d'y aller. */
+function ClubHub({ club: c }: { club: Club }) {
+  const p = c.progress;
+  const division = p?.division ?? c.season?.division ?? null;
+  const progress = !p || p.status !== 'tracking' || p.division <= 1
+    ? { value: division === null ? '—' : divisionLabel(division), sub: `${c.promotions} montées · ${c.relegations} descentes` }
+    : p.seriesStarted
+      ? { value: `${p.streak}/${p.streakNeeded}`, sub: `Série finale vers l'${divisionLabel(p.division - 1)}` }
+      : { value: `${p.points}/${p.target} pts`, sub: `${divisionLabel(p.division)} → ${divisionLabel(p.division - 1)} · ${p.chances} chance${p.chances > 1 ? 's' : ''}` };
+  const level = levelDivision(c.skillRating);
+  const tiles = [
+    { id: 'progression', label: 'Progression', ...progress },
+    { id: 'niveau', label: 'Niveau', value: `${c.skillRating}`, sub: `Skill rating${level === null ? '' : ` · niveau ${divisionLabel(level)}`} · classement, adversaires` },
+    { id: 'bilan', label: 'Bilan', value: `${c.gamesPlayed} matchs`, sub: `${c.wins} V · ${c.draws} N · ${c.losses} D · palmarès` },
+    ...(hasIdentity(c) ? [{ id: 'identite', label: 'Identité', value: c.stadium ?? 'Maillots', sub: c.kits ? 'Stade et maillots' : 'Stade' }] : []),
+  ];
+  return (
+    <div className="fc-view">
+      <div className="fc-club-head">
+        <h1 className="fc-title fc-title--lg">{c.name}</h1>
+        <span className="fc-muted">{[c.region, c.reputation].filter(Boolean).join(' · ')}</span>
+      </div>
+      <nav className="fc-club-hub" aria-label="Sections du club">
+        {tiles.map((t, i) => (
+          <Link key={t.id} to={`/club/${t.id}`} className={`fc-block fc-club-hub-tile${i === 0 ? ' is-main' : ''}`}>
+            <span className="fc-dv-label">{t.label}</span>
+            <b>{t.value}</b>
+            <small>{t.sub}</small>
+            <span className="fc-club-hub-go" aria-hidden="true">→</span>
+          </Link>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+function Record({ club: c, matches }: { club: Club; matches: Match[] }) {
+  return (
+    <section id="bilan" className="fc-club-section" aria-label="Bilan">
+      <h2 className="fc-section-head">Bilan <small>{c.gamesPlayed} matchs</small></h2>
+      <div className="fc-stats-top">
+        <CareerTile club={c} />
+        <AveragesTile club={c} />
+      </div>
+      <GoalsChart matches={matches} />
+      <div className="fc-stats-bottom">
+        <StatTile label="Ligue" value={c.leagueApps} sub="apparitions" delay={200} />
+        <StatTile label="Playoff" value={c.playoffApps} sub="apparitions" delay={250} />
+        <StatTile label="Réputation" value={c.reputation} text tone="discret" delay={300} />
+      </div>
+    </section>
   );
 }
 
@@ -129,20 +176,23 @@ function Level({ club }: { club: Club }) {
           ))}
         </div>
       </div>
-      <div className="fc-level-how">
-        {HOW.map(([title, text]) => (
-          <div key={title} className="fc-block fc-marine"><h3>{title}</h3><p>{text}</p></div>
-        ))}
-      </div>
+      <details className="fc-block fc-marine fc-fold">
+        <summary>Comment marche le skill rating ?</summary>
+        <div className="fc-level-how">
+          {HOW.map(([title, text]) => (
+            <div key={title} className="fc-block fc-marine"><h3>{title}</h3><p>{text}</p></div>
+          ))}
+        </div>
       <div className="fc-block fc-marine fc-level-glossary">
         <p><span className="fc-mtype-badge fc-mtype-badge--exploit">Exploit</span>Victoire contre un club noté plus de 50 points au-dessus de nous.</p>
         <p><span className="fc-mtype-badge fc-mtype-badge--upset">Contre-perf</span>Défaite contre un club noté au moins 100 points en dessous.</p>
         <p><strong>~1650</strong> : note de l’adversaire relevée après le match, elle a pu bouger depuis.</p>
       </div>
-      <p className="fc-muted fc-level-source">
+        <p className="fc-muted fc-level-source">
         Repères : note médiane des clubs de chaque division parmi les 100 meilleurs de la saison, classements EA du {SR_SURVEY_DATE}.
         EA ne publie pas sa formule exacte.
-      </p>
+        </p>
+      </details>
     </section>
   );
 }

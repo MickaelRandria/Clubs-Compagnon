@@ -56,7 +56,7 @@ export function TopNav() {
           </span>
         </Link>
         {club.data && (
-          <Link to="/club#niveau" className="fc-top-brand-sr" aria-label={`Skill rating du club : ${club.data.skillRating}. C'est quoi ?`}>
+          <Link to="/club/niveau" className="fc-top-brand-sr" aria-label={`Skill rating du club : ${club.data.skillRating}. C'est quoi ?`}>
             {club.data.skillRating}
             <small>SR</small>
           </Link>

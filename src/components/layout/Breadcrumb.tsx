@@ -1,5 +1,7 @@
 import { Link, useLocation } from 'react-router';
 
+const CLUB_LABELS: Record<string, string> = { progression: 'Progression', niveau: 'Niveau', bilan: 'Bilan', identite: 'Identité' };
+
 interface Crumb {
   label: string;
   to?: string;
@@ -8,6 +10,8 @@ interface Crumb {
 /** Fil d'Ariane façon FIFA 17 (« PLAY › NEW CAREER »), déduit de l'adresse. */
 function crumbsFor(pathname: string): Crumb[] {
   if (/^\/matchs\/[^/]+/.test(pathname)) return [{ label: 'Matchs', to: '/matchs' }, { label: 'Fiche du match' }];
+  const club = pathname.match(/^\/club\/([^/]+)/);
+  if (club) return [{ label: 'Club', to: '/club' }, { label: CLUB_LABELS[club[1]] ?? 'Club' }];
   if (/^\/joueurs\/[^/]+/.test(pathname)) return [{ label: 'Effectif', to: '/joueurs' }, { label: 'Fiche joueur' }];
   switch (pathname) {
     case '/': return [{ label: 'Accueil' }];

@@ -9,7 +9,7 @@ export function RankTile({ club }: { club: Club }) {
   const division = p?.division ?? club.season?.division ?? club.bestDivision;
   if (!p || p.status === 'calibrating' || p.division <= 1) {
     return (
-      <Tile className="fc-card fc-card--small fc-card--rank" to="/club#progression" delay={140}>
+      <Tile className="fc-card fc-card--small fc-card--rank" to="/club/progression" delay={140}>
         <span className="fc-card-copy">
           <span className="fc-title fc-title--md">Classement</span>
           <span className="fc-big">{division != null ? divisionLabel(division) : '—'}</span>
@@ -27,7 +27,7 @@ export function RankTile({ club }: { club: Club }) {
   const remaining = gap.points;
   const then = p.streakNeeded > 0 ? `, puis ${p.streakNeeded} victoires d'affilée` : " et c'est la montée";
   return (
-    <Tile className="fc-card fc-card--small fc-card--rank fc-dv-tile" to="/club#progression" delay={140}>
+    <Tile className="fc-card fc-card--small fc-card--rank fc-dv-tile" to="/club/progression" delay={140}>
       <span className="fc-dv-shine" aria-hidden="true" />
       <span className="fc-dv-tile-copy">
         <span className="fc-dv-tile-head">
